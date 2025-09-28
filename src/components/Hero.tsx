@@ -21,7 +21,7 @@ export const Hero = () => {
         </p>
         <div className="mt-8 flex justify-center gap-4">
           <Button size="lg" className="bg-white text-primary hover:bg-gray-200">Commencez aujourd'hui</Button>
-          <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary">
+          <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-primary">
             En savoir plus
           </Button>
         </div>
