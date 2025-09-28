@@ -1,0 +1,55 @@
+{
+  "header": {
+    "solution": "Solution",
+    "process": "Process",
+    "partners": "Partners",
+    "becomePartner": "Become a Partner"
+  },
+  "hero": {
+    "title": "Your Card Program. Zero Interchange Fees.",
+    "subtitle": "Launch your own white-label payment card. A complete platform for banks, financial institutions, and merchants who want to innovate without the traditional costs.",
+    "ctaStart": "Get Started Now",
+    "ctaContact": "Contact Us"
+  },
+  "features": {
+    "title": "A Revolutionary Payment Platform",
+    "subtitle": "Designed to optimize your revenue and build customer loyalty.",
+    "feature1_title": "Zero Interchange Fees",
+    "feature1_desc": "Eliminate a major cost source and increase your margins on every transaction with our private payment processor.",
+    "feature2_title": "Complete White-Label Solution",
+    "feature2_desc": "Strengthen your brand with custom debit, credit, or prepaid cards bearing your logo, with no initial development fees.",
+    "feature3_title": "Unmatched Hybrid Flexibility",
+    "feature3_desc": "Offer credit, debit, and prepaid products on a single card, allowing you to create unique offers for your customers.",
+    "feature4_title": "Local Partnership and Expertise",
+    "feature4_desc": "Benefit from simple integration and expert support based in Quebec to launch your card program quickly."
+  },
+  "howItWorks": {
+    "title": "A Launch in 3 Key Steps",
+    "subtitle": "Our integration process is simple, fast, and transparent.",
+    "step1_title": "Consultation & Strategy",
+    "step1_desc": "Together, we define your needs to create a custom card program that meets your business objectives.",
+    "step2_title": "Integration & Customization",
+    "step2_desc": "Our technical teams integrate our platform with your systems and customize the cards according to your brand.",
+    "step3_title": "Launch & Growth",
+    "step3_desc": "We support you during the launch of your program and provide you with the tools to ensure its success."
+  },
+  "testimonials": {
+    "title": "What Our Partners Are Saying",
+    "testimonial1_quote": "Integrating the Inglis Dominium solution allowed us to launch an innovative credit card in record time, while significantly reducing our operational costs.",
+    "testimonial1_author": "Chief Financial Officer",
+    "testimonial1_company": "Major Financial Institution",
+    "testimonial2_quote": "The white-label prepaid card program has transformed our loyalty program. It's a powerful marketing tool and a new source of revenue for us.",
+    "testimonial2_author": "Vice President of Marketing",
+    "testimonial2_company": "Retail Chain"
+  },
+  "cta": {
+    "title": "Ready to launch your own payment solution?",
+    "subtitle": "Contact our team of experts to discover how Inglis Dominium can transform your business.",
+    "button": "Schedule a Consultation"
+  },
+  "footer": {
+    "copyright": "© 2024 Inglis Dominium. All rights reserved.",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy"
+  }
+}

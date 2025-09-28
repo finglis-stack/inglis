@@ -1,0 +1,55 @@
+{
+  "header": {
+    "solution": "Solution",
+    "process": "Processus",
+    "partners": "Partenaires",
+    "becomePartner": "Devenez partenaire"
+  },
+  "hero": {
+    "title": "Votre Programme de Cartes. Zéro Frais d'Interchange.",
+    "subtitle": "Lancez votre propre carte de paiement en marque blanche. Une plateforme complète pour les banques, institutions financières et commerçants qui souhaitent innover sans les coûts traditionnels.",
+    "ctaStart": "Commencez maintenant",
+    "ctaContact": "Contactez-nous"
+  },
+  "features": {
+    "title": "Une Plateforme de Paiement Révolutionnaire",
+    "subtitle": "Conçue pour optimiser vos revenus et fidéliser vos clients.",
+    "feature1_title": "Zéro Frais d'Interchange",
+    "feature1_desc": "Éliminez une source de coûts majeure et augmentez vos marges sur chaque transaction grâce à notre processeur de paiement privé.",
+    "feature2_title": "Solution Marque Blanche Complète",
+    "feature2_desc": "Renforcez votre marque avec des cartes de débit, crédit ou prépayées personnalisées à votre image, sans frais de développement initiaux.",
+    "feature3_title": "Flexibilité Hybride Inégalée",
+    "feature3_desc": "Offrez des produits de crédit, débit et prépayés sur une seule carte, vous permettant de créer des offres uniques pour vos clients.",
+    "feature4_title": "Partenariat et Expertise Locale",
+    "feature4_desc": "Bénéficiez d'une intégration simple et d'un support expert basé au Québec pour lancer votre programme de cartes rapidement."
+  },
+  "howItWorks": {
+    "title": "Un Lancement en 3 Étapes Clés",
+    "subtitle": "Notre processus d'intégration est simple, rapide et transparent.",
+    "step1_title": "Consultation & Stratégie",
+    "step1_desc": "Nous définissons ensemble vos besoins pour créer un programme de cartes sur mesure qui atteint vos objectifs d'affaires.",
+    "step2_title": "Intégration & Personnalisation",
+    "step2_desc": "Nos équipes techniques intègrent notre plateforme à vos systèmes et personnalisent les cartes selon votre marque.",
+    "step3_title": "Lancement & Croissance",
+    "step3_desc": "Nous vous accompagnons lors du lancement de votre programme et vous fournissons les outils pour en assurer le succès."
+  },
+  "testimonials": {
+    "title": "Ce que nos partenaires en disent",
+    "testimonial1_quote": "L'intégration de la solution Inglis Dominium nous a permis de lancer une carte de crédit innovante en un temps record, tout en réduisant nos coûts opérationnels de manière significative.",
+    "testimonial1_author": "Directeur des Finances",
+    "testimonial1_company": "Grande institution financière",
+    "testimonial2_quote": "Le programme de cartes prépayées en marque blanche a transformé notre programme de fidélité. C'est un outil marketing puissant et une nouvelle source de revenus pour nous.",
+    "testimonial2_author": "Vice-Présidente Marketing",
+    "testimonial2_company": "Chaîne de commerces de détail"
+  },
+  "cta": {
+    "title": "Prêt à lancer votre propre solution de paiement ?",
+    "subtitle": "Contactez notre équipe d'experts pour découvrir comment Inglis Dominium peut transformer votre entreprise.",
+    "button": "Planifier une consultation"
+  },
+  "footer": {
+    "copyright": "© 2024 Inglis Dominium. Tous droits réservés.",
+    "terms": "Termes de service",
+    "privacy": "Politique de confidentialité"
+  }
+}

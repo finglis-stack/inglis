@@ -1,44 +1,47 @@
 import { DollarSign, Award, Layers, Users } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
-const features = [
+const featureKeys = [
   {
     icon: <DollarSign className="h-8 w-8 text-primary" />,
-    title: "Zéro Frais d'Interchange",
-    description: "Éliminez une source de coûts majeure et augmentez vos marges sur chaque transaction grâce à notre processeur de paiement privé.",
+    titleKey: "features.feature1_title",
+    descriptionKey: "features.feature1_desc",
   },
   {
     icon: <Award className="h-8 w-8 text-primary" />,
-    title: "Solution Marque Blanche Complète",
-    description: "Renforcez votre marque avec des cartes de débit, crédit ou prépayées personnalisées à votre image, sans frais de développement initiaux.",
+    titleKey: "features.feature2_title",
+    descriptionKey: "features.feature2_desc",
   },
   {
     icon: <Layers className="h-8 w-8 text-primary" />,
-    title: "Flexibilité Hybride Inégalée",
-    description: "Offrez des produits de crédit, débit et prépayés sur une seule carte, vous permettant de créer des offres uniques pour vos clients.",
+    titleKey: "features.feature3_title",
+    descriptionKey: "features.feature3_desc",
   },
   {
     icon: <Users className="h-8 w-8 text-primary" />,
-    title: "Partenariat et Expertise Locale",
-    description: "Bénéficiez d'une intégration simple et d'un support expert basé au Québec pour lancer votre programme de cartes rapidement.",
+    titleKey: "features.feature4_title",
+    descriptionKey: "features.feature4_desc",
   },
 ];
 
 export const Features = () => {
+  const { t } = useTranslation();
+
   return (
     <section id="features" className="py-20 bg-secondary">
       <div className="container px-4 md:px-6">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold">Une Plateforme de Paiement Révolutionnaire</h2>
-          <p className="text-muted-foreground mt-2">Conçue pour optimiser vos revenus et fidéliser vos clients.</p>
+          <h2 className="text-3xl font-bold">{t('features.title')}</h2>
+          <p className="text-muted-foreground mt-2">{t('features.subtitle')}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {features.map((feature, index) => (
+          {featureKeys.map((feature, index) => (
             <Card key={index}>
               <CardHeader>
                 {feature.icon}
-                <CardTitle className="mt-4">{feature.title}</CardTitle>
-                <CardDescription className="mt-2">{feature.description}</CardDescription>
+                <CardTitle className="mt-4">{t(feature.titleKey)}</CardTitle>
+                <CardDescription className="mt-2">{t(feature.descriptionKey)}</CardDescription>
               </CardHeader>
             </Card>
           ))}
