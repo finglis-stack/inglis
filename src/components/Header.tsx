@@ -25,7 +25,7 @@ export const Header = () => {
         </nav>
         <div className="flex items-center gap-4">
           <Button className="bg-neutral-800 text-gray-300 hover:bg-neutral-700" asChild>
-            <Link to="/onboarding/create-account">{t('header.becomePartner')}</Link>
+            <Link to="/onboarding/institution-info">{t('header.becomePartner')}</Link>
           </Button>
           <LanguageSwitcher />
         </div>

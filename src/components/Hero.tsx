@@ -25,7 +25,7 @@ export const Hero = () => {
         </p>
         <div className="mt-8 flex justify-center gap-4">
           <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-primary" asChild>
-            <Link to="/onboarding/create-account">{t('hero.ctaStart')}</Link>
+            <Link to="/onboarding/institution-info">{t('hero.ctaStart')}</Link>
           </Button>
           <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-primary">
             {t('hero.ctaContact')}

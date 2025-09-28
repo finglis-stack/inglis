@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { OnboardingLayout } from './OnboardingLayout';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -14,12 +13,6 @@ const InstitutionType = () => {
   const [jurisdiction, setJurisdiction] = useState('');
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate('/onboarding/create-account');
-      }
-    });
-
     const savedData = localStorage.getItem('onboardingData');
     if (savedData) {
       const data = JSON.parse(savedData);
@@ -49,7 +42,7 @@ const InstitutionType = () => {
 
   return (
     <OnboardingLayout>
-      <h1 className="text-3xl font-bold mb-2">Détails de l'institution (2/3)</h1>
+      <h1 className="text-3xl font-bold mb-2">Détails de l'institution (2/4)</h1>
       <p className="text-muted-foreground mb-6">Quel type d'institution représentez-vous ?</p>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-6">
