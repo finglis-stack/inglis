@@ -12,7 +12,7 @@ export const OnboardingLayout: React.FC<OnboardingLayoutProps> = ({ children }) 
       <div className="w-full md:w-1/2 flex flex-col items-center p-8 relative">
         <header className="w-full max-w-md absolute top-8 flex justify-between items-center">
           <Link to="/">
-            <img src="/logo.png" alt="Inglis Dominium Logo" className="h-10" />
+            <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="h-10" />
           </Link>
           <LanguageSwitcher />
         </header>
