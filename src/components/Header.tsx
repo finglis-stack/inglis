@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
 export const Header = () => {
   const { t } = useTranslation();
@@ -23,7 +24,9 @@ export const Header = () => {
           </a>
         </nav>
         <div className="flex items-center gap-4">
-          <Button className="bg-neutral-800 text-gray-300 hover:bg-neutral-700">{t('header.becomePartner')}</Button>
+          <Button className="bg-neutral-800 text-gray-300 hover:bg-neutral-700" asChild>
+            <Link to="/onboarding/create-account">{t('header.becomePartner')}</Link>
+          </Button>
           <LanguageSwitcher />
         </div>
       </div>
