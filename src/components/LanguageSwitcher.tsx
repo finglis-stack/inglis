@@ -24,7 +24,7 @@ export const LanguageSwitcher = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="text-white hover:bg-gray-700 hover:text-white">
+        <Button variant="ghost" className="text-white hover:bg-neutral-800 hover:text-white">
           <img src={`/flags/${currentLanguage.country.toLowerCase()}.png`} alt={currentLanguage.country} className="w-5 h-auto mr-2" />
           {currentLanguage.name}
         </Button>
