@@ -99,3 +99,12 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgb(0 0 0 / 50%);
+  }
+  .text-shadow-lg {
+    text-shadow: 0 4px 8px rgb(0 0 0 / 50%);
+  }
+}
