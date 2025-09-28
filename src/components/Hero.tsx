@@ -7,8 +7,9 @@ export const Hero = () => {
         <img
           src="/hero-background.jpg"
           alt="Renard dans la neige"
-          className="w-full h-full object-cover filter blur-sm brightness-75"
+          className="w-full h-full object-cover filter blur-sm"
         />
+        <div className="absolute inset-0 bg-black/60" />
       </div>
       
       <div className="container relative px-4 md:px-6">
