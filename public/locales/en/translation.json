@@ -51,5 +51,24 @@
     "copyright": "© 2024 Inglis Dominium. All rights reserved.",
     "terms": "Terms of Service",
     "privacy": "Privacy Policy"
+  },
+  "onboarding": {
+    "institutionType": {
+      "title": "Institution Details (3/5)",
+      "subtitle": "What type of institution do you represent?",
+      "institutionTypeLabel": "Institution Type",
+      "institutionTypePlaceholder": "Select a type",
+      "typeBank": "Bank",
+      "typeCreditUnion": "Credit Union",
+      "typeFintech": "Fintech",
+      "typeOther": "Other",
+      "jurisdictionLabel": "Jurisdiction",
+      "jurisdictionFederal": "Federal",
+      "jurisdictionProvincial": "Provincial",
+      "jurisdictionState": "State",
+      "jurisdictionNational": "National",
+      "jurisdictionEU": "European Union",
+      "fillAllFieldsError": "Please fill in all fields."
+    }
   }
 }

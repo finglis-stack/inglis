@@ -6,11 +6,14 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { showError } from '@/utils/toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useTranslation } from 'react-i18next';
 
 const InstitutionType = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [institutionType, setInstitutionType] = useState('');
   const [jurisdiction, setJurisdiction] = useState('');
+  const [country, setCountry] = useState('');
 
   useEffect(() => {
     const savedData = localStorage.getItem('onboardingData');
@@ -18,6 +21,7 @@ const InstitutionType = () => {
       const data = JSON.parse(savedData);
       setInstitutionType(data.institutionType || '');
       setJurisdiction(data.jurisdiction || '');
+      setCountry((data.country || '').toLowerCase());
     } else {
         navigate('/onboarding/institution-info');
     }
@@ -27,7 +31,7 @@ const InstitutionType = () => {
     e.preventDefault();
 
     if (!institutionType || !jurisdiction) {
-        showError("Veuillez remplir tous les champs.");
+        showError(t('onboarding.institutionType.fillAllFieldsError'));
         return;
     }
 
@@ -40,40 +44,64 @@ const InstitutionType = () => {
     navigate('/onboarding/contact-info');
   };
 
+  const getJurisdictionOptions = () => {
+    const countryNormalized = (country || '').trim().toLowerCase();
+
+    if (['canada', 'ca'].includes(countryNormalized)) {
+      return [
+        { value: 'federal', label: t('onboarding.institutionType.jurisdictionFederal') },
+        { value: 'provincial', label: t('onboarding.institutionType.jurisdictionProvincial') }
+      ];
+    }
+
+    if (['united states', 'us', 'usa', 'united states of america'].includes(countryNormalized)) {
+      return [
+        { value: 'federal', label: t('onboarding.institutionType.jurisdictionFederal') },
+        { value: 'state', label: t('onboarding.institutionType.jurisdictionState') }
+      ];
+    }
+
+    // Default to Europe options for all other countries
+    return [
+      { value: 'national', label: t('onboarding.institutionType.jurisdictionNational') },
+      { value: 'european_union', label: t('onboarding.institutionType.jurisdictionEU') }
+    ];
+  };
+
+  const jurisdictionOptions = getJurisdictionOptions();
+
   return (
     <OnboardingLayout>
-      <h1 className="text-3xl font-bold mb-2">Détails de l'institution (3/5)</h1>
-      <p className="text-muted-foreground mb-6">Quel type d'institution représentez-vous ?</p>
+      <h1 className="text-3xl font-bold mb-2">{t('onboarding.institutionType.title')}</h1>
+      <p className="text-muted-foreground mb-6">{t('onboarding.institutionType.subtitle')}</p>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-6">
           <div className="grid gap-2">
-            <Label>Type d'institution</Label>
+            <Label>{t('onboarding.institutionType.institutionTypeLabel')}</Label>
             <Select onValueChange={setInstitutionType} value={institutionType}>
                 <SelectTrigger>
-                    <SelectValue placeholder="Sélectionnez un type" />
+                    <SelectValue placeholder={t('onboarding.institutionType.institutionTypePlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="banque">Banque</SelectItem>
-                    <SelectItem value="cooperative_credit">Coopérative de crédit</SelectItem>
-                    <SelectItem value="fintech">Fintech</SelectItem>
-                    <SelectItem value="autre">Autre</SelectItem>
+                    <SelectItem value="banque">{t('onboarding.institutionType.typeBank')}</SelectItem>
+                    <SelectItem value="cooperative_credit">{t('onboarding.institutionType.typeCreditUnion')}</SelectItem>
+                    <SelectItem value="fintech">{t('onboarding.institutionType.typeFintech')}</SelectItem>
+                    <SelectItem value="autre">{t('onboarding.institutionType.typeOther')}</SelectItem>
                 </SelectContent>
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label>Juridiction</Label>
-            <RadioGroup onValueChange={setJurisdiction} value={jurisdiction} className="flex space-x-4">
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="federal" id="federal" />
-                <Label htmlFor="federal">Fédéral</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="provincial" id="provincial" />
-                <Label htmlFor="provincial">Provincial</Label>
-              </div>
+            <Label>{t('onboarding.institutionType.jurisdictionLabel')}</Label>
+            <RadioGroup onValueChange={setJurisdiction} value={jurisdiction} className="flex flex-wrap gap-4">
+              {jurisdictionOptions.map(option => (
+                <div key={option.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option.value} id={option.value} />
+                  <Label htmlFor={option.value}>{option.label}</Label>
+                </div>
+              ))}
             </RadioGroup>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between mt-4">
             <Button type="button" variant="outline" onClick={() => navigate('/onboarding/institution-info')}>
                 Précédent
             </Button>

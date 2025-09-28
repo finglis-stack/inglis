@@ -51,5 +51,24 @@
     "copyright": "© 2024 Inglis Dominium. Tous droits réservés.",
     "terms": "Termes de service",
     "privacy": "Politique de confidentialité"
+  },
+  "onboarding": {
+    "institutionType": {
+      "title": "Détails de l'institution (3/5)",
+      "subtitle": "Quel type d'institution représentez-vous ?",
+      "institutionTypeLabel": "Type d'institution",
+      "institutionTypePlaceholder": "Sélectionnez un type",
+      "typeBank": "Banque",
+      "typeCreditUnion": "Coopérative de crédit",
+      "typeFintech": "Fintech",
+      "typeOther": "Autre",
+      "jurisdictionLabel": "Juridiction",
+      "jurisdictionFederal": "Fédéral",
+      "jurisdictionProvincial": "Provincial",
+      "jurisdictionState": "État",
+      "jurisdictionNational": "National",
+      "jurisdictionEU": "Union Européenne",
+      "fillAllFieldsError": "Veuillez remplir tous les champs."
+    }
   }
 }
