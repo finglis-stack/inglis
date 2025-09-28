@@ -9,16 +9,16 @@ export const Header = () => {
         </a>
         <nav className="hidden md:flex gap-6 text-sm font-medium">
           <a href="#features" className="text-gray-300 hover:text-white transition-colors">
-            Caractéristiques
+            Solution
           </a>
           <a href="#how-it-works" className="text-gray-300 hover:text-white transition-colors">
-            Fonctionnement
+            Processus
           </a>
           <a href="#testimonials" className="text-gray-300 hover:text-white transition-colors">
-            Témoignages
+            Partenaires
           </a>
         </nav>
-        <Button>Obtenir ma carte</Button>
+        <Button>Devenez partenaire</Button>
       </div>
     </header>
   );

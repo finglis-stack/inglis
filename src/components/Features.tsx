@@ -1,26 +1,26 @@
-import { CreditCard, Lock, Globe, Sprout } from "lucide-react";
+import { DollarSign, Award, Layers, Users } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 const features = [
   {
-    icon: <CreditCard className="h-8 w-8 text-primary" />,
-    title: "Le meilleur des deux mondes",
-    description: "Profitez de la flexibilité du crédit et du contrôle du débit en une seule carte.",
+    icon: <DollarSign className="h-8 w-8 text-primary" />,
+    title: "Zéro Frais d'Interchange",
+    description: "Éliminez une source de coûts majeure et augmentez vos marges sur chaque transaction grâce à notre processeur de paiement privé.",
   },
   {
-    icon: <Lock className="h-8 w-8 text-primary" />,
-    title: "Confidentialité assurée",
-    description: "Notre processeur de paiement privé garantit la sécurité et l'anonymat de vos transactions.",
+    icon: <Award className="h-8 w-8 text-primary" />,
+    title: "Solution Marque Blanche Complète",
+    description: "Renforcez votre marque avec des cartes de débit, crédit ou prépayées personnalisées à votre image, sans frais de développement initiaux.",
   },
   {
-    icon: <Globe className="h-8 w-8 text-primary" />,
-    title: "Utilisable partout",
-    description: "Grâce à notre système 'open loop', votre carte est acceptée chez des millions de commerçants.",
+    icon: <Layers className="h-8 w-8 text-primary" />,
+    title: "Flexibilité Hybride Inégalée",
+    description: "Offrez des produits de crédit, débit et prépayés sur une seule carte, vous permettant de créer des offres uniques pour vos clients.",
   },
   {
-    icon: <Sprout className="h-8 w-8 text-primary" />,
-    title: "Fièrement québécois",
-    description: "Soutenez une technologie financière locale, conçue et opérée ici même, au Québec.",
+    icon: <Users className="h-8 w-8 text-primary" />,
+    title: "Partenariat et Expertise Locale",
+    description: "Bénéficiez d'une intégration simple et d'un support expert basé au Québec pour lancer votre programme de cartes rapidement.",
   },
 ];
 
@@ -29,8 +29,8 @@ export const Features = () => {
     <section id="features" className="py-20 bg-secondary">
       <div className="container px-4 md:px-6">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold">Pourquoi choisir Inglis Dominium ?</h2>
-          <p className="text-muted-foreground mt-2">La solution de paiement qui s'adapte à vous.</p>
+          <h2 className="text-3xl font-bold">Une Plateforme de Paiement Révolutionnaire</h2>
+          <p className="text-muted-foreground mt-2">Conçue pour optimiser vos revenus et fidéliser vos clients.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {features.map((feature, index) => (

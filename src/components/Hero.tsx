@@ -14,15 +14,15 @@ export const Hero = () => {
       
       <div className="container relative px-4 md:px-6">
         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tighter text-shadow-lg">
-          La liberté financière, réinventée.
+          Votre Programme de Cartes. Zéro Frais d'Interchange.
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-gray-200 text-shadow">
-          Inglis Dominium: La carte hybride qui combine le meilleur du crédit et du débit. Une solution de paiement 100% québécoise, privée et sécurisée.
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-200 text-shadow">
+          Lancez votre propre carte de paiement en marque blanche. Une plateforme complète pour les banques, institutions financières et commerçants qui souhaitent innover sans les coûts traditionnels.
         </p>
         <div className="mt-8 flex justify-center gap-4">
-          <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-primary">Commencez aujourd'hui</Button>
+          <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-primary">Demander une démo</Button>
           <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-primary">
-            En savoir plus
+            Contactez-nous
           </Button>
         </div>
       </div>
