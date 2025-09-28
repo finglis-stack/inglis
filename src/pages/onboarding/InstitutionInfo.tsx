@@ -5,54 +5,53 @@ import { OnboardingLayout } from './OnboardingLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { showError, showSuccess } from '@/utils/toast';
-import { Session } from '@supabase/supabase-js';
+import { showError } from '@/utils/toast';
 
-const InstitutionDetails = () => {
+const InstitutionInfo = () => {
   const navigate = useNavigate();
-  const [session, setSession] = useState<Session | null>(null);
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [country, setCountry] = useState('');
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         navigate('/onboarding/create-account');
-      } else {
-        setSession(session);
       }
     });
+    
+    const savedData = localStorage.getItem('onboardingData');
+    if (savedData) {
+      const data = JSON.parse(savedData);
+      setName(data.name || '');
+      setAddress(data.address || '');
+      setCity(data.city || '');
+      setCountry(data.country || '');
+    }
   }, [navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session) return;
-
-    setLoading(true);
-    const { error } = await supabase.from('institutions').insert({
-      user_id: session.user.id,
-      name,
-      address,
-      city,
-      country,
-    });
-
-    if (error) {
-      showError(error.message);
-    } else {
-      showSuccess('Informations enregistrées avec succès !');
-      navigate('/dashboard');
+    
+    if (!name) {
+        showError("Le nom de l'institution est requis.");
+        return;
     }
-    setLoading(false);
+
+    const savedData = localStorage.getItem('onboardingData');
+    const data = savedData ? JSON.parse(savedData) : {};
+    
+    const updatedData = { ...data, name, address, city, country };
+    localStorage.setItem('onboardingData', JSON.stringify(updatedData));
+    
+    navigate('/onboarding/institution-type');
   };
 
   return (
     <OnboardingLayout>
-      <h1 className="text-3xl font-bold mb-2">Détails de l'institution</h1>
-      <p className="text-muted-foreground mb-6">Parlez-nous un peu de vous.</p>
+      <h1 className="text-3xl font-bold mb-2">Détails de l'institution (1/3)</h1>
+      <p className="text-muted-foreground mb-6">Commençons par les informations de base.</p>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4">
           <div className="grid gap-2">
@@ -71,8 +70,8 @@ const InstitutionDetails = () => {
             <Label htmlFor="country">Pays</Label>
             <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Enregistrement...' : 'Terminer'}
+          <Button type="submit" className="w-full">
+            Suivant
           </Button>
         </div>
       </form>
@@ -80,4 +79,4 @@ const InstitutionDetails = () => {
   );
 };
 
-export default InstitutionDetails;
+export default InstitutionInfo;

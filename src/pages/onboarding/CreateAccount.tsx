@@ -25,7 +25,8 @@ const CreateAccount = () => {
       showError(error.message);
     } else {
       showSuccess('Compte créé ! Veuillez vérifier vos e-mails pour confirmer.');
-      navigate('/onboarding/details');
+      localStorage.removeItem('onboardingData');
+      navigate('/onboarding/institution-info');
     }
     setLoading(false);
   };
