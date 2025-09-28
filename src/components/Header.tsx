@@ -27,7 +27,9 @@ export const Header = () => {
           <Button className="bg-neutral-800 text-gray-300 hover:bg-neutral-700" asChild>
             <Link to="/onboarding/institution-info">{t('header.becomePartner')}</Link>
           </Button>
-          <LanguageSwitcher />
+          <div className="text-gray-300 [&_button]:hover:bg-neutral-700 [&_button]:hover:text-white">
+            <LanguageSwitcher />
+          </div>
         </div>
       </div>
     </header>
