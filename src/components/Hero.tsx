@@ -6,7 +6,7 @@ export const Hero = () => {
       <div className="absolute inset-0 z-[-1]">
         <img
           src="/hero-background.jpg"
-          alt="Renard dans la neige"
+          alt="Place Royale, Québec"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-black/60" />
@@ -28,7 +28,7 @@ export const Hero = () => {
       </div>
 
       <p className="absolute bottom-2 right-4 text-xs text-gray-300/70">
-        Photo par Alain Audet
+        Photo par DEZALB
       </p>
     </section>
   );
