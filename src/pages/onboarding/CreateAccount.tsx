@@ -77,7 +77,7 @@ const CreateAccount = () => {
 
   return (
     <OnboardingLayout>
-      <h1 className="text-3xl font-bold mb-2">Créer votre compte (4/4)</h1>
+      <h1 className="text-3xl font-bold mb-2">Créer votre compte (5/5)</h1>
       <p className="text-muted-foreground mb-6">Finalisez votre inscription.</p>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4">

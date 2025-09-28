@@ -43,7 +43,7 @@ const InstitutionInfo = () => {
 
   return (
     <OnboardingLayout>
-      <h1 className="text-3xl font-bold mb-2">Détails de l'institution (1/4)</h1>
+      <h1 className="text-3xl font-bold mb-2">Détails de l'institution (2/5)</h1>
       <p className="text-muted-foreground mb-6">Commençons par les informations de base.</p>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4">
@@ -63,9 +63,14 @@ const InstitutionInfo = () => {
             <Label htmlFor="country">Pays</Label>
             <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} />
           </div>
-          <Button type="submit" className="w-full">
-            Suivant
-          </Button>
+        </div>
+        <div className="flex justify-between mt-6">
+            <Button type="button" variant="outline" onClick={() => navigate('/onboarding/welcome')}>
+                Précédent
+            </Button>
+            <Button type="submit">
+                Suivant
+            </Button>
         </div>
       </form>
     </OnboardingLayout>

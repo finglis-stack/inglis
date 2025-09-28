@@ -42,7 +42,7 @@ const InstitutionType = () => {
 
   return (
     <OnboardingLayout>
-      <h1 className="text-3xl font-bold mb-2">Détails de l'institution (2/4)</h1>
+      <h1 className="text-3xl font-bold mb-2">Détails de l'institution (3/5)</h1>
       <p className="text-muted-foreground mb-6">Quel type d'institution représentez-vous ?</p>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-6">
