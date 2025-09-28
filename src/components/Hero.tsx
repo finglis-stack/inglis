@@ -20,7 +20,7 @@ export const Hero = () => {
           Lancez votre propre carte de paiement en marque blanche. Une plateforme complète pour les banques, institutions financières et commerçants qui souhaitent innover sans les coûts traditionnels.
         </p>
         <div className="mt-8 flex justify-center gap-4">
-          <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-primary">Commencez maintenant!</Button>
+          <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-primary">Commencez maintenant</Button>
           <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-primary">
             Contactez-nous
           </Button>
