@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -9,15 +9,13 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (error || !data.user) {
-        navigate('/onboarding/create-account');
-      } else {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
         setUserEmail(data.user.email || '');
       }
     };
     fetchUser();
-  }, [navigate]);
+  }, []);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -25,10 +23,15 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold mb-4">Bienvenue sur votre tableau de bord</h1>
-      <p className="text-lg text-muted-foreground mb-8">Connecté en tant que : {userEmail}</p>
-      <Button onClick={handleSignOut}>Se déconnecter</Button>
+    <div>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Tableau de bord</h1>
+        <div className="flex items-center gap-4">
+            <p className="text-sm text-muted-foreground">Connecté en tant que : {userEmail}</p>
+            <Button onClick={handleSignOut} variant="outline">Se déconnecter</Button>
+        </div>
+      </div>
+      <p className="text-lg">Bienvenue sur votre tableau de bord.</p>
     </div>
   );
 };
