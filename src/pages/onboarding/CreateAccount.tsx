@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { showError, showSuccess } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 const CreateAccount = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,10 +18,10 @@ const CreateAccount = () => {
   useEffect(() => {
     const savedData = localStorage.getItem('onboardingData');
     if (!savedData) {
-      showError("Veuillez d'abord remplir les informations sur l'institution.");
+      showError(t('onboarding.createAccount.fillInfoFirstError'));
       navigate('/onboarding/institution-info');
     }
-  }, [navigate]);
+  }, [navigate, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +29,7 @@ const CreateAccount = () => {
 
     const savedData = localStorage.getItem('onboardingData');
     if (!savedData) {
-      showError("Les données d'intégration sont manquantes. Veuillez recommencer.");
+      showError(t('onboarding.createAccount.missingDataError'));
       navigate('/onboarding/institution-info');
       setLoading(false);
       return;
@@ -45,7 +47,7 @@ const CreateAccount = () => {
     }
 
     if (!signUpData.user) {
-        showError("La création du compte a échoué. Veuillez réessayer.");
+        showError(t('onboarding.createAccount.creationFailedError'));
         setLoading(false);
         return;
     }
@@ -65,9 +67,9 @@ const CreateAccount = () => {
     const { error: insertError } = await supabase.from('institutions').insert(finalData);
 
     if (insertError) {
-      showError(`Erreur lors de la sauvegarde des informations : ${insertError.message}`);
+      showError(t('onboarding.createAccount.saveInfoError', { message: insertError.message }));
     } else {
-      showSuccess('Compte créé et profil complété avec succès !');
+      showSuccess(t('onboarding.createAccount.successMessage'));
       localStorage.removeItem('onboardingData');
       navigate('/dashboard');
     }
@@ -77,23 +79,23 @@ const CreateAccount = () => {
 
   return (
     <OnboardingLayout>
-      <h1 className="text-3xl font-bold mb-2">Créer votre compte (5/5)</h1>
-      <p className="text-muted-foreground mb-6">Finalisez votre inscription.</p>
+      <h1 className="text-3xl font-bold mb-2">{t('onboarding.createAccount.title')}</h1>
+      <p className="text-muted-foreground mb-6">{t('onboarding.createAccount.subtitle')}</p>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('onboarding.createAccount.emailLabel')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="nom@exemple.com"
+              placeholder={t('onboarding.createAccount.emailPlaceholder')}
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">Mot de passe</Label>
+            <Label htmlFor="password">{t('onboarding.createAccount.passwordLabel')}</Label>
             <Input 
               id="password" 
               type="password" 
@@ -104,10 +106,10 @@ const CreateAccount = () => {
           </div>
           <div className="flex justify-between mt-4">
             <Button type="button" variant="outline" onClick={() => navigate('/onboarding/contact-info')}>
-                Précédent
+                {t('onboarding.common.previous')}
             </Button>
             <Button type="submit" disabled={loading}>
-                {loading ? 'Création...' : 'Terminer et créer le compte'}
+                {loading ? t('onboarding.createAccount.loadingButton') : t('onboarding.createAccount.submitButton')}
             </Button>
           </div>
         </div>

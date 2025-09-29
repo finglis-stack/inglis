@@ -4,9 +4,11 @@ import { OnboardingLayout } from './OnboardingLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useTranslation } from 'react-i18next';
 
 const ContactInfo = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [phoneNumber, setPhoneNumber] = useState('');
 
   useEffect(() => {
@@ -33,20 +35,20 @@ const ContactInfo = () => {
 
   return (
     <OnboardingLayout>
-      <h1 className="text-3xl font-bold mb-2">Détails de l'institution (4/5)</h1>
-      <p className="text-muted-foreground mb-6">Presque terminé !</p>
+      <h1 className="text-3xl font-bold mb-2">{t('onboarding.contactInfo.title')}</h1>
+      <p className="text-muted-foreground mb-6">{t('onboarding.contactInfo.subtitle')}</p>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="phone">Numéro de téléphone</Label>
+            <Label htmlFor="phone">{t('onboarding.contactInfo.phoneLabel')}</Label>
             <Input id="phone" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
           </div>
           <div className="flex justify-between mt-4">
             <Button type="button" variant="outline" onClick={() => navigate('/onboarding/institution-type')}>
-                Précédent
+                {t('onboarding.common.previous')}
             </Button>
             <Button type="submit">
-                Suivant
+                {t('onboarding.common.next')}
             </Button>
           </div>
         </div>

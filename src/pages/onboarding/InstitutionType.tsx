@@ -103,10 +103,10 @@ const InstitutionType = () => {
           </div>
           <div className="flex justify-between mt-4">
             <Button type="button" variant="outline" onClick={() => navigate('/onboarding/institution-info')}>
-                Précédent
+                {t('onboarding.common.previous')}
             </Button>
             <Button type="submit">
-                Suivant
+                {t('onboarding.common.next')}
             </Button>
           </div>
         </div>

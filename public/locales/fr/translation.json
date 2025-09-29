@@ -53,6 +53,44 @@
     "privacy": "Politique de confidentialité"
   },
   "onboarding": {
+    "welcome": {
+      "title": "Bienvenue chez Inglis Dominium",
+      "p1": "Inglis Dominium est un réseau de paiement indépendant qui permet aux institutions financières, aux commerces et aux entreprises d'émettre leurs propres cartes de paiement virtuelles et physiques.",
+      "p2": "En continuant, vous reconnaissez avoir lu et accepté nos <0>Conditions d'utilisation</0> ainsi que notre <1>Politique de confidentialité</1>, qui régit l'utilisation de vos informations personnelles et corporatives.",
+      "acceptButton": "J'accepte et je continue"
+    },
+    "institutionInfo": {
+      "title": "Détails de l'institution (2/5)",
+      "subtitle": "Commençons par les informations de base.",
+      "nameLabel": "Nom de l'institution",
+      "addressLabel": "Adresse",
+      "cityLabel": "Ville",
+      "countryLabel": "Pays",
+      "nameRequiredError": "Le nom de l'institution est requis."
+    },
+    "contactInfo": {
+      "title": "Détails de l'institution (4/5)",
+      "subtitle": "Presque terminé !",
+      "phoneLabel": "Numéro de téléphone"
+    },
+    "createAccount": {
+      "title": "Créer votre compte (5/5)",
+      "subtitle": "Finalisez votre inscription.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "nom@exemple.com",
+      "passwordLabel": "Mot de passe",
+      "submitButton": "Terminer et créer le compte",
+      "loadingButton": "Création...",
+      "fillInfoFirstError": "Veuillez d'abord remplir les informations sur l'institution.",
+      "missingDataError": "Les données d'intégration sont manquantes. Veuillez recommencer.",
+      "creationFailedError": "La création du compte a échoué. Veuillez réessayer.",
+      "saveInfoError": "Erreur lors de la sauvegarde des informations : {{message}}",
+      "successMessage": "Compte créé et profil complété avec succès !"
+    },
+    "common": {
+      "previous": "Précédent",
+      "next": "Suivant"
+    },
     "institutionType": {
       "title": "Détails de l'institution (3/5)",
       "subtitle": "Quel type d'institution représentez-vous ?",
