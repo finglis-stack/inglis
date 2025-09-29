@@ -1,19 +1,48 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNewUser } from '@/context/NewUserContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { showSuccess } from '@/utils/toast';
+import { showSuccess, showError } from '@/utils/toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Step4Review = () => {
   const navigate = useNavigate();
   const { userData, resetUser } = useNewUser();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    // Here you would typically send the data to your backend/API
-    console.log('Submitting user data:', userData);
-    showSuccess('Nouvel utilisateur personnel créé avec succès !');
-    resetUser();
-    navigate('/dashboard/users');
+  const handleSubmit = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      showError("Vous n'êtes pas authentifié. Veuillez vous reconnecter.");
+      setLoading(false);
+      navigate('/login');
+      return;
+    }
+
+    const profileData = {
+      created_by_user_id: user.id,
+      type: 'personal',
+      full_name: userData.fullName,
+      address: userData.address,
+      phone: userData.phone,
+      email: userData.email,
+      dob: userData.dob,
+      sin: userData.sin || null,
+    };
+
+    const { error } = await supabase.from('profiles').insert([profileData]);
+
+    if (error) {
+      showError(`Erreur lors de la création de l'utilisateur : ${error.message}`);
+    } else {
+      showSuccess('Nouvel utilisateur personnel créé avec succès !');
+      resetUser();
+      navigate('/dashboard/users');
+    }
+    setLoading(false);
   };
 
   return (
@@ -43,8 +72,10 @@ const Step4Review = () => {
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/personal/step-3')}>Précédent</Button>
-        <Button onClick={handleSubmit}>Soumettre</Button>
+        <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/personal/step-3')} disabled={loading}>Précédent</Button>
+        <Button onClick={handleSubmit} disabled={loading}>
+          {loading ? 'Soumission...' : 'Soumettre'}
+        </Button>
       </CardFooter>
     </Card>
   );
