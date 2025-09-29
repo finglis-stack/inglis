@@ -3,7 +3,8 @@
     "solution": "Solution",
     "process": "How it Works",
     "partners": "Partners",
-    "becomePartner": "Become a Partner"
+    "becomePartner": "Become a Partner",
+    "login": "Login"
   },
   "hero": {
     "title": "Your Card Program. Zero Interchange Fees.",
@@ -144,5 +145,15 @@
     "combinations_total_1": "Total (without expiration/CVV): 676 × 1000 × 10 × 676 × 10,000 = 45,697,600,000,000",
     "combinations_total_2": "With expiration (48 months) and CVV (1000): ... × 48 × 1000 = 2.19 x 10¹⁸",
     "combinations_final": "After validation by the Luhn algorithm (which validates 1/10 of the numbers), we get approximately 2.19 x 10¹⁷ valid combinations. This system allows for the issuance of hundreds of quadrillions of cards with a clear logical structure and internal validation."
+  },
+  "login": {
+    "title": "Login",
+    "subtitle": "Access your partner dashboard.",
+    "emailLabel": "Email Address",
+    "passwordLabel": "Password",
+    "button": "Sign In",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Not a partner yet?",
+    "signUp": "Sign up"
   }
 }

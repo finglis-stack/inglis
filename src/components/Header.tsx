@@ -23,7 +23,10 @@ export const Header = () => {
             {t('header.partners')}
           </a>
         </nav>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="bg-transparent border-neutral-700 text-gray-300 hover:bg-neutral-800 hover:text-white" asChild>
+            <Link to="/login">{t('header.login')}</Link>
+          </Button>
           <Button className="bg-neutral-800 text-gray-300 hover:bg-neutral-700" asChild>
             <Link to="/onboarding/welcome">{t('header.becomePartner')}</Link>
           </Button>
