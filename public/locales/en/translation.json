@@ -1,7 +1,7 @@
 {
   "header": {
     "solution": "Solution",
-    "process": "Process",
+    "process": "How it Works",
     "partners": "Partners",
     "becomePartner": "Become a Partner"
   },
@@ -108,5 +108,41 @@
       "jurisdictionEU": "European Union",
       "fillAllFieldsError": "Please fill in all fields."
     }
+  },
+  "cardExplained": {
+    "title": "How Our Cards Work",
+    "subtitle": "Discover the unique structure and logic behind every Inglis Dominium card.",
+    "cardTitle": "Sample Card",
+    "interactiveHint": "Click on a section of the card number to learn more.",
+    "initials_title": "LL: User's Initials",
+    "initials_desc": "The first two letters correspond to the user's first and last name initials. For example, for Léa Tremblay, LT is used.",
+    "issuer_title": "NNNN: Issuer ID and Card Type",
+    "issuer_desc_1": "The first four digits are divided into two parts.",
+    "issuer_desc_2": "The first three digits (e.g., 742) represent the card issuer's ID (organization, service, internal entity).",
+    "issuer_desc_3": "The fourth digit (e.g., 3) corresponds to the card type (resident, professional, test, etc.).",
+    "random_letters_title": "LL: Random Letters",
+    "random_letters_desc": "This two-letter block is randomly generated for each card. It serves to increase entropy without adding excessive visual complexity. Example: QZ.",
+    "unique_id_title": "NNNN: Unique Identifier",
+    "unique_id_desc": "This four-digit block is a unique identifier specific to each card. Example: 4821.",
+    "check_digit_title": "C: Check Digit (Luhn)",
+    "check_digit_desc_1": "The check digit is calculated using the Luhn algorithm. The entire alphanumeric sequence is converted into a full numeric sequence for the calculation.",
+    "check_digit_desc_2": "Letters are converted to numbers based on their position in the alphabet by adding 9: A=10, B=11, ..., Z=35. For example, LT becomes 2129 and QZ becomes 2635.",
+    "check_digit_desc_3": "The sequence to be validated for LT-7423-QZ-4821 is therefore: 2129742326354821. The Luhn algorithm is applied to this sequence to calculate the final digit (e.g., 6).",
+    "expiration_title": "MM/YY: Expiration Date",
+    "expiration_desc": "The card's expiration is a maximum of 4 years (48 months). It is formatted as MM/YY. Example: 06/28.",
+    "cvv_title": "CVV: Security Code",
+    "cvv_desc": "The CVV is a three-digit code randomly generated for transaction security. Example: 915.",
+    "summary_title": "A Clear and Logical Structure",
+    "summary_desc": "The initials identify the cardholder, the first digits identify the issuer and product type. The following blocks make each card unique. The check digit ensures integrity, the expiration provides a time limit, and the CVV completes the security.",
+    "combinations_title": "An Astronomical Number of Combinations",
+    "combinations_desc_1": "The system allows for the generation of a virtually unlimited number of unique cards.",
+    "combinations_calc_1": "Initials: 26 × 26 = 676",
+    "combinations_calc_2": "Issuer: 1000 possibilities (000-999)",
+    "combinations_calc_3": "Card Type: 10 possibilities (0-9)",
+    "combinations_calc_4": "Random Letters: 26 × 26 = 676",
+    "combinations_calc_5": "Unique ID: 10,000 possibilities (0000-9999)",
+    "combinations_total_1": "Total (without expiration/CVV): 676 × 1000 × 10 × 676 × 10,000 = 45,697,600,000,000",
+    "combinations_total_2": "With expiration (48 months) and CVV (1000): ... × 48 × 1000 = 2.19 x 10¹⁸",
+    "combinations_final": "After validation by the Luhn algorithm (which validates 1/10 of the numbers), we get approximately 2.19 x 10¹⁷ valid combinations. This system allows for the issuance of hundreds of quadrillions of cards with a clear logical structure and internal validation."
   }
 }

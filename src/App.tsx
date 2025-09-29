@@ -11,6 +11,7 @@ import InstitutionInfo from "./pages/onboarding/InstitutionInfo";
 import InstitutionType from "./pages/onboarding/InstitutionType";
 import ContactInfo from "./pages/onboarding/ContactInfo";
 import Dashboard from "./pages/Dashboard";
+import CardStructure from "./pages/CardStructure";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/card-structure" element={<CardStructure />} />
           <Route path="/onboarding/welcome" element={<Welcome />} />
           <Route path="/onboarding/create-account" element={<CreateAccount />} />
           <Route path="/onboarding/institution-info" element={<InstitutionInfo />} />
