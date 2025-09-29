@@ -22,8 +22,21 @@ const Step4Review = () => {
       return;
     }
 
+    // Find the institution ID for the current user
+    const { data: institution, error: institutionError } = await supabase
+      .from('institutions')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (institutionError || !institution) {
+      showError("Impossible de trouver l'institution associée à votre compte.");
+      setLoading(false);
+      return;
+    }
+
     const profileData = {
-      created_by_user_id: user.id,
+      institution_id: institution.id,
       type: 'personal',
       full_name: userData.fullName,
       address: userData.address,
