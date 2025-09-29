@@ -119,7 +119,7 @@
     "issuer_title": "NNNN : Identifiant Émetteur et Type de Carte",
     "issuer_desc_1": "Les quatre premiers chiffres sont divisés en deux parties.",
     "issuer_desc_2": "Les trois premiers chiffres (ex: 742) représentent l'identifiant de l’émetteur de la carte (organisme, service, entité interne).",
-    "issuer_desc_3": "Le quatrième chiffre (ex: 3) correspond au type de carte (résident, professionnelle, test, etc.).",
+    "issuer_desc_3": "Le quatrième chiffre (ex: 3) correspond au type de carte (Débit, crédit, prépayé, test, etc.).",
     "random_letters_title": "LL : Lettres Aléatoires",
     "random_letters_desc": "Ce bloc de deux lettres est généré aléatoirement pour chaque carte. Il sert à augmenter l'entropie sans ajouter de complexité visuelle excessive. Exemple : QZ.",
     "unique_id_title": "NNNN : Identifiant Unique",

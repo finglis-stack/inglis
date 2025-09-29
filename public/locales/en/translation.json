@@ -119,7 +119,7 @@
     "issuer_title": "NNNN: Issuer ID and Card Type",
     "issuer_desc_1": "The first four digits are divided into two parts.",
     "issuer_desc_2": "The first three digits (e.g., 742) represent the card issuer's ID (organization, service, internal entity).",
-    "issuer_desc_3": "The fourth digit (e.g., 3) corresponds to the card type (resident, professional, test, etc.).",
+    "issuer_desc_3": "The fourth digit (e.g., 3) corresponds to the card type (Debit, credit, prepaid, test, etc.).",
     "random_letters_title": "LL: Random Letters",
     "random_letters_desc": "This two-letter block is randomly generated for each card. It serves to increase entropy without adding excessive visual complexity. Example: QZ.",
     "unique_id_title": "NNNN: Unique Identifier",
