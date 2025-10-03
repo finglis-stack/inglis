@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import PersonalProfile from '@/components/dashboard/users/PersonalProfile';
 import CorporateProfile from '@/components/dashboard/users/CorporateProfile';
 import { Skeleton } from '@/components/ui/skeleton';
-import { TooltipProvider } from '@/components/ui/tooltip';
 
 const UserProfile = () => {
   const { id } = useParams();
@@ -53,12 +52,10 @@ const UserProfile = () => {
   }
 
   return (
-    <TooltipProvider>
-      <div className="p-4">
-        {profile.type === 'personal' && <PersonalProfile profile={profile} />}
-        {profile.type === 'corporate' && <CorporateProfile profile={profile} />}
-      </div>
-    </TooltipProvider>
+    <div className="p-4">
+      {profile.type === 'personal' && <PersonalProfile profile={profile} />}
+      {profile.type === 'corporate' && <CorporateProfile profile={profile} />}
+    </div>
   );
 };
 
