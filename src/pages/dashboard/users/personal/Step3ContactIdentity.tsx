@@ -29,7 +29,7 @@ const Step3ContactIdentity = () => {
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
-        <CardTitle>Contact & Vérification (3/4)</CardTitle>
+        <CardTitle>Contact & Vérification (3/5)</CardTitle>
         <CardDescription>Informations pour contacter et vérifier l'utilisateur.</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>

@@ -24,7 +24,7 @@ const Step3Address = () => {
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
-        <CardTitle>Adresse de l'entreprise (3/4)</CardTitle>
+        <CardTitle>Adresse de l'entreprise (3/5)</CardTitle>
         <CardDescription>Entrez l'adresse enregistrée de l'entreprise.</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>

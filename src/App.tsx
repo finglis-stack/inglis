@@ -23,11 +23,12 @@ import { NewUserTypeSelection } from "@/pages/dashboard/users/NewUserTypeSelecti
 import Step1Name from "@/pages/dashboard/users/personal/Step1Name";
 import Step2Address from "@/pages/dashboard/users/personal/Step2Address";
 import Step3ContactIdentity from "@/pages/dashboard/users/personal/Step3ContactIdentity";
-import Step4Review from "@/pages/dashboard/users/personal/Step4Review";
+import Step4SetPin from "@/pages/dashboard/users/shared/Step4SetPin";
+import Step5Review from "@/pages/dashboard/users/personal/Step5Review";
 import Step1BusinessInfo from "@/pages/dashboard/users/corporate/Step1BusinessInfo";
 import Step2Registration from "@/pages/dashboard/users/corporate/Step2Registration";
 import Step3AddressCorp from "@/pages/dashboard/users/corporate/Step3Address";
-import Step4ReviewCorp from "@/pages/dashboard/users/corporate/Step4Review";
+import Step5ReviewCorp from "@/pages/dashboard/users/corporate/Step5Review";
 import UserProfile from "@/pages/dashboard/users/UserProfile";
 
 const queryClient = new QueryClient();
@@ -67,11 +68,13 @@ const App = () => (
               <Route path="new/personal/step-1" element={<Step1Name />} />
               <Route path="new/personal/step-2" element={<Step2Address />} />
               <Route path="new/personal/step-3" element={<Step3ContactIdentity />} />
-              <Route path="new/personal/step-4" element={<Step4Review />} />
+              <Route path="new/personal/step-4" element={<Step4SetPin />} />
+              <Route path="new/personal/step-5" element={<Step5Review />} />
               <Route path="new/corporate/step-1" element={<Step1BusinessInfo />} />
               <Route path="new/corporate/step-2" element={<Step2Registration />} />
               <Route path="new/corporate/step-3" element={<Step3AddressCorp />} />
-              <Route path="new/corporate/step-4" element={<Step4ReviewCorp />} />
+              <Route path="new/corporate/step-4" element={<Step4SetPin />} />
+              <Route path="new/corporate/step-5" element={<Step5ReviewCorp />} />
             </Route>
           </Route>
 
