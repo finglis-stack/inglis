@@ -55,25 +55,39 @@ const UserProfile = () => {
   }, [isUnlocked, fetchLogs]);
 
   const handleUnlock = async (pin) => {
-    if (pin === profile.pin) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { error: insertError } = await supabase
-          .from('profile_access_logs')
-          .insert({ profile_id: profile.id, visitor_user_id: user.id });
-        
-        if (insertError) {
-          console.error("Failed to log profile access:", insertError);
-          showError("Impossible d'enregistrer l'accès.");
-        } else {
-          // Attendre que l'insertion soit terminée, puis récupérer le nouvel historique
-          await fetchLogs();
-        }
-      }
-      setIsUnlocked(true);
-      return true;
+    if (pin !== profile.pin) {
+      return false;
     }
-    return false;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      showError("Impossible de vérifier l'utilisateur.");
+      return false;
+    }
+
+    // Mise à jour optimiste : Affiche immédiatement la nouvelle entrée.
+    const optimisticLog = {
+      created_at: new Date().toISOString(),
+      visitor_email: user.email,
+    };
+    setAccessLogs(prevLogs => [optimisticLog, ...prevLogs]);
+
+    // Déverrouille l'interface
+    setIsUnlocked(true);
+
+    // Enregistre la visite en arrière-plan.
+    const { error: insertError } = await supabase
+      .from('profile_access_logs')
+      .insert({ profile_id: profile.id, visitor_user_id: user.id });
+
+    if (insertError) {
+      console.error("Failed to log profile access:", insertError);
+      showError("Erreur lors de l'enregistrement de la visite. L'historique sera rafraîchi.");
+      // En cas d'erreur, on rafraîchit pour annuler la mise à jour optimiste.
+      fetchLogs();
+    }
+    
+    return true;
   };
 
   const handlePinChanged = (newPin) => {
