@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import PersonalProfile from '@/components/dashboard/users/PersonalProfile';
@@ -19,6 +19,17 @@ const UserProfile = () => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [accessLogs, setAccessLogs] = useState([]);
 
+  const fetchLogs = useCallback(async () => {
+    if (!id) return;
+    const { data, error } = await supabase.rpc('get_profile_access_logs', { p_profile_id: id });
+    if (error) {
+      console.error("Erreur lors de la récupération de l'historique:", error);
+      setAccessLogs([]);
+    } else {
+      setAccessLogs(data);
+    }
+  }, [id]);
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!id) return;
@@ -38,29 +49,25 @@ const UserProfile = () => {
   }, [id]);
 
   useEffect(() => {
-    const fetchLogs = async () => {
-      if (!id) return;
-      const { data, error } = await supabase.rpc('get_profile_access_logs', { p_profile_id: id });
-      if (error) {
-        console.error("Erreur lors de la récupération de l'historique:", error);
-      } else {
-        setAccessLogs(data);
-      }
-    };
-
     if (isUnlocked) {
       fetchLogs();
     }
-  }, [id, isUnlocked]);
+  }, [isUnlocked, fetchLogs]);
 
   const handleUnlock = async (pin) => {
     if (pin === profile.pin) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { error: insertError } = await supabase.from('profile_access_logs').insert({ profile_id: profile.id, visitor_user_id: user.id });
+        const { error: insertError } = await supabase
+          .from('profile_access_logs')
+          .insert({ profile_id: profile.id, visitor_user_id: user.id });
+        
         if (insertError) {
           console.error("Failed to log profile access:", insertError);
           showError("Impossible d'enregistrer l'accès.");
+        } else {
+          // Attendre que l'insertion soit terminée, puis récupérer le nouvel historique
+          await fetchLogs();
         }
       }
       setIsUnlocked(true);
