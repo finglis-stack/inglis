@@ -9,6 +9,7 @@ import PinLock from '@/components/dashboard/users/PinLock';
 import AccessLog from '@/components/dashboard/users/AccessLog';
 import ChangePinDialog from '@/components/dashboard/users/ChangePinDialog';
 import { cn } from '@/lib/utils';
+import { showError } from '@/utils/toast';
 
 const UserProfile = () => {
   const { id } = useParams();
@@ -56,7 +57,11 @@ const UserProfile = () => {
     if (pin === profile.pin) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from('profile_access_logs').insert({ profile_id: profile.id, visitor_user_id: user.id });
+        const { error: insertError } = await supabase.from('profile_access_logs').insert({ profile_id: profile.id, visitor_user_id: user.id });
+        if (insertError) {
+          console.error("Failed to log profile access:", insertError);
+          showError("Impossible d'enregistrer l'accès.");
+        }
       }
       setIsUnlocked(true);
       return true;
