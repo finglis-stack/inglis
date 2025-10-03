@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { cn, calculateAge } from '@/lib/utils';
 
 const PersonalProfile = ({ profile }) => {
   const getStatusInfo = (status) => {
@@ -19,6 +19,20 @@ const PersonalProfile = ({ profile }) => {
   };
 
   const statusInfo = getStatusInfo(profile.status);
+  const age = profile.dob ? calculateAge(profile.dob) : null;
+  const ageTags = [];
+
+  if (age !== null) {
+    if (age < 18) {
+      ageTags.push({ text: 'Mineur', className: 'bg-blue-100 text-blue-800 border-blue-200' });
+    }
+    if (age <= 19) {
+      ageTags.push({ text: 'Adolescent', className: 'bg-indigo-100 text-indigo-800 border-indigo-200' });
+    }
+    if (age < 21) {
+      ageTags.push({ text: 'Jeune adulte', className: 'bg-purple-100 text-purple-800 border-purple-200' });
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -27,7 +41,7 @@ const PersonalProfile = ({ profile }) => {
           <div className="flex items-center gap-4">
             <User className="h-8 w-8 text-primary" />
             <div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <CardTitle className="text-2xl">{profile.full_name}</CardTitle>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -38,6 +52,9 @@ const PersonalProfile = ({ profile }) => {
                     <p className="text-sm text-muted-foreground">Le compte est considéré comme {statusInfo.text.toLowerCase()} car [raison à définir].</p>
                   </TooltipContent>
                 </Tooltip>
+                {ageTags.map((tag, index) => (
+                  <Badge key={index} className={cn(tag.className)}>{tag.text}</Badge>
+                ))}
               </div>
               <CardDescription>Profil Personnel</CardDescription>
             </div>
