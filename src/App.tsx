@@ -28,6 +28,7 @@ import Step1BusinessInfo from "@/pages/dashboard/users/corporate/Step1BusinessIn
 import Step2Registration from "@/pages/dashboard/users/corporate/Step2Registration";
 import Step3AddressCorp from "@/pages/dashboard/users/corporate/Step3Address";
 import Step4ReviewCorp from "@/pages/dashboard/users/corporate/Step4Review";
+import UserProfile from "@/pages/dashboard/users/UserProfile";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,7 @@ const App = () => (
             <Route path="cards" element={<Cards />} />
             <Route path="transactions" element={<Transactions />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="users/profile/:id" element={<UserProfile />} />
             
             <Route path="users" element={<NewUserRoutes />}>
               <Route index element={<Users />} />

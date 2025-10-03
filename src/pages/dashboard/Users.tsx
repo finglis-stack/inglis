@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Search } from 'lucide-react';
+import { PlusCircle, Search, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
@@ -78,12 +78,13 @@ const Users = () => {
                   <TableHead>Type</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Date de création</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">Chargement...</TableCell>
+                    <TableCell colSpan={5} className="text-center">Chargement...</TableCell>
                   </TableRow>
                 ) : results.length > 0 ? (
                   results.map((profile) => (
@@ -94,11 +95,18 @@ const Users = () => {
                       <TableCell>{profile.type === 'personal' ? 'Personnel' : 'Corporatif'}</TableCell>
                       <TableCell>{profile.email || profile.phone || 'N/A'}</TableCell>
                       <TableCell>{new Date(profile.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <Button asChild variant="outline" size="icon">
+                          <a href={`/dashboard/users/profile/${profile.id}`} target="_blank" rel="noopener noreferrer">
+                            <Eye className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">Aucun résultat trouvé.</TableCell>
+                    <TableCell colSpan={5} className="text-center">Aucun résultat trouvé.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
