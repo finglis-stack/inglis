@@ -31,6 +31,7 @@ import Step3AddressCorp from "@/pages/dashboard/users/corporate/Step3Address";
 import Step5ReviewCorp from "@/pages/dashboard/users/corporate/Step5Review";
 import UserProfile from "@/pages/dashboard/users/UserProfile";
 import CreditFiles from "@/pages/dashboard/CreditFiles";
+import CreditReportAccess from "@/pages/CreditReportAccess";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +51,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/card-structure" element={<CardStructure />} />
+          <Route path="/credit-report-access" element={<CreditReportAccess />} />
           <Route path="/onboarding/welcome" element={<Welcome />} />
           <Route path="/onboarding/create-account" element={<CreateAccount />} />
           <Route path="/onboarding/institution-info" element={<InstitutionInfo />} />
