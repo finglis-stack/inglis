@@ -12,7 +12,8 @@ const Step3ContactIdentity = () => {
   const [formData, setFormData] = useState({
     phone: userData.phone || '',
     email: userData.email || '',
-    dob: userData.dob || '',
+    // Assure que la date est correctement formatée et évite les problèmes de fuseau horaire
+    dob: userData.dob ? new Date(userData.dob).toISOString().split('T')[0] : '',
     sin: userData.sin || '',
   });
 
