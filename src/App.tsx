@@ -30,6 +30,7 @@ import Step2Registration from "@/pages/dashboard/users/corporate/Step2Registrati
 import Step3AddressCorp from "@/pages/dashboard/users/corporate/Step3Address";
 import Step5ReviewCorp from "@/pages/dashboard/users/corporate/Step5Review";
 import UserProfile from "@/pages/dashboard/users/UserProfile";
+import CreditFiles from "@/pages/dashboard/CreditFiles";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => (
             <Route index element={<Dashboard />} />
             <Route path="cards" element={<Cards />} />
             <Route path="transactions" element={<Transactions />} />
+            <Route path="credit-files" element={<CreditFiles />} />
             <Route path="settings" element={<Settings />} />
             <Route path="users/profile/:id" element={<UserProfile />} />
             

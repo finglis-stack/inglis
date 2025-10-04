@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { CreditCard, LayoutDashboard, Users, ArrowRightLeft, Settings } from 'lucide-react';
+import { CreditCard, LayoutDashboard, Users, ArrowRightLeft, Settings, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { to: '/dashboard/cards', icon: <CreditCard className="h-5 w-5" />, label: 'Liste des cartes' },
   { to: '/dashboard/users', icon: <Users className="h-5 w-5" />, label: 'Utilisateurs' },
   { to: '/dashboard/transactions', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
+  { to: '/dashboard/credit-files', icon: <FileText className="h-5 w-5" />, label: 'Dossier de crédit' },
   { to: '/dashboard/settings', icon: <Settings className="h-5 w-5" />, label: 'Paramètres' },
 ];
 
