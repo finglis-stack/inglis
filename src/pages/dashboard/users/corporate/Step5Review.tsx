@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useNewUser } from '@/context/NewUserContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { showSuccess, showError } from '@/utils/toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -10,6 +12,7 @@ const Step5Review = () => {
   const navigate = useNavigate();
   const { userData, resetUser } = useNewUser();
   const [loading, setLoading] = useState(false);
+  const [consent, setConsent] = useState(false);
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -20,6 +23,12 @@ const Step5Review = () => {
       setLoading(false);
       navigate('/login');
       return;
+    }
+
+    if (consent) {
+      // TODO: Implement corporate credit bureau logic when available.
+      // For now, we just acknowledge the consent.
+      console.log("Consent given for corporate profile:", userData.legalName);
     }
 
     const { data: institution, error: institutionError } = await supabase
@@ -81,6 +90,17 @@ const Step5Review = () => {
         <div>
           <h4 className="font-semibold">NIP</h4>
           <p className="text-muted-foreground">****</p>
+        </div>
+        <div className="items-top flex space-x-2 pt-4">
+          <Checkbox id="terms1" checked={consent} onCheckedChange={(checked) => setConsent(checked === true)} />
+          <div className="grid gap-1.5 leading-none">
+            <Label htmlFor="terms1" className="font-bold">
+              Consentement au partage d'informations
+            </Label>
+            <p className="text-sm text-muted-foreground">
+              Je consens au partage des informations de ce profil avec le bureau de crédit à des fins de vérification et de rapport.
+            </p>
+          </div>
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
