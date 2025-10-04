@@ -65,7 +65,7 @@ const CreditReportAccess = () => {
         <div className="win95-container w-full max-w-md">
           <div className="flex items-center gap-4 mb-4">
             <Shield size={32} />
-            <h1 className="text-xl font-bold">Accès - Bureau Fédéral de Crédit</h1>
+            <h1 className="text-xl font-bold">Bureau de Crédit</h1>
           </div>
           <p className="mb-4 text-sm">
             Ce système est réservé au personnel autorisé. Toutes les activités sont surveillées et enregistrées.
