@@ -46,17 +46,6 @@ const CreditReportAccess = () => {
       setError(`DOSSIER NON TROUVÉ POUR LE NAS : ${ssn}`);
       setReport(null);
     } else {
-      if (!data.credit_history) {
-        data.credit_history = [
-          { date: '2023-05-15', type: 'Prêt auto', details: 'Financement ABC - $25,000', status: 'Paid' },
-          { date: '2022-11-01', type: 'Carte de crédit', details: 'Banque Royale - Limite $5,000', status: 'Active' },
-          { date: '2024-01-20', type: 'Hypothèque', details: 'Prêts Logis - $350,000', status: 'Active' },
-          { date: '2023-09-10', type: 'Facture télécom', details: 'Bell - Paiement en retard', status: 'Late' },
-        ];
-      }
-      if (!data.credit_score) {
-        data.credit_score = Math.floor(Math.random() * (850 - 600 + 1)) + 600;
-      }
       setReport(data as CreditReport);
     }
 
@@ -162,7 +151,7 @@ const CreditReportAccess = () => {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="win95-window w-full max-w-3xl">
           <div className="win95-title-bar">
-            <span>C:\\BUREAU\\CREDIT.EXE</span>
+            <span>BUREAU DE CRÉDIT</span>
             <div className="flex gap-1">
               <span className="w-4 h-4 bg-gray-300 border border-black flex items-center justify-center text-xs font-mono">_</span>
               <span className="w-4 h-4 bg-gray-300 border border-black flex items-center justify-center text-xs font-mono">[]</span>
@@ -191,7 +180,7 @@ const CreditReportAccess = () => {
                       value={ssn}
                       onChange={(e) => setSsn(e.target.value)}
                       className="win95-input w-full"
-                      placeholder="___-___-___"
+                      placeholder="***-***-***"
                       required
                     />
                   </div>
@@ -215,11 +204,13 @@ const CreditReportAccess = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <h2 className="text-2xl font-bold">{report.full_name}</h2>
-                    <p>NAS: ***-**-{report.ssn.slice(-4)}</p>
+                    <p>NAS: ***-***-{report.ssn.slice(6)}</p>
                   </div>
                   <div className="text-center p-2 border-2 border-t-gray-500 border-l-gray-500 border-b-white border-r-white">
                     <p className="font-bold">SCORE DE CRÉDIT</p>
-                    <p className={`text-5xl font-mono font-bold ${getScoreColor(report.credit_score)}`}>{report.credit_score}</p>
+                    <p className={`text-5xl font-mono font-bold ${report.credit_score ? getScoreColor(report.credit_score) : 'text-gray-500'}`}>
+                      {report.credit_score ?? 'N/A'}
+                    </p>
                   </div>
                 </div>
 
@@ -249,14 +240,20 @@ const CreditReportAccess = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {report.credit_history.map((item, index) => (
-                          <tr key={index}>
-                            <td>{item.date}</td>
-                            <td>{item.type}</td>
-                            <td>{item.details}</td>
-                            <td className={item.status === 'Late' ? 'text-red-600 font-bold' : ''}>{item.status}</td>
+                        {report.credit_history && report.credit_history.length > 0 ? (
+                          report.credit_history.map((item, index) => (
+                            <tr key={index}>
+                              <td>{item.date}</td>
+                              <td>{item.type}</td>
+                              <td>{item.details}</td>
+                              <td className={item.status === 'Late' ? 'text-red-600 font-bold' : ''}>{item.status}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={4} style={{ textAlign: 'center' }}>AUCUN HISTORIQUE DE CRÉDIT DISPONIBLE</td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                     </table>
                   </div>
