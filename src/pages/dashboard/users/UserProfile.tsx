@@ -21,19 +21,14 @@ const UserProfile = () => {
 
   const fetchLogs = useCallback(async () => {
     if (!id) return;
-    console.log(`[DEBUG] Étape 1: Tentative de récupération de l'historique pour le profil ID: ${id}`);
     
-    console.log('[DEBUG] Étape 2: Appel de la fonction RPC "get_profile_access_logs" avec le paramètre:', { p_profile_id: id });
     const { data, error } = await supabase.rpc('get_profile_access_logs', { p_profile_id: id });
     
-    console.log('[DEBUG] Étape 3: Résultat reçu de la base de données:', { data, error });
-
     if (error) {
-      console.error("[ERREUR] L'appel RPC a échoué:", error);
+      console.error("Erreur lors de l'appel RPC get_profile_access_logs:", error);
       showError(`Erreur lors de la récupération de l'historique: ${error.message}`);
       setAccessLogs([]);
     } else {
-      console.log("[SUCCÈS] Données de l'historique reçues:", data);
       setAccessLogs(data);
     }
   }, [id]);
