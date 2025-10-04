@@ -25,11 +25,9 @@ const PersonalProfile = ({ profile }) => {
   if (age !== null) {
     if (age < 18) {
       ageTags.push({ text: 'Mineur', className: 'bg-blue-100 text-blue-800 border-blue-200' });
-    }
-    if (age <= 19) {
+    } else if (age <= 19) {
       ageTags.push({ text: 'Adolescent', className: 'bg-indigo-100 text-indigo-800 border-indigo-200' });
-    }
-    if (age < 21) {
+    } else if (age < 21) {
       ageTags.push({ text: 'Jeune adulte', className: 'bg-purple-100 text-purple-800 border-purple-200' });
     }
   }
