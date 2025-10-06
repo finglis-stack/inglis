@@ -36,7 +36,10 @@ const Step5Review = () => {
         body: profileData,
       });
 
-      if (error) throw error;
+      if (error) {
+        const functionError = await error.context.json();
+        throw new Error(functionError.error || error.message);
+      }
 
       showSuccess('Nouvel utilisateur personnel créé avec succès !');
       resetUser();

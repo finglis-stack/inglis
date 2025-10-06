@@ -62,7 +62,10 @@ const UserProfile = () => {
           body: { profile_id: profile.id },
         });
 
-        if (error) throw error;
+        if (error) {
+          const functionError = await error.context.json();
+          throw new Error(functionError.error || error.message);
+        }
         setDecryptedSin(data.sin);
       } catch (e) {
         showError(`Impossible de déchiffrer le NAS: ${e.message}`);
