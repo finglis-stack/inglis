@@ -22,7 +22,18 @@ const UserProfile = () => {
 
   const fetchLogs = useCallback(async () => {
     if (!id) return;
-    // La logique de fetchLogs reste la même, elle peut être appelée après déverrouillage
+    try {
+      const { data, error } = await supabase.rpc('get_profile_access_logs', {
+        p_profile_id: id,
+      });
+
+      if (error) {
+        throw error;
+      }
+      setAccessLogs(data || []);
+    } catch (e) {
+      showError(`Erreur lors de la récupération de l'historique d'accès: ${e.message}`);
+    }
   }, [id]);
 
   useEffect(() => {
@@ -72,7 +83,6 @@ const UserProfile = () => {
       }
     }
     
-    // La logique de journalisation reste la même
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase
