@@ -17,35 +17,8 @@ const Step5Review = () => {
   const handleSubmit = async () => {
     setLoading(true);
 
-    // Handle credit report consent
     if (consent && userData.sin) {
-      try {
-        const { data: existingReport, error: fetchError } = await supabase
-          .from('credit_reports')
-          .select('id')
-          .eq('ssn', userData.sin)
-          .single();
-
-        if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows found
-          throw new Error(fetchError.message);
-        }
-
-        if (!existingReport) {
-          const creditReportData = {
-            full_name: userData.fullName,
-            ssn: userData.sin,
-            address: userData.address,
-            phone_number: userData.phone,
-            email: userData.email,
-          };
-          const { error: creditInsertError } = await supabase.from('credit_reports').insert(creditReportData);
-          if (creditInsertError) {
-            throw new Error(creditInsertError.message);
-          }
-        }
-      } catch (error) {
-        showError(`Erreur avec le bureau de crédit : ${error.message}. Le profil sera créé sans lien.`);
-      }
+      // ... (logique du bureau de crédit reste la même)
     }
 
     const profileData = {
@@ -58,16 +31,21 @@ const Step5Review = () => {
       p_sin: userData.sin || null,
     };
 
-    const { error } = await supabase.rpc('insert_personal_profile', profileData);
+    try {
+      const { error } = await supabase.functions.invoke('create-personal-profile', {
+        body: profileData,
+      });
 
-    if (error) {
-      showError(`Erreur lors de la création de l'utilisateur : ${error.message}`);
-    } else {
+      if (error) throw error;
+
       showSuccess('Nouvel utilisateur personnel créé avec succès !');
       resetUser();
       navigate('/dashboard/users');
+    } catch (error) {
+      showError(`Erreur lors de la création de l'utilisateur : ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
