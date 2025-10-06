@@ -16,14 +16,6 @@ const Step5Review = () => {
 
   const handleSubmit = async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      showError("Vous n'êtes pas authentifié. Veuillez vous reconnecter.");
-      setLoading(false);
-      navigate('/login');
-      return;
-    }
 
     // Handle credit report consent
     if (consent && userData.sin) {
@@ -56,31 +48,17 @@ const Step5Review = () => {
       }
     }
 
-    const { data: institution, error: institutionError } = await supabase
-      .from('institutions')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (institutionError || !institution) {
-      showError("Impossible de trouver l'institution associée à votre compte.");
-      setLoading(false);
-      return;
-    }
-
     const profileData = {
-      institution_id: institution.id,
-      type: 'personal',
       full_name: userData.fullName,
       address: userData.address,
       phone: userData.phone,
       email: userData.email,
       dob: userData.dob,
-      sin: userData.sin || null,
       pin: userData.pin,
+      p_sin: userData.sin || null,
     };
 
-    const { error } = await supabase.from('profiles').insert([profileData]);
+    const { error } = await supabase.rpc('insert_personal_profile', profileData);
 
     if (error) {
       showError(`Erreur lors de la création de l'utilisateur : ${error.message}`);
@@ -115,7 +93,7 @@ const Step5Review = () => {
         <div>
           <h4 className="font-semibold">Identité</h4>
           <p className="text-muted-foreground">Date de naissance: {userData.dob}</p>
-          <p className="text-muted-foreground">NAS: {userData.sin || 'Non fourni'}</p>
+          <p className="text-muted-foreground">NAS: {userData.sin ? '***-***-***' : 'Non fourni'}</p>
         </div>
          <div>
           <h4 className="font-semibold">NIP</h4>

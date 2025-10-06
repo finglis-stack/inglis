@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn, calculateAge } from '@/lib/utils';
 
-const PersonalProfile = ({ profile }) => {
+const PersonalProfile = ({ profile, decryptedSin }) => {
   const getStatusInfo = (status) => {
     switch (status) {
       case 'active':
@@ -86,7 +86,7 @@ const PersonalProfile = ({ profile }) => {
           </CardHeader>
           <CardContent className="space-y-2">
             <p><strong>Date de naissance:</strong> {profile.dob ? new Date(profile.dob).toLocaleDateString() : 'N/A'}</p>
-            <p><strong>Numéro d'assurance sociale:</strong> {profile.sin || 'Non fourni'}</p>
+            <p><strong>Numéro d'assurance sociale:</strong> {decryptedSin || (profile.sin ? 'Verrouillé' : 'Non fourni')}</p>
           </CardContent>
         </Card>
       </div>

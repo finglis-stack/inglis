@@ -18,6 +18,7 @@ const UserProfile = () => {
   const [error, setError] = useState(null);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [accessLogs, setAccessLogs] = useState([]);
+  const [decryptedSin, setDecryptedSin] = useState(null);
 
   const fetchLogs = useCallback(async () => {
     if (!id) return;
@@ -76,6 +77,16 @@ const UserProfile = () => {
 
     setIsUnlocked(true);
 
+    // Décrypter le NAS
+    if (profile.sin) {
+      const { data: sinData, error: sinError } = await supabase.rpc('get_decrypted_sin', { p_profile_id: profile.id });
+      if (sinError) {
+        showError("Impossible de déchiffrer le NAS.");
+      } else {
+        setDecryptedSin(sinData);
+      }
+    }
+
     const { error: insertError } = await supabase
       .from('profile_access_logs')
       .insert({ profile_id: profile.id, visitor_user_id: user.id });
@@ -112,7 +123,7 @@ const UserProfile = () => {
         {!isUnlocked && profile.pin && <PinLock onUnlock={handleUnlock} />}
         
         <div className={cn({ 'blur-sm pointer-events-none': !isUnlocked && profile.pin })}>
-          {profile.type === 'personal' && <PersonalProfile profile={profile} />}
+          {profile.type === 'personal' && <PersonalProfile profile={profile} decryptedSin={decryptedSin} />}
           {profile.type === 'corporate' && <CorporateProfile profile={profile} />}
         </div>
 
