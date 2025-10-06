@@ -13,6 +13,7 @@ serve(async (req) => {
   }
 
   try {
+    // Authentifier l'utilisateur
     const authHeader = req.headers.get('Authorization')!
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -24,18 +25,22 @@ serve(async (req) => {
 
     const { profile_id } = await req.json()
 
+    // Utiliser le client admin
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { data, error: rpcError } = await supabaseAdmin.rpc('get_decrypted_sin', {
-      p_user_id: user.id,
-      p_profile_id: profile_id
-    })
-    if (rpcError) throw rpcError
+    // Vérification de sécurité : l'utilisateur a-t-il le droit de voir ce profil ?
+    const { data: institution } = await supabaseAdmin.from('institutions').select('id').eq('user_id', user.id).single()
+    const { data: profile, error: profileError } = await supabaseAdmin.from('profiles').select('id').eq('id', profile_id).eq('institution_id', institution.id).single()
+    if (profileError || !profile) throw new Error('Permission denied to access this profile');
 
-    return new Response(JSON.stringify({ sin: data }), {
+    // Sélectionner le NAS. La base de données le déchiffrera automatiquement pour le service_role.
+    const { data: sinData, error: selectError } = await supabaseAdmin.from('profiles').select('sin').eq('id', profile_id).single()
+    if (selectError) throw selectError
+
+    return new Response(JSON.stringify({ sin: sinData.sin }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })

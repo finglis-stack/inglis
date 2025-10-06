@@ -28,7 +28,7 @@ const Step5Review = () => {
       email: userData.email,
       dob: userData.dob,
       pin: userData.pin,
-      p_sin: userData.sin || null,
+      sin: userData.sin || null,
     };
 
     try {

@@ -13,6 +13,7 @@ serve(async (req) => {
   }
 
   try {
+    // Authentifier l'utilisateur
     const authHeader = req.headers.get('Authorization')!
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -24,16 +25,37 @@ serve(async (req) => {
 
     const profileData = await req.json()
 
+    // Utiliser le client admin pour les opérations en base de données
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { error: rpcError } = await supabaseAdmin.rpc('insert_personal_profile', {
-      p_user_id: user.id,
-      ...profileData
-    })
-    if (rpcError) throw rpcError
+    // Récupérer l'ID de l'institution de l'utilisateur
+    const { data: institution, error: institutionError } = await supabaseAdmin
+      .from('institutions')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+    if (institutionError) throw institutionError;
+
+    // Préparer l'enregistrement à insérer. Le NAS est envoyé en clair.
+    // La base de données le chiffrera automatiquement grâce au chiffrement transparent.
+    const recordToInsert = {
+      institution_id: institution.id,
+      type: 'personal',
+      full_name: profileData.full_name,
+      address: profileData.address,
+      phone: profileData.phone,
+      email: profileData.email,
+      dob: profileData.dob,
+      pin: profileData.pin,
+      sin: profileData.sin,
+    };
+
+    // Insérer directement dans la table
+    const { error: insertError } = await supabaseAdmin.from('profiles').insert(recordToInsert)
+    if (insertError) throw insertError
 
     return new Response(JSON.stringify({ message: "Profile created successfully" }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
