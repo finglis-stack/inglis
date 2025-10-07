@@ -26,10 +26,10 @@ const CardStructure = () => {
 
   const segments: { id: CardSegment; example: string }[] = [
     { id: 'initials', example: 'LT' },
-    { id: 'issuer', example: '7423' },
+    { id: 'issuer', example: '000000' },
     { id: 'random_letters', example: 'QZ' },
-    { id: 'unique_id', example: '4821' },
-    { id: 'check_digit', example: '6' },
+    { id: 'unique_id', example: '0000000' },
+    { id: 'check_digit', example: '7' },
   ];
 
   const handleSegmentClick = (segment: CardSegment) => {
