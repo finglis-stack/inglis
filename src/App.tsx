@@ -34,6 +34,7 @@ import CreditFiles from "@/pages/dashboard/CreditFiles";
 import CreditReportAccess from "@/pages/CreditReportAccess";
 import CardPrograms from "@/pages/dashboard/settings/CardPrograms";
 import NewCardProgram from "@/pages/dashboard/settings/NewCardProgram";
+import CardProgramLayout from "@/pages/dashboard/settings/CardProgramLayout";
 
 const queryClient = new QueryClient();
 
@@ -67,7 +68,6 @@ const App = () => (
             <Route path="credit-files" element={<CreditFiles />} />
             <Route path="settings" element={<Settings />} />
             <Route path="settings/card-programs" element={<CardPrograms />} />
-            <Route path="settings/card-programs/new" element={<NewCardProgram />} />
             <Route path="users/profile/:id" element={<UserProfile />} />
             
             <Route path="users" element={<NewUserRoutes />}>
@@ -84,6 +84,10 @@ const App = () => (
               <Route path="new/corporate/step-4" element={<Step4SetPin />} />
               <Route path="new/corporate/step-5" element={<Step5ReviewCorp />} />
             </Route>
+          </Route>
+
+          <Route element={<CardProgramLayout />}>
+            <Route path="/dashboard/settings/card-programs/new" element={<NewCardProgram />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
