@@ -32,6 +32,8 @@ import Step5ReviewCorp from "@/pages/dashboard/users/corporate/Step5Review";
 import UserProfile from "@/pages/dashboard/users/UserProfile";
 import CreditFiles from "@/pages/dashboard/CreditFiles";
 import CreditReportAccess from "@/pages/CreditReportAccess";
+import CardPrograms from "@/pages/dashboard/settings/CardPrograms";
+import NewCardProgram from "@/pages/dashboard/settings/NewCardProgram";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +66,8 @@ const App = () => (
             <Route path="transactions" element={<Transactions />} />
             <Route path="credit-files" element={<CreditFiles />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="settings/card-programs" element={<CardPrograms />} />
+            <Route path="settings/card-programs/new" element={<NewCardProgram />} />
             <Route path="users/profile/:id" element={<UserProfile />} />
             
             <Route path="users" element={<NewUserRoutes />}>
