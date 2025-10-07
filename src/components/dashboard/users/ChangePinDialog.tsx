@@ -12,11 +12,13 @@ import {
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 const ChangePinDialog = ({ profileId, onPinChanged }) => {
   const [open, setOpen] = useState(false);
   const [newPin, setNewPin] = useState('');
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const handleSave = async () => {
     setLoading(true);
@@ -39,13 +41,13 @@ const ChangePinDialog = ({ profileId, onPinChanged }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Modifier le NIP</Button>
+        <Button variant="outline">{t('dashboard.userProfile.changePinTitle')}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Modifier le NIP</DialogTitle>
+          <DialogTitle>{t('dashboard.userProfile.changePinTitle')}</DialogTitle>
           <DialogDescription>
-            Entrez un nouveau NIP à 4 chiffres pour ce profil.
+            {t('dashboard.userProfile.changePinDesc')}
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-center py-4">
@@ -59,9 +61,9 @@ const ChangePinDialog = ({ profileId, onPinChanged }) => {
           </InputOTP>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>Annuler</Button>
+          <Button variant="ghost" onClick={() => setOpen(false)}>{t('dashboard.userProfile.cancel')}</Button>
           <Button onClick={handleSave} disabled={loading || newPin.length !== 4}>
-            {loading ? 'Sauvegarde...' : 'Sauvegarder'}
+            {loading ? t('dashboard.userProfile.saving') : t('dashboard.userProfile.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

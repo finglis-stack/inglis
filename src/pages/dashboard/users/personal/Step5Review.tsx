@@ -7,12 +7,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { showSuccess, showError } from '@/utils/toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 const Step5Review = () => {
   const navigate = useNavigate();
   const { userData, resetUser } = useNewUser();
   const [loading, setLoading] = useState(false);
   const [consent, setConsent] = useState(false);
+  const { t } = useTranslation();
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -54,48 +56,48 @@ const Step5Review = () => {
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
-        <CardTitle>Vérification (5/5)</CardTitle>
-        <CardDescription>Veuillez vérifier que toutes les informations sont correctes avant de soumettre.</CardDescription>
+        <CardTitle>{t('dashboard.personalSteps.step5_title')}</CardTitle>
+        <CardDescription>{t('dashboard.personalSteps.step5_desc')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <h4 className="font-semibold">Nom complet</h4>
+          <h4 className="font-semibold">{t('dashboard.personalSteps.fullName')}</h4>
           <p className="text-muted-foreground">{userData.fullName}</p>
         </div>
         <div>
-          <h4 className="font-semibold">Adresse</h4>
+          <h4 className="font-semibold">{t('dashboard.personalSteps.address')}</h4>
           <p className="text-muted-foreground">{userData.address?.street}, {userData.address?.city}, {userData.address?.province}, {userData.address?.postalCode}, {userData.address?.country}</p>
         </div>
         <div>
-          <h4 className="font-semibold">Contact</h4>
-          <p className="text-muted-foreground">Téléphone: {userData.phone}</p>
-          <p className="text-muted-foreground">Email: {userData.email}</p>
+          <h4 className="font-semibold">{t('dashboard.personalSteps.contact')}</h4>
+          <p className="text-muted-foreground">{t('dashboard.personalSteps.phone')}: {userData.phone}</p>
+          <p className="text-muted-foreground">{t('dashboard.personalSteps.email')}: {userData.email}</p>
         </div>
         <div>
-          <h4 className="font-semibold">Identité</h4>
-          <p className="text-muted-foreground">Date de naissance: {userData.dob}</p>
-          <p className="text-muted-foreground">NAS: {userData.sin ? '***-***-***' : 'Non fourni'}</p>
+          <h4 className="font-semibold">{t('dashboard.personalSteps.identity')}</h4>
+          <p className="text-muted-foreground">{t('dashboard.personalSteps.dob')}: {userData.dob}</p>
+          <p className="text-muted-foreground">{t('dashboard.personalSteps.sinValue')}: {userData.sin ? '***-***-***' : t('dashboard.personalSteps.sinNotProvided')}</p>
         </div>
          <div>
-          <h4 className="font-semibold">NIP</h4>
+          <h4 className="font-semibold">{t('dashboard.personalSteps.pin')}</h4>
           <p className="text-muted-foreground">****</p>
         </div>
         <div className="items-top flex space-x-2 pt-4">
           <Checkbox id="terms1" checked={consent} onCheckedChange={(checked) => setConsent(checked === true)} />
           <div className="grid gap-1.5 leading-none">
             <Label htmlFor="terms1" className="font-bold">
-              Consentement au partage d'informations
+              {t('dashboard.personalSteps.consentTitle')}
             </Label>
             <p className="text-sm text-muted-foreground">
-              Je consens au partage des informations de ce profil avec le bureau de crédit à des fins de vérification et de rapport.
+              {t('dashboard.personalSteps.consentDesc')}
             </p>
           </div>
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/personal/step-4')} disabled={loading}>Précédent</Button>
+        <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/personal/step-4')} disabled={loading}>{t('dashboard.sharedSteps.previous')}</Button>
         <Button onClick={handleSubmit} disabled={loading}>
-          {loading ? 'Soumission...' : 'Soumettre'}
+          {loading ? t('dashboard.personalSteps.submitting') : t('dashboard.personalSteps.submit')}
         </Button>
       </CardFooter>
     </Card>

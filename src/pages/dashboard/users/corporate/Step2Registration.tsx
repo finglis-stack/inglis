@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from 'react-i18next';
 
 const Step2Registration = () => {
   const navigate = useNavigate();
   const { userData, updateUser } = useNewUser();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     businessNumber: userData.businessNumber || '',
     jurisdiction: userData.jurisdiction || '',
@@ -27,23 +29,23 @@ const Step2Registration = () => {
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
-        <CardTitle>Enregistrement (2/4)</CardTitle>
-        <CardDescription>Détails d'enregistrement officiels de l'entreprise.</CardDescription>
+        <CardTitle>{t('dashboard.corporateSteps.step2_title')}</CardTitle>
+        <CardDescription>{t('dashboard.corporateSteps.step2_desc')}</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <Label htmlFor="businessNumber">Numéro d'entreprise (NEQ, etc.)</Label>
+            <Label htmlFor="businessNumber">{t('dashboard.corporateSteps.businessNumber')}</Label>
             <Input id="businessNumber" required value={formData.businessNumber} onChange={handleChange} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="jurisdiction">Juridiction d'incorporation</Label>
+            <Label htmlFor="jurisdiction">{t('dashboard.corporateSteps.jurisdiction')}</Label>
             <Input id="jurisdiction" required value={formData.jurisdiction} onChange={handleChange} />
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/corporate/step-1')}>Précédent</Button>
-          <Button type="submit">Suivant</Button>
+          <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/corporate/step-1')}>{t('dashboard.sharedSteps.previous')}</Button>
+          <Button type="submit">{t('dashboard.sharedSteps.next')}</Button>
         </CardFooter>
       </form>
     </Card>

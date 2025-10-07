@@ -3,36 +3,38 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PlusCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const CardPrograms = () => {
+  const { t } = useTranslation();
   // Données fictives en attendant la suite
   const programs: any[] = [];
 
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Programmes de carte</h1>
+        <h1 className="text-3xl font-bold">{t('dashboard.cardPrograms.title')}</h1>
         <Button asChild>
           <Link to="/dashboard/settings/card-programs/new">
             <PlusCircle className="mr-2 h-4 w-4" />
-            Créer un programme
+            {t('dashboard.cardPrograms.createProgram')}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Liste des programmes</CardTitle>
-          <CardDescription>Voici la liste de tous les programmes de carte actifs et inactifs pour votre institution.</CardDescription>
+          <CardTitle>{t('dashboard.cardPrograms.listTitle')}</CardTitle>
+          <CardDescription>{t('dashboard.cardPrograms.listDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nom du programme</TableHead>
-                <TableHead>Identifiant</TableHead>
-                <TableHead>Type de carte</TableHead>
-                <TableHead>Statut</TableHead>
+                <TableHead>{t('dashboard.cardPrograms.colName')}</TableHead>
+                <TableHead>{t('dashboard.cardPrograms.colId')}</TableHead>
+                <TableHead>{t('dashboard.cardPrograms.colType')}</TableHead>
+                <TableHead>{t('dashboard.cardPrograms.colStatus')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -48,7 +50,7 @@ const CardPrograms = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center h-24">
-                    Aucun programme de carte trouvé.
+                    {t('dashboard.cardPrograms.noPrograms')}
                   </TableCell>
                 </TableRow>
               )}

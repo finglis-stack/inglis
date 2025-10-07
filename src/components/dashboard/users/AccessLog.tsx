@@ -1,12 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Clock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const AccessLog = ({ logs }) => {
+  const { t } = useTranslation();
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Historique d'accès</CardTitle>
+        <CardTitle>{t('dashboard.userProfile.accessLogTitle')}</CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-48">
@@ -15,11 +17,11 @@ const AccessLog = ({ logs }) => {
               <li key={index} className="text-sm text-muted-foreground flex items-center gap-2">
                 <Clock className="h-4 w-4 flex-shrink-0" />
                 <span>
-                  Consulté par <strong>{log.visitor_email || 'Utilisateur inconnu'}</strong> le {new Date(log.created_at).toLocaleString('fr-CA')}
+                  {t('dashboard.userProfile.accessedBy')} <strong>{log.visitor_email || t('dashboard.userProfile.unknownUser')}</strong> {t('dashboard.userProfile.on')} {new Date(log.created_at).toLocaleString('fr-CA')}
                 </span>
               </li>
             ))}
-            {logs.length === 0 && <p>Aucun accès enregistré.</p>}
+            {logs.length === 0 && <p>{t('dashboard.userProfile.noAccess')}</p>}
           </ul>
         </ScrollArea>
       </CardContent>

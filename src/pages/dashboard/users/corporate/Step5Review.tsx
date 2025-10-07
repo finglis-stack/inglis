@@ -7,12 +7,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { showSuccess, showError } from '@/utils/toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useTranslation } from 'react-i18next';
 
 const Step5Review = () => {
   const navigate = useNavigate();
   const { userData, resetUser } = useNewUser();
   const [loading, setLoading] = useState(false);
   const [consent, setConsent] = useState(false);
+  const { t } = useTranslation();
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -69,44 +71,44 @@ const Step5Review = () => {
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
-        <CardTitle>Vérification (5/5)</CardTitle>
-        <CardDescription>Veuillez vérifier que toutes les informations sont correctes avant de soumettre.</CardDescription>
+        <CardTitle>{t('dashboard.corporateSteps.step5_title')}</CardTitle>
+        <CardDescription>{t('dashboard.corporateSteps.step5_desc')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <h4 className="font-semibold">Nom de l'entreprise</h4>
-          <p className="text-muted-foreground">Légal: {userData.legalName}</p>
-          <p className="text-muted-foreground">Commercial: {userData.operatingName || 'N/A'}</p>
+          <h4 className="font-semibold">{t('dashboard.corporateSteps.companyName')}</h4>
+          <p className="text-muted-foreground">{t('dashboard.corporateSteps.legal')}: {userData.legalName}</p>
+          <p className="text-muted-foreground">{t('dashboard.corporateSteps.commercial')}: {userData.operatingName || 'N/A'}</p>
         </div>
         <div>
-          <h4 className="font-semibold">Enregistrement</h4>
-          <p className="text-muted-foreground">Numéro d'entreprise: {userData.businessNumber}</p>
-          <p className="text-muted-foreground">Juridiction: {userData.jurisdiction}</p>
+          <h4 className="font-semibold">{t('dashboard.corporateSteps.registration')}</h4>
+          <p className="text-muted-foreground">{t('dashboard.corporateSteps.businessNumber')}: {userData.businessNumber}</p>
+          <p className="text-muted-foreground">{t('dashboard.corporateSteps.jurisdiction')}: {userData.jurisdiction}</p>
         </div>
         <div>
-          <h4 className="font-semibold">Adresse</h4>
+          <h4 className="font-semibold">{t('dashboard.corporateSteps.address')}</h4>
           <p className="text-muted-foreground">{userData.businessAddress?.street}, {userData.businessAddress?.city}, {userData.businessAddress?.province}, {userData.businessAddress?.postalCode}, {userData.businessAddress?.country}</p>
         </div>
         <div>
-          <h4 className="font-semibold">NIP</h4>
+          <h4 className="font-semibold">{t('dashboard.corporateSteps.pin')}</h4>
           <p className="text-muted-foreground">****</p>
         </div>
         <div className="items-top flex space-x-2 pt-4">
           <Checkbox id="terms1" checked={consent} onCheckedChange={(checked) => setConsent(checked === true)} />
           <div className="grid gap-1.5 leading-none">
             <Label htmlFor="terms1" className="font-bold">
-              Consentement au partage d'informations
+              {t('dashboard.personalSteps.consentTitle')}
             </Label>
             <p className="text-sm text-muted-foreground">
-              Je consens au partage des informations de ce profil avec le bureau de crédit à des fins de vérification et de rapport.
+              {t('dashboard.personalSteps.consentDesc')}
             </p>
           </div>
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/corporate/step-4')} disabled={loading}>Précédent</Button>
+        <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/corporate/step-4')} disabled={loading}>{t('dashboard.sharedSteps.previous')}</Button>
         <Button onClick={handleSubmit} disabled={loading}>
-          {loading ? 'Soumission...' : 'Soumettre'}
+          {loading ? t('dashboard.corporateSteps.submitting') : t('dashboard.corporateSteps.submit')}
         </Button>
       </CardFooter>
     </Card>

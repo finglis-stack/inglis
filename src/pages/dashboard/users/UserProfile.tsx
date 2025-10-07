@@ -10,9 +10,11 @@ import AccessLog from '@/components/dashboard/users/AccessLog';
 import ChangePinDialog from '@/components/dashboard/users/ChangePinDialog';
 import { cn } from '@/lib/utils';
 import { showError } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 const UserProfile = () => {
   const { id } = useParams();
+  const { t } = useTranslation();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,7 +44,7 @@ const UserProfile = () => {
       setLoading(true);
       const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single();
       if (error) {
-        setError('Profil non trouvé ou erreur de chargement.');
+        setError(t('dashboard.userProfile.loadingError'));
       } else {
         setProfile(data);
         if (!data.pin) {
@@ -52,7 +54,7 @@ const UserProfile = () => {
       setLoading(false);
     };
     fetchProfile();
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     if (isUnlocked) {
@@ -109,7 +111,7 @@ const UserProfile = () => {
   }
 
   if (error) return <div className="text-center text-red-500 p-4">{error}</div>;
-  if (!profile) return <div className="text-center p-4">Aucun profil trouvé.</div>;
+  if (!profile) return <div className="text-center p-4">{t('dashboard.userProfile.notFound')}</div>;
 
   return (
     <TooltipProvider>

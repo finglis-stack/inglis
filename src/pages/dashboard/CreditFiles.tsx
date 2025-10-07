@@ -2,24 +2,26 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const CreditFiles = () => {
+  const { t } = useTranslation();
   return (
     <div>
-      <h1 className="text-3xl font-bold">Dossier de crédit</h1>
-      <p className="mt-4 text-muted-foreground">Consultez et gérez les dossiers de crédit ici.</p>
+      <h1 className="text-3xl font-bold">{t('dashboard.creditFiles.title')}</h1>
+      <p className="mt-4 text-muted-foreground">{t('dashboard.creditFiles.subtitle')}</p>
 
       <Card className="mt-8 max-w-lg">
         <CardHeader>
-          <CardTitle>Accès Direct au Bureau de Crédit</CardTitle>
+          <CardTitle>{t('dashboard.creditFiles.directAccessTitle')}</CardTitle>
           <CardDescription>
-            Ouvrir l'interface sécurisée pour interroger directement la base de données du bureau de crédit à l'aide d'un numéro d'assurance sociale.
+            {t('dashboard.creditFiles.directAccessDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild>
             <Link to="/credit-report-access" target="_blank" rel="noopener noreferrer">
-              Voir dossier de crédit
+              {t('dashboard.creditFiles.viewCreditReport')}
               <ExternalLink className="ml-2 h-4 w-4" />
             </Link>
           </Button>

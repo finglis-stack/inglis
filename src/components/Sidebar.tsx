@@ -1,17 +1,20 @@
 import { NavLink } from 'react-router-dom';
 import { CreditCard, LayoutDashboard, Users, ArrowRightLeft, Settings, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const navItems = [
-  { to: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: 'Tableau de bord' },
-  { to: '/dashboard/cards', icon: <CreditCard className="h-5 w-5" />, label: 'Liste des cartes' },
-  { to: '/dashboard/users', icon: <Users className="h-5 w-5" />, label: 'Utilisateurs' },
-  { to: '/dashboard/transactions', icon: <ArrowRightLeft className="h-5 w-5" />, label: 'Transactions' },
-  { to: '/dashboard/credit-files', icon: <FileText className="h-5 w-5" />, label: 'Dossier de crédit' },
-  { to: '/dashboard/settings', icon: <Settings className="h-5 w-5" />, label: 'Paramètres' },
-];
+import { useTranslation } from 'react-i18next';
 
 export const Sidebar = () => {
+  const { t } = useTranslation();
+
+  const navItems = [
+    { to: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: t('dashboard.sidebar.dashboard') },
+    { to: '/dashboard/cards', icon: <CreditCard className="h-5 w-5" />, label: t('dashboard.sidebar.cards') },
+    { to: '/dashboard/users', icon: <Users className="h-5 w-5" />, label: t('dashboard.sidebar.users') },
+    { to: '/dashboard/transactions', icon: <ArrowRightLeft className="h-5 w-5" />, label: t('dashboard.sidebar.transactions') },
+    { to: '/dashboard/credit-files', icon: <FileText className="h-5 w-5" />, label: t('dashboard.sidebar.creditFiles') },
+    { to: '/dashboard/settings', icon: <Settings className="h-5 w-5" />, label: t('dashboard.sidebar.settings') },
+  ];
+
   return (
     <aside className="w-64 flex-shrink-0 bg-gray-100 p-4 flex flex-col border-r">
       <div className="mb-8">

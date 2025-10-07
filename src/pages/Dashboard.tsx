@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
@@ -25,13 +27,13 @@ const Dashboard = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Tableau de bord</h1>
+        <h1 className="text-3xl font-bold">{t('dashboard.title')}</h1>
         <div className="flex items-center gap-4">
-            <p className="text-sm text-muted-foreground">Connecté en tant que : {userEmail}</p>
-            <Button onClick={handleSignOut} variant="outline">Se déconnecter</Button>
+            <p className="text-sm text-muted-foreground">{t('dashboard.loggedInAs', { email: userEmail })}</p>
+            <Button onClick={handleSignOut} variant="outline">{t('dashboard.signOut')}</Button>
         </div>
       </div>
-      <p className="text-lg">Bienvenue sur votre tableau de bord.</p>
+      <p className="text-lg">{t('dashboard.welcome')}</p>
     </div>
   );
 };
