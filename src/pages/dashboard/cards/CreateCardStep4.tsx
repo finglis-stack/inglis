@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
-const CreateCardStep3 = () => {
+const CreateCardStep4 = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { cardData, resetCard } = useNewCard();
@@ -58,6 +58,8 @@ const CreateCardStep3 = () => {
         body: {
           profile_id: cardData.profileId,
           card_program_id: cardData.programId,
+          credit_limit: cardData.creditLimit,
+          cash_advance_limit: cardData.cashAdvanceLimit,
         },
       });
 
@@ -98,6 +100,14 @@ const CreateCardStep3 = () => {
               <h4 className="font-semibold">{t('dashboard.newCard.cardType')}</h4>
               <p className="text-muted-foreground capitalize">{program.card_type}</p>
             </div>
+            {program.card_type === 'credit' && (
+              <div>
+                <h4 className="font-semibold">{t('dashboard.newCard.creditLimit')}</h4>
+                <p className="text-muted-foreground">${cardData.creditLimit}</p>
+                <h4 className="font-semibold mt-2">{t('dashboard.newCard.cashAdvanceLimit')}</h4>
+                <p className="text-muted-foreground">${cardData.cashAdvanceLimit || 'N/A'}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -109,7 +119,7 @@ const CreateCardStep3 = () => {
         />
       </div>
       <div className="md:col-span-2 flex justify-between mt-8">
-        <Button variant="outline" onClick={() => navigate('/dashboard/cards/new/step-2')} disabled={submitting}>
+        <Button variant="outline" onClick={() => navigate('/dashboard/cards/new/step-3')} disabled={submitting}>
           {t('dashboard.sharedSteps.previous')}
         </Button>
         <Button onClick={handleSubmit} disabled={submitting}>
@@ -120,4 +130,4 @@ const CreateCardStep3 = () => {
   );
 };
 
-export default CreateCardStep3;
+export default CreateCardStep4;

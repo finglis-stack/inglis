@@ -181,8 +181,10 @@
       "step1_desc": "Recherchez et choisissez le profil.",
       "step2_title": "Sélectionner le programme",
       "step2_desc": "Choisissez un programme de carte.",
-      "step3_title": "Vérification",
-      "step3_desc": "Vérifiez et confirmez la création.",
+      "step3_limits_title": "Définir les limites",
+      "step3_limits_desc": "Configurez les limites de crédit pour cette carte.",
+      "step4_review_title": "Vérification",
+      "step4_review_desc": "Vérifiez et confirmez la création.",
       "select": "Sélectionner",
       "selected": "Sélectionné",
       "reviewTitle": "Résumé de la carte",
@@ -191,7 +193,12 @@
       "cardType": "Type de carte",
       "createButton": "Créer la carte",
       "creating": "Création en cours...",
-      "successMessage": "Carte créée avec succès !"
+      "successMessage": "Carte créée avec succès !",
+      "debitNoLimits": "Ceci est une carte de débit et ne nécessite pas de limites de crédit.",
+      "minorBlockedTitle": "Action non autorisée",
+      "minorBlockedDesc": "Les cartes de crédit ne peuvent pas être émises pour des mineurs non émancipés. Veuillez sélectionner un programme de carte de débit.",
+      "creditLimit": "Limite de crédit",
+      "cashAdvanceLimit": "Limite d'avance de fonds (Optionnel)"
     },
     "transactions": {
       "title": "Transactions",

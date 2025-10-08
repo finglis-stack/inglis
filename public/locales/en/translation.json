@@ -181,8 +181,10 @@
       "step1_desc": "Search for and choose the profile.",
       "step2_title": "Select Program",
       "step2_desc": "Choose a card program.",
-      "step3_title": "Review",
-      "step3_desc": "Review and confirm creation.",
+      "step3_limits_title": "Set Limits",
+      "step3_limits_desc": "Configure the credit limits for this card.",
+      "step4_review_title": "Review",
+      "step4_review_desc": "Review and confirm creation.",
       "select": "Select",
       "selected": "Selected",
       "reviewTitle": "Card Summary",
@@ -191,7 +193,12 @@
       "cardType": "Card Type",
       "createButton": "Create Card",
       "creating": "Creating...",
-      "successMessage": "Card created successfully!"
+      "successMessage": "Card created successfully!",
+      "debitNoLimits": "This is a debit card and does not require credit limits.",
+      "minorBlockedTitle": "Action Not Allowed",
+      "minorBlockedDesc": "Credit cards cannot be issued to non-emancipated minors. Please select a debit card program.",
+      "creditLimit": "Credit Limit",
+      "cashAdvanceLimit": "Cash Advance Limit (Optional)"
     },
     "transactions": {
       "title": "Transactions",

@@ -68,7 +68,7 @@ serve(async (req) => {
   }
 
   try {
-    const { profile_id, card_program_id } = await req.json();
+    const { profile_id, card_program_id, credit_limit, cash_advance_limit } = await req.json();
     if (!profile_id || !card_program_id) throw new Error("Profile ID and Program ID are required.");
 
     const authHeader = req.headers.get('Authorization')!;
@@ -92,7 +92,7 @@ serve(async (req) => {
     const { data: profile, error: profileError } = await supabaseAdmin.from('profiles').select('id, full_name, legal_name, type').eq('id', profile_id).eq('institution_id', institution.id).single();
     if (profileError || !profile) throw new Error("Profile not found or access denied.");
 
-    const { data: program, error: programError } = await supabaseAdmin.from('card_programs').select('id, bin').eq('id', card_program_id).eq('institution_id', institution.id).single();
+    const { data: program, error: programError } = await supabaseAdmin.from('card_programs').select('id, bin, card_type').eq('id', card_program_id).eq('institution_id', institution.id).single();
     if (programError || !program) throw new Error("Card program not found or access denied.");
 
     // Generate card components
@@ -101,12 +101,11 @@ serve(async (req) => {
     const random_letters = generateRandomLetters(2);
     const unique_identifier = generateRandomDigits(7);
 
-    // Calculate check digit
     const base_number_for_luhn = convertAlphanumericToNumeric(`${user_initials}${issuer_id}${random_letters}${unique_identifier}`);
     const check_digit = calculateLuhn(base_number_for_luhn);
 
-    // Insert new card
-    const { error: insertError } = await supabaseAdmin.from('cards').insert({
+    // Insert new card and get its ID
+    const { data: newCard, error: insertError } = await supabaseAdmin.from('cards').insert({
       profile_id,
       card_program_id,
       user_initials,
@@ -115,9 +114,23 @@ serve(async (req) => {
       unique_identifier,
       check_digit,
       status: 'active',
-    });
+    }).select('id').single();
 
     if (insertError) throw insertError;
+
+    // If it's a credit card, create a credit account
+    if (program.card_type === 'credit') {
+        if (!credit_limit) throw new Error("Credit limit is required for credit cards.");
+        
+        const { error: accountError } = await supabaseAdmin.from('credit_accounts').insert({
+            profile_id: profile_id,
+            card_id: newCard.id,
+            credit_limit: credit_limit,
+            cash_advance_limit: cash_advance_limit || null,
+        });
+
+        if (accountError) throw accountError;
+    }
 
     return new Response(JSON.stringify({ message: "Card created successfully" }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

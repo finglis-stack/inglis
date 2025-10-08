@@ -5,7 +5,8 @@ import { StepIndicator } from '@/components/dashboard/users/StepIndicator';
 const cardSteps = (t) => [
   { id: 1, name: t('dashboard.newCard.step1_title'), description: t('dashboard.newCard.step1_desc') },
   { id: 2, name: t('dashboard.newCard.step2_title'), description: t('dashboard.newCard.step2_desc') },
-  { id: 3, name: t('dashboard.newCard.step3_title'), description: t('dashboard.newCard.step3_desc') },
+  { id: 3, name: t('dashboard.newCard.step3_limits_title'), description: t('dashboard.newCard.step3_limits_desc') },
+  { id: 4, name: t('dashboard.newCard.step4_review_title'), description: t('dashboard.newCard.step4_review_desc') },
 ];
 
 const CreateCardLayout = () => {
@@ -18,6 +19,8 @@ const CreateCardLayout = () => {
     currentStepId = 2;
   } else if (path.includes('step-3')) {
     currentStepId = 3;
+  } else if (path.includes('step-4')) {
+    currentStepId = 4;
   }
   
   const steps = cardSteps(t);
