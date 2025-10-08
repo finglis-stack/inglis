@@ -2,17 +2,29 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
-import { showError } from '@/utils/toast';
+import { showError, showSuccess } from '@/utils/toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const CardPrograms = () => {
   const { t } = useTranslation();
   const [programs, setPrograms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPrograms = async () => {
@@ -32,6 +44,27 @@ const CardPrograms = () => {
 
     fetchPrograms();
   }, []);
+
+  const handleDeleteProgram = async (programId: string) => {
+    setDeletingId(programId);
+    try {
+      const { error } = await supabase.functions.invoke('delete-card-program', {
+        body: { program_id: programId },
+      });
+
+      if (error) {
+        const functionError = await error.context.json();
+        throw new Error(functionError.error || error.message);
+      }
+
+      setPrograms(programs.filter((p) => p.id !== programId));
+      showSuccess("Programme supprimé avec succès !");
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div>
@@ -58,12 +91,13 @@ const CardPrograms = () => {
                 <TableHead>{t('dashboard.cardPrograms.colId')}</TableHead>
                 <TableHead>{t('dashboard.cardPrograms.colType')}</TableHead>
                 <TableHead>{t('dashboard.cardPrograms.colStatus')}</TableHead>
+                <TableHead className="text-right">{t('dashboard.cardPrograms.colActions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     <div className="space-y-2">
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-full" />
@@ -78,11 +112,34 @@ const CardPrograms = () => {
                     <TableCell>{program.program_id}</TableCell>
                     <TableCell>{program.card_type}</TableCell>
                     <TableCell>{program.status}</TableCell>
+                    <TableCell className="text-right">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" disabled={deletingId === program.id}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('dashboard.cardPrograms.deleteTitle')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t('dashboard.cardPrograms.deleteDesc')}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('dashboard.cardPrograms.deleteCancel')}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteProgram(program.id)}>
+                              {deletingId === program.id ? t('dashboard.cardPrograms.deleteProgress') : t('dashboard.cardPrograms.deleteConfirm')}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center h-24">
+                  <TableCell colSpan={5} className="text-center h-24">
                     {t('dashboard.cardPrograms.noPrograms')}
                   </TableCell>
                 </TableRow>

@@ -199,7 +199,13 @@
       "colId": "Identifier",
       "colType": "Card Type",
       "colStatus": "Status",
-      "noPrograms": "No card programs found."
+      "colActions": "Actions",
+      "noPrograms": "No card programs found.",
+      "deleteTitle": "Are you sure?",
+      "deleteDesc": "This action cannot be undone. The card program will be permanently deleted.",
+      "deleteCancel": "Cancel",
+      "deleteConfirm": "Confirm",
+      "deleteProgress": "Deleting..."
     },
     "newCardProgram": {
       "title": "Create a New Card Program",

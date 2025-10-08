@@ -199,7 +199,13 @@
       "colId": "Identifiant",
       "colType": "Type de carte",
       "colStatus": "Statut",
-      "noPrograms": "Aucun programme de carte trouvé."
+      "colActions": "Actions",
+      "noPrograms": "Aucun programme de carte trouvé.",
+      "deleteTitle": "Êtes-vous sûr ?",
+      "deleteDesc": "Cette action est irréversible. Le programme de carte sera définitivement supprimé.",
+      "deleteCancel": "Annuler",
+      "deleteConfirm": "Confirmer",
+      "deleteProgress": "Suppression..."
     },
     "newCardProgram": {
       "title": "Créer un nouveau programme de carte",
