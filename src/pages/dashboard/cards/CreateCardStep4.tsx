@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNewCard } from '@/context/NewCardContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CardPreview } from '@/components/dashboard/CardPreview';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,7 +15,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Label } from '@/components/ui/label';
 
 const CreateCardStep4 = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { cardData, resetCard } = useNewCard();
   
@@ -95,7 +95,7 @@ const CreateCardStep4 = () => {
     }
   };
 
-  if (loading) {
+  if (loading || !profile || !program || !institution) {
     return <Skeleton className="h-64 w-full" />;
   }
 
