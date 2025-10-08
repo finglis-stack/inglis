@@ -4,8 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import UserAccounts from './UserAccounts';
 
-const CorporateProfile = ({ profile }) => {
+const CorporateProfile = ({ profile, cards, creditAccounts, debitAccounts }) => {
   const { t } = useTranslation();
 
   const getStatusInfo = (status) => {
@@ -68,6 +69,7 @@ const CorporateProfile = ({ profile }) => {
             <p>{profile.business_address?.country}</p>
           </CardContent>
         </Card>
+        <UserAccounts cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} className="md:col-span-2" />
       </div>
     </div>
   );

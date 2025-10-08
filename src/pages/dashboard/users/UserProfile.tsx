@@ -22,6 +22,9 @@ const UserProfile = () => {
   const [accessLogs, setAccessLogs] = useState([]);
   const [decryptedSin, setDecryptedSin] = useState(null);
   const [decryptedAddress, setDecryptedAddress] = useState(null);
+  const [cards, setCards] = useState([]);
+  const [creditAccounts, setCreditAccounts] = useState([]);
+  const [debitAccounts, setDebitAccounts] = useState([]);
 
   const fetchLogs = useCallback(async () => {
     if (!id) return;
@@ -69,6 +72,30 @@ const UserProfile = () => {
     }
 
     setIsUnlocked(true);
+
+    try {
+      const { data: cardsData, error: cardsError } = await supabase
+        .from('cards')
+        .select('*, card_programs(program_name, card_type)')
+        .eq('profile_id', profile.id);
+      if (cardsError) throw cardsError;
+      setCards(cardsData || []);
+
+      const { data: creditAccountsData, error: creditAccountsError } = await supabase
+        .from('credit_accounts')
+        .select('*')
+        .eq('profile_id', profile.id);
+      if (creditAccountsError) throw creditAccountsError;
+      setCreditAccounts(creditAccountsData || []);
+
+      const { data: debitAccountsData, error: debitAccountsError } = await supabase
+        .from('debit_accounts')
+        .select('*')
+        .eq('profile_id', profile.id);
+      if (debitAccountsError) throw debitAccountsError;
+    } catch (e) {
+      showError(`Erreur lors de la récupération des comptes : ${e.message}`);
+    }
 
     if (profile.type === 'personal') {
       if (profile.sin) {
@@ -137,8 +164,8 @@ const UserProfile = () => {
         {!isUnlocked && profile.pin && <PinLock onUnlock={handleUnlock} />}
         
         <div className={cn({ 'blur-sm pointer-events-none': !isUnlocked && profile.pin })}>
-          {profile.type === 'personal' && <PersonalProfile profile={profile} decryptedSin={decryptedSin} decryptedAddress={decryptedAddress} />}
-          {profile.type === 'corporate' && <CorporateProfile profile={profile} />}
+          {profile.type === 'personal' && <PersonalProfile profile={profile} decryptedSin={decryptedSin} decryptedAddress={decryptedAddress} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} />}
+          {profile.type === 'corporate' && <CorporateProfile profile={profile} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} />}
         </div>
 
         {isUnlocked && (

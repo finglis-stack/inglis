@@ -5,8 +5,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn, calculateAge } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { format, parseISO } from 'date-fns';
+import UserAccounts from './UserAccounts';
 
-const PersonalProfile = ({ profile, decryptedSin, decryptedAddress }) => {
+const PersonalProfile = ({ profile, decryptedSin, decryptedAddress, cards, creditAccounts, debitAccounts }) => {
   const { t } = useTranslation();
 
   const getStatusInfo = (status) => {
@@ -94,6 +95,9 @@ const PersonalProfile = ({ profile, decryptedSin, decryptedAddress }) => {
             )}
           </CardContent>
         </Card>
+        
+        <UserAccounts cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} className="md:col-span-2" />
+
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>{t('dashboard.userProfile.identityInfo')}</CardTitle>
