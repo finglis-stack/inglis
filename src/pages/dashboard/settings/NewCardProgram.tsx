@@ -33,8 +33,8 @@ const NewCardProgram = () => {
   const [loading, setLoading] = useState(false);
   const [consent, setConsent] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    programName: 'Programme Prestige',
-    programId: 'P-001',
+    programName: '',
+    programId: '',
     cardType: 'credit',
     gracePeriod: '30',
     feeModel: 'none',
@@ -57,7 +57,16 @@ const NewCardProgram = () => {
   const handleBack = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleRadioChange = (key: keyof FormData, value: any) => {
+    setFormData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleColorChange = (value: string) => {
+    setFormData(prev => ({ ...prev, cardColor: value }));
   };
 
   const handleSubmit = async () => {
@@ -163,11 +172,11 @@ const NewCardProgram = () => {
               <p className="text-sm text-muted-foreground">{t('dashboard.newCardProgram.step1_desc')}</p>
               <div className="grid gap-2">
                 <Label htmlFor="programName">{t('dashboard.newCardProgram.programNameLabel')}</Label>
-                <Input id="programName" value={formData.programName} onChange={handleChange} />
+                <Input id="programName" value={formData.programName} onChange={handleChange} required />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="programId">{t('dashboard.newCardProgram.programIdLabel')}</Label>
-                <Input id="programId" value={formData.programId} onChange={handleChange} />
+                <Input id="programId" value={formData.programId} onChange={handleChange} required />
               </div>
             </div>
           )}
@@ -175,7 +184,7 @@ const NewCardProgram = () => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">{t('dashboard.newCardProgram.step2_title')}</h3>
               <p className="text-sm text-muted-foreground">{t('dashboard.newCardProgram.step2_desc')}</p>
-              <RadioGroup value={formData.cardType} onValueChange={(value) => setFormData({...formData, cardType: value as 'credit' | 'debit'})}>
+              <RadioGroup value={formData.cardType} onValueChange={(value) => handleRadioChange('cardType', value)}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="debit" id="debit" />
                   <Label htmlFor="debit">{t('dashboard.newCardProgram.debit')}</Label>
@@ -197,7 +206,7 @@ const NewCardProgram = () => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">{t('dashboard.newCardProgram.step3_title_fees')}</h3>
               <p className="text-sm text-muted-foreground">{t('dashboard.newCardProgram.step3_desc_fees')}</p>
-              <RadioGroup value={formData.feeModel} onValueChange={(value) => setFormData({...formData, feeModel: value as FormData['feeModel']})} className="space-y-2">
+              <RadioGroup value={formData.feeModel} onValueChange={(value) => handleRadioChange('feeModel', value)} className="space-y-2">
                 <Label htmlFor="fee-none" className="flex flex-col p-4 border rounded-md has-[[data-state=checked]]:border-primary cursor-pointer">
                   <div className="flex items-center space-x-2"><RadioGroupItem value="none" id="fee-none" /><span className="font-semibold">{t('dashboard.newCardProgram.feeNone')}</span></div>
                   <p className="text-sm text-muted-foreground ml-6">{t('dashboard.newCardProgram.feeNoneDesc')}</p>
@@ -227,7 +236,7 @@ const NewCardProgram = () => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">{t('dashboard.newCardProgram.step4_title_bin')}</h3>
               <p className="text-sm text-muted-foreground">{t('dashboard.newCardProgram.step4_desc_bin')}</p>
-              <RadioGroup value={formData.binType} onValueChange={(value) => setFormData({...formData, binType: value as 'dedicated' | 'shared'})} className="space-y-2">
+              <RadioGroup value={formData.binType} onValueChange={(value) => handleRadioChange('binType', value)} className="space-y-2">
                 <Label htmlFor="shared-bin" className="flex flex-col p-4 border rounded-md has-[[data-state=checked]]:border-primary cursor-pointer">
                   <div className="flex items-center space-x-2"><RadioGroupItem value="shared" id="shared-bin" /><span className="font-semibold">{t('dashboard.newCardProgram.binShared')}</span></div>
                   <p className="text-sm text-muted-foreground ml-6">{t('dashboard.newCardProgram.binSharedDesc')}</p>
@@ -245,7 +254,7 @@ const NewCardProgram = () => {
               <p className="text-sm text-muted-foreground">{t('dashboard.newCardProgram.step5_desc_design')}</p>
               <div className="grid grid-cols-2 gap-4">
                 {cardColors.map(color => (
-                  <button key={color.name} onClick={() => setFormData({...formData, cardColor: color.value})} className={cn("p-4 rounded-md border-2", formData.cardColor === color.value ? "border-primary" : "border-transparent")}>
+                  <button key={color.name} onClick={() => handleColorChange(color.value)} className={cn("p-4 rounded-md border-2", formData.cardColor === color.value ? "border-primary" : "border-transparent")}>
                     <div className="w-full h-16 rounded" style={{ background: color.value }} />
                     <p className="mt-2 text-sm font-medium">{color.name}</p>
                   </button>
@@ -286,7 +295,7 @@ const NewCardProgram = () => {
           <div className="flex justify-between mt-8">
             <Button variant="outline" onClick={handleBack} disabled={currentStep === 1 || loading}>{t('dashboard.sharedSteps.previous')}</Button>
             {currentStep < steps.length ? (
-              <Button onClick={handleNext}>{t('dashboard.sharedSteps.next')}</Button>
+              <Button onClick={handleNext} disabled={currentStep === 1 && (!formData.programName || !formData.programId)}>{t('dashboard.sharedSteps.next')}</Button>
             ) : (
               <Button onClick={handleSubmit} disabled={!consent || loading}>
                 {loading ? t('dashboard.newCardProgram.creatingButton') : t('dashboard.newCardProgram.finishButton')}
