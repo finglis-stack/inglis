@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, Wallet } from 'lucide-react';
+import { CreditCard, Wallet, Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const UserAccounts = ({ cards, creditAccounts, debitAccounts, className }) => {
   const getStatusVariant = (status) => {
@@ -41,8 +43,8 @@ const UserAccounts = ({ cards, creditAccounts, debitAccounts, className }) => {
               <TableRow>
                 <TableHead>Carte</TableHead>
                 <TableHead>Programme</TableHead>
-                <TableHead>Statut</TableHead>
                 <TableHead>Compte Associé</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -50,9 +52,11 @@ const UserAccounts = ({ cards, creditAccounts, debitAccounts, className }) => {
                 const account = findAccountForCard(card.id);
                 return (
                   <TableRow key={card.id}>
-                    <TableCell className="font-mono text-xs">{getCardNumber(card)}</TableCell>
+                    <TableCell>
+                      <p className="font-mono text-xs">{getCardNumber(card)}</p>
+                      <Badge variant={getStatusVariant(card.status)} className="mt-1">{card.status}</Badge>
+                    </TableCell>
                     <TableCell>{card.card_programs.program_name}</TableCell>
-                    <TableCell><Badge variant={getStatusVariant(card.status)}>{card.status}</Badge></TableCell>
                     <TableCell>
                       {account ? (
                         <div className="flex items-center gap-2">
@@ -68,6 +72,15 @@ const UserAccounts = ({ cards, creditAccounts, debitAccounts, className }) => {
                         </div>
                       ) : (
                         <p className="text-xs text-muted-foreground">Aucun compte lié</p>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {account?.type === 'debit' && (
+                        <Button asChild variant="outline" size="sm">
+                          <Link to={`/dashboard/accounts/debit/${account.id}`}>
+                            <Settings className="mr-2 h-4 w-4" /> Gérer
+                          </Link>
+                        </Button>
                       )}
                     </TableCell>
                   </TableRow>

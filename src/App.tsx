@@ -42,6 +42,7 @@ import CreateCardStep1 from "@/pages/dashboard/cards/CreateCardStep1";
 import CreateCardStep2 from "@/pages/dashboard/cards/CreateCardStep2";
 import CreateCardStep3SetLimits from "@/pages/dashboard/cards/CreateCardStep3SetLimits";
 import CreateCardStep4 from "@/pages/dashboard/cards/CreateCardStep4";
+import DebitAccountDetails from "@/pages/dashboard/accounts/DebitAccountDetails";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ const App = () => (
             <Route path="settings/card-programs" element={<CardPrograms />} />
             <Route path="users" element={<Users />} />
             <Route path="users/profile/:id" element={<UserProfile />} />
+            <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
           </Route>
 
           <Route element={<NewUserProvider />}>

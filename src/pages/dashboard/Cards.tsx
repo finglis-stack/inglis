@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MoreHorizontal } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -10,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -106,6 +107,17 @@ const Cards = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
+                          {card.card_type === 'debit' && card.debit_account_id && (
+                            <>
+                              <DropdownMenuItem asChild>
+                                <Link to={`/dashboard/accounts/debit/${card.debit_account_id}`}>
+                                  <Settings className="mr-2 h-4 w-4" />
+                                  Gérer le compte
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
                           <DropdownMenuItem>{t('dashboard.cards.actionView')}</DropdownMenuItem>
                           <DropdownMenuItem>{t('dashboard.cards.actionDeactivate')}</DropdownMenuItem>
                         </DropdownMenuContent>
