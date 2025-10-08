@@ -31,7 +31,7 @@ const PersonalProfile = ({ profile, decryptedSin, decryptedAddress }) => {
       ageTags.push({ text: t('dashboard.userProfile.tagMinor'), className: 'bg-blue-100 text-blue-800 border-blue-200' });
     } else if (age <= 19) {
       ageTags.push({ text: t('dashboard.userProfile.tagTeen'), className: 'bg-indigo-100 text-indigo-800 border-indigo-200' });
-    } else if (age < 21) {
+    } else if (age < 25) {
       ageTags.push({ text: t('dashboard.userProfile.tagYoungAdult'), className: 'bg-purple-100 text-purple-800 border-purple-200' });
     }
   }
