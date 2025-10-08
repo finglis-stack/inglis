@@ -130,6 +130,15 @@ serve(async (req) => {
         });
 
         if (accountError) throw accountError;
+    } else if (program.card_type === 'debit') {
+        // If it's a debit card, create a debit account
+        const { error: accountError } = await supabaseAdmin.from('debit_accounts').insert({
+            profile_id: profile_id,
+            card_id: newCard.id,
+            current_balance: 0, // Start with a zero balance
+        });
+
+        if (accountError) throw accountError;
     }
 
     return new Response(JSON.stringify({ message: "Card created successfully" }), {
