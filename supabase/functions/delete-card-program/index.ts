@@ -38,13 +38,14 @@ serve(async (req) => {
     if (programError || !program) throw new Error("Accès non autorisé ou programme non trouvé.");
 
     // 2. Vérifier si des cartes sont associées à ce programme
-    const { data: cards, error: cardsError } = await supabaseAdmin
+    const { count, error: cardsError } = await supabaseAdmin
       .from('cards')
-      .select('id', { count: 'exact', head: true })
+      .select('*', { count: 'exact', head: true })
       .eq('card_program_id', program_id)
       
     if (cardsError) throw cardsError;
-    if (cards.count > 0) {
+    
+    if (count !== null && count > 0) {
       throw new Error("Ce programme ne peut pas être supprimé car des cartes y sont associées.");
     }
 
