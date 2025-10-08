@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import { CardPreview } from '@/components/dashboard/CardPreview';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { supabase } from '@/integrations/supabase/client';
+import { showSuccess, showError } from '@/utils/toast';
 
 interface FormData {
   programName: string;
@@ -23,7 +28,10 @@ interface FormData {
 
 const NewCardProgram = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [consent, setConsent] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     programName: 'Programme Prestige',
     programId: 'P-001',
@@ -50,6 +58,64 @@ const NewCardProgram = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Utilisateur non authentifié.");
+
+      const { data: institution, error: institutionError } = await supabase
+        .from('institutions')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      if (institutionError) throw institutionError;
+
+      let bin;
+      if (formData.binType === 'dedicated') {
+        let isUnique = false;
+        while (!isUnique) {
+          bin = Math.floor(100000 + Math.random() * 900000).toString();
+          const { data: existingBin, error: binCheckError } = await supabase
+            .from('card_programs')
+            .select('bin')
+            .eq('bin', bin)
+            .eq('bin_type', 'dedicated')
+            .single();
+          if (binCheckError && binCheckError.code !== 'PGRST116') throw binCheckError;
+          if (!existingBin) isUnique = true;
+        }
+      } else {
+        bin = '100000'; // BIN partagé par défaut
+      }
+
+      const programData = {
+        institution_id: institution.id,
+        program_name: formData.programName,
+        program_id: formData.programId,
+        card_type: formData.cardType,
+        grace_period: formData.cardType === 'credit' ? parseInt(formData.gracePeriod) : null,
+        fee_model: formData.feeModel,
+        issuance_fee: formData.issuanceFee ? parseFloat(formData.issuanceFee) : null,
+        merchant_transaction_fee: formData.merchantTransactionFee ? parseFloat(formData.merchantTransactionFee) : null,
+        bin_type: formData.binType,
+        bin: bin,
+        card_color: formData.cardColor,
+      };
+
+      const { error: insertError } = await supabase.from('card_programs').insert(programData);
+      if (insertError) throw insertError;
+
+      showSuccess(t('dashboard.newCardProgram.successMessage'));
+      navigate('/dashboard/settings/card-programs');
+
+    } catch (error) {
+      showError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const cardColors = [
@@ -191,7 +257,7 @@ const NewCardProgram = () => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">{t('dashboard.newCardProgram.step6_title_review')}</h3>
               <p className="text-sm text-muted-foreground">{t('dashboard.newCardProgram.step6_desc_review')}</p>
-              <div className="p-4 border rounded-md space-y-2">
+              <div className="p-4 border rounded-md space-y-2 mb-4">
                 <p><strong>{t('dashboard.newCardProgram.programNameLabel')}:</strong> {formData.programName}</p>
                 <p><strong>{t('dashboard.newCardProgram.programIdLabel')}:</strong> {formData.programId}</p>
                 <p><strong>{t('dashboard.newCardProgram.cardTypeLabel')}:</strong> {formData.cardType === 'credit' ? t('dashboard.newCardProgram.credit') : t('dashboard.newCardProgram.debit')}</p>
@@ -203,14 +269,28 @@ const NewCardProgram = () => {
                 </>)}
                 <p><strong>{t('dashboard.newCardProgram.binTypeLabel')}:</strong> {formData.binType === 'dedicated' ? t('dashboard.newCardProgram.binDedicated') : t('dashboard.newCardProgram.binShared')}</p>
               </div>
+              <Card>
+                <CardHeader><CardTitle>{t('dashboard.newCardProgram.termsTitle')}</CardTitle></CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-48 p-4 border rounded-md">
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{t('dashboard.newCardProgram.termsContent')}</p>
+                  </ScrollArea>
+                  <div className="flex items-center space-x-2 mt-4">
+                    <Checkbox id="terms" checked={consent} onCheckedChange={(checked) => setConsent(checked === true)} />
+                    <Label htmlFor="terms">{t('dashboard.newCardProgram.termsCheckbox')}</Label>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
           <div className="flex justify-between mt-8">
-            <Button variant="outline" onClick={handleBack} disabled={currentStep === 1}>{t('dashboard.sharedSteps.previous')}</Button>
+            <Button variant="outline" onClick={handleBack} disabled={currentStep === 1 || loading}>{t('dashboard.sharedSteps.previous')}</Button>
             {currentStep < steps.length ? (
               <Button onClick={handleNext}>{t('dashboard.sharedSteps.next')}</Button>
             ) : (
-              <Button>{t('dashboard.newCardProgram.finishButton')}</Button>
+              <Button onClick={handleSubmit} disabled={!consent || loading}>
+                {loading ? t('dashboard.newCardProgram.creatingButton') : t('dashboard.newCardProgram.finishButton')}
+              </Button>
             )}
           </div>
         </CardContent>

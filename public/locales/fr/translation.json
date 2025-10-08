@@ -242,7 +242,12 @@
       "step6_title_review": "Révision",
       "step6_desc_review": "Vérifiez les détails de votre programme avant de le finaliser.",
       "reviewFeeModel": "Modèle de frais",
-      "finishButton": "Terminer"
+      "finishButton": "Créer le programme",
+      "creatingButton": "Création en cours...",
+      "successMessage": "Le programme de carte a été créé avec succès !",
+      "termsTitle": "Termes et Conditions du Programme de Carte",
+      "termsContent": "En créant ce programme de carte, vous (l'« Émetteur ») acceptez les termes et conditions suivants avec Inglis Dominium (le « Fournisseur »).\n\n1. **Responsabilités de l'Émetteur** : Vous êtes entièrement responsable de la gestion des utilisateurs finaux, du respect des réglementations financières applicables (y compris LBC/FT) et de la communication des termes et conditions à vos titulaires de carte.\n\n2. **Attribution du BIN** : Si vous avez sélectionné un BIN Dédié, le Fournisseur vous attribuera un Numéro d'Identification Bancaire unique pour votre usage exclusif. Si vous avez sélectionné un BIN Partagé, votre programme utilisera un BIN commun à d'autres programmes sur le réseau du Fournisseur.\n\n3. **Frais et Facturation** : Vous acceptez la structure de frais sélectionnée. Le Fournisseur se réserve le droit de prélever les frais convenus (frais annuels, commissions sur transaction, etc.) selon les modalités de votre contrat de service principal. Tous les frais sont en dollars canadiens (CAD) et sont non remboursables.\n\n4. **Conformité et Sécurité** : Vous vous engagez à utiliser la plateforme du Fournisseur conformément à toutes les lois et réglementations en vigueur. Vous êtes responsable de la sécurité des données de vos titulaires de carte dans vos propres systèmes.\n\n5. **Limitation de Responsabilité** : Le Fournisseur ne sera pas responsable des pertes ou dommages résultant de votre gestion du programme de carte, y compris la fraude, les défauts de paiement des utilisateurs ou les erreurs opérationnelles de votre part.\n\nEn cochant la case ci-dessous, vous confirmez que vous avez lu, compris et accepté ces termes et conditions, et que vous êtes autorisé à lier votre institution à cet accord.",
+      "termsCheckbox": "Je confirme avoir lu et accepté les termes et conditions."
     },
     "users": {
       "title": "Utilisateurs",

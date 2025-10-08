@@ -242,7 +242,12 @@
       "step6_title_review": "Review",
       "step6_desc_review": "Review your program details before finalizing.",
       "reviewFeeModel": "Fee Model",
-      "finishButton": "Finish"
+      "finishButton": "Create Program",
+      "creatingButton": "Creating...",
+      "successMessage": "Card program created successfully!",
+      "termsTitle": "Card Program Terms and Conditions",
+      "termsContent": "By creating this card program, you (the 'Issuer') agree to the following terms and conditions with Inglis Dominium (the 'Provider').\n\n1. **Issuer Responsibilities**: You are fully responsible for managing end-users, complying with applicable financial regulations (including AML/CFT), and communicating terms and conditions to your cardholders.\n\n2. **BIN Assignment**: If you have selected a Dedicated BIN, the Provider will assign you a unique Bank Identification Number for your exclusive use. If you have selected a Shared BIN, your program will use a BIN common to other programs on the Provider's network.\n\n3. **Fees and Billing**: You agree to the selected fee structure. The Provider reserves the right to collect the agreed-upon fees (annual fees, transaction commissions, etc.) according to the terms of your main service agreement. All fees are in Canadian Dollars (CAD) and are non-refundable.\n\n4. **Compliance and Security**: You agree to use the Provider's platform in accordance with all applicable laws and regulations. You are responsible for the security of your cardholders' data within your own systems.\n\n5. **Limitation of Liability**: The Provider will not be liable for any loss or damage resulting from your management of the card program, including fraud, user payment defaults, or operational errors on your part.\n\nBy checking the box below, you confirm that you have read, understood, and accepted these terms and conditions, and that you are authorized to bind your institution to this agreement.",
+      "termsCheckbox": "I confirm that I have read and agree to the terms and conditions."
     },
     "users": {
       "title": "Users",
