@@ -4,20 +4,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, DollarSign, CreditCard, User, Download, Upload } from 'lucide-react';
+import { ArrowLeft, DollarSign, CreditCard, User, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 const DebitAccountDetails = () => {
   const { accountId } = useParams();
   const [account, setAccount] = useState<any>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAccountDetails = async () => {
+    const fetchDetails = async () => {
       if (!accountId) return;
       setLoading(true);
-      const { data, error } = await supabase
+
+      const { data: accountData, error: accountError } = await supabase
         .from('debit_accounts')
         .select(`
           *,
@@ -27,16 +30,29 @@ const DebitAccountDetails = () => {
         .eq('id', accountId)
         .single();
 
-      if (error) {
-        showError(`Erreur: ${error.message}`);
-        setAccount(null);
-      } else {
-        setAccount(data);
+      if (accountError) {
+        showError(`Erreur: ${accountError.message}`);
+        setLoading(false);
+        return;
       }
+      setAccount(accountData);
+
+      const { data: transactionsData, error: transactionsError } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('debit_account_id', accountId)
+        .order('created_at', { ascending: false });
+      
+      if (transactionsError) {
+        showError(`Erreur lors de la récupération des transactions: ${transactionsError.message}`);
+      } else {
+        setTransactions(transactionsData);
+      }
+
       setLoading(false);
     };
 
-    fetchAccountDetails();
+    fetchDetails();
   }, [accountId]);
 
   if (loading) {
@@ -70,6 +86,7 @@ const DebitAccountDetails = () => {
         <div>
           <h1 className="text-3xl font-bold">Gestion du Compte de Débit</h1>
           <p className="text-muted-foreground">Compte de {profileName}</p>
+          <p className="text-xs text-muted-foreground font-mono mt-1">ID: {account.id}</p>
         </div>
         <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
       </div>
@@ -91,12 +108,48 @@ const DebitAccountDetails = () => {
             <CardDescription>Effectuez des opérations sur ce compte de débit.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-4">
-            <Button><Upload className="mr-2 h-4 w-4" /> Déposer des fonds</Button>
-            <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Retirer des fonds</Button>
             <Button variant="destructive">Bloquer le compte</Button>
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" /> Historique des Transactions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="text-right">Montant</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transactions.length > 0 ? (
+                transactions.map((tx) => (
+                  <TableRow key={tx.id}>
+                    <TableCell>{new Date(tx.created_at).toLocaleString('fr-CA')}</TableCell>
+                    <TableCell>{tx.description || 'N/A'}</TableCell>
+                    <TableCell><Badge variant="outline" className="capitalize">{tx.type}</Badge></TableCell>
+                    <TableCell className={`text-right font-medium ${tx.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(tx.amount)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center h-24">
+                    Aucune transaction trouvée pour ce compte.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
