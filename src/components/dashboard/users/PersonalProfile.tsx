@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn, calculateAge } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { format } from 'date-fns';
 
 const PersonalProfile = ({ profile, decryptedSin, decryptedAddress }) => {
   const { t } = useTranslation();
@@ -34,6 +35,8 @@ const PersonalProfile = ({ profile, decryptedSin, decryptedAddress }) => {
       ageTags.push({ text: t('dashboard.userProfile.tagYoungAdult'), className: 'bg-purple-100 text-purple-800 border-purple-200' });
     }
   }
+
+  const formattedDob = profile.dob ? format(new Date(profile.dob + 'T00:00:00'), 'dd/MM/yyyy') : 'N/A';
 
   return (
     <div className="space-y-6">
@@ -94,7 +97,7 @@ const PersonalProfile = ({ profile, decryptedSin, decryptedAddress }) => {
             <CardTitle>{t('dashboard.userProfile.identityInfo')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p><strong>{t('dashboard.userProfile.dob')}:</strong> {profile.dob ? new Date(profile.dob).toLocaleDateString() : 'N/A'}</p>
+            <p><strong>{t('dashboard.userProfile.dob')}:</strong> {formattedDob}</p>
             <p><strong>{t('dashboard.userProfile.sin')}:</strong> {decryptedSin || (profile.sin ? t('dashboard.userProfile.sinLocked') : t('dashboard.userProfile.sinNotProvided'))}</p>
           </CardContent>
         </Card>

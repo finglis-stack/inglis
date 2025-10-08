@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { showSuccess, showError } from '@/utils/toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
+import { format } from 'date-fns';
 
 const Step5Review = () => {
   const navigate = useNavigate();
@@ -53,6 +54,8 @@ const Step5Review = () => {
     }
   };
 
+  const formattedDob = userData.dob ? format(new Date(userData.dob + 'T00:00:00'), 'dd/MM/yyyy') : 'N/A';
+
   return (
     <Card className="w-full max-w-lg mx-auto">
       <CardHeader>
@@ -75,7 +78,7 @@ const Step5Review = () => {
         </div>
         <div>
           <h4 className="font-semibold">{t('dashboard.personalSteps.identity')}</h4>
-          <p className="text-muted-foreground">{t('dashboard.personalSteps.dob')}: {userData.dob}</p>
+          <p className="text-muted-foreground">{t('dashboard.personalSteps.dob')}: {formattedDob}</p>
           <p className="text-muted-foreground">{t('dashboard.personalSteps.sinValue')}: {userData.sin ? '***-***-***' : t('dashboard.personalSteps.sinNotProvided')}</p>
         </div>
          <div>
