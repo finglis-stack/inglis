@@ -8,7 +8,7 @@ import { ArrowLeft, DollarSign, CreditCard, User, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import DebitAccountAccessLog from '../../../components/dashboard/DebitAccountAccessLog';
+import DebitAccountAccessLog from '@/components/DebitAccountAccessLog';
 
 const DebitAccountDetails = () => {
   const { accountId } = useParams();
