@@ -4,7 +4,6 @@ import { useNewUser } from '@/context/NewUserContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 
 const Step2Registration = () => {
@@ -27,28 +26,22 @@ const Step2Registration = () => {
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
-      <CardHeader>
-        <CardTitle>{t('dashboard.corporateSteps.step2_title')}</CardTitle>
-        <CardDescription>{t('dashboard.corporateSteps.step2_desc')}</CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div className="grid gap-2">
-            <Label htmlFor="businessNumber">{t('dashboard.corporateSteps.businessNumber')}</Label>
-            <Input id="businessNumber" required value={formData.businessNumber} onChange={handleChange} />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="jurisdiction">{t('dashboard.corporateSteps.jurisdiction')}</Label>
-            <Input id="jurisdiction" required value={formData.jurisdiction} onChange={handleChange} />
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/corporate/step-1')}>{t('dashboard.sharedSteps.previous')}</Button>
-          <Button type="submit">{t('dashboard.sharedSteps.next')}</Button>
-        </CardFooter>
-      </form>
-    </Card>
+    <form onSubmit={handleSubmit}>
+      <div className="space-y-4">
+        <div className="grid gap-2">
+          <Label htmlFor="businessNumber">{t('dashboard.corporateSteps.businessNumber')}</Label>
+          <Input id="businessNumber" required value={formData.businessNumber} onChange={handleChange} />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="jurisdiction">{t('dashboard.corporateSteps.jurisdiction')}</Label>
+          <Input id="jurisdiction" required value={formData.jurisdiction} onChange={handleChange} />
+        </div>
+      </div>
+      <div className="flex justify-between mt-8">
+        <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/corporate/step-1')}>{t('dashboard.sharedSteps.previous')}</Button>
+        <Button type="submit">{t('dashboard.sharedSteps.next')}</Button>
+      </div>
+    </form>
   );
 };
 

@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useNewUser } from '@/context/NewUserContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
 
 const Step1Name = () => {
@@ -20,24 +19,17 @@ const Step1Name = () => {
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
-      <CardHeader>
-        <CardTitle>{t('dashboard.personalSteps.step1_title')}</CardTitle>
-        <CardDescription>{t('dashboard.personalSteps.step1_desc')}</CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent>
-          <div className="grid gap-2">
-            <Label htmlFor="fullName">{t('dashboard.personalSteps.fullName')}</Label>
-            <Input id="fullName" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
-          </div>
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="ghost" asChild><Link to="/dashboard/users/new">{t('dashboard.sharedSteps.cancel')}</Link></Button>
-          <Button type="submit">{t('dashboard.sharedSteps.next')}</Button>
-        </CardFooter>
-      </form>
-    </Card>
+    <form onSubmit={handleSubmit}>
+      <div className="space-y-4">
+        <div className="grid gap-2">
+          <Label htmlFor="fullName">{t('dashboard.personalSteps.fullName')}</Label>
+          <Input id="fullName" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+        </div>
+      </div>
+      <div className="flex justify-end gap-4 mt-8">
+        <Button type="submit">{t('dashboard.sharedSteps.next')}</Button>
+      </div>
+    </form>
   );
 };
 

@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Outlet } from 'react-router-dom';
 
 const NewUserContext = createContext(null);
 
-export const NewUserProvider = ({ children }) => {
+export const NewUserProvider = () => {
   const [userData, setUserData] = useState(() => {
     try {
       const item = window.localStorage.getItem('newUserFormData');
@@ -32,7 +33,7 @@ export const NewUserProvider = ({ children }) => {
 
   return (
     <NewUserContext.Provider value={{ userData, updateUser, resetUser }}>
-      {children}
+      <Outlet />
     </NewUserContext.Provider>
   );
 };

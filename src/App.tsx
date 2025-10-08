@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import Welcome from "@/pages/onboarding/Welcome";
@@ -35,14 +35,9 @@ import CreditReportAccess from "@/pages/CreditReportAccess";
 import CardPrograms from "@/pages/dashboard/settings/CardPrograms";
 import NewCardProgram from "@/pages/dashboard/settings/NewCardProgram";
 import CardProgramLayout from "@/pages/dashboard/settings/CardProgramLayout";
+import NewUserLayout from "@/pages/dashboard/users/NewUserLayout";
 
 const queryClient = new QueryClient();
-
-const NewUserRoutes = () => (
-  <NewUserProvider>
-    <Outlet />
-  </NewUserProvider>
-);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -68,21 +63,23 @@ const App = () => (
             <Route path="credit-files" element={<CreditFiles />} />
             <Route path="settings" element={<Settings />} />
             <Route path="settings/card-programs" element={<CardPrograms />} />
+            <Route path="users" element={<Users />} />
             <Route path="users/profile/:id" element={<UserProfile />} />
-            
-            <Route path="users" element={<NewUserRoutes />}>
-              <Route index element={<Users />} />
-              <Route path="new" element={<NewUserTypeSelection />} />
-              <Route path="new/personal/step-1" element={<Step1Name />} />
-              <Route path="new/personal/step-2" element={<Step2Address />} />
-              <Route path="new/personal/step-3" element={<Step3ContactIdentity />} />
-              <Route path="new/personal/step-4" element={<Step4SetPin />} />
-              <Route path="new/personal/step-5" element={<Step5Review />} />
-              <Route path="new/corporate/step-1" element={<Step1BusinessInfo />} />
-              <Route path="new/corporate/step-2" element={<Step2Registration />} />
-              <Route path="new/corporate/step-3" element={<Step3AddressCorp />} />
-              <Route path="new/corporate/step-4" element={<Step4SetPin />} />
-              <Route path="new/corporate/step-5" element={<Step5ReviewCorp />} />
+          </Route>
+
+          <Route element={<NewUserProvider />}>
+            <Route path="/dashboard/users/new" element={<NewUserTypeSelection />} />
+            <Route element={<NewUserLayout />}>
+              <Route path="/dashboard/users/new/personal/step-1" element={<Step1Name />} />
+              <Route path="/dashboard/users/new/personal/step-2" element={<Step2Address />} />
+              <Route path="/dashboard/users/new/personal/step-3" element={<Step3ContactIdentity />} />
+              <Route path="/dashboard/users/new/personal/step-4" element={<Step4SetPin />} />
+              <Route path="/dashboard/users/new/personal/step-5" element={<Step5Review />} />
+              <Route path="/dashboard/users/new/corporate/step-1" element={<Step1BusinessInfo />} />
+              <Route path="/dashboard/users/new/corporate/step-2" element={<Step2Registration />} />
+              <Route path="/dashboard/users/new/corporate/step-3" element={<Step3AddressCorp />} />
+              <Route path="/dashboard/users/new/corporate/step-4" element={<Step4SetPin />} />
+              <Route path="/dashboard/users/new/corporate/step-5" element={<Step5ReviewCorp />} />
             </Route>
           </Route>
 

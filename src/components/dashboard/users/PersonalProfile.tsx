@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn, calculateAge } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 const PersonalProfile = ({ profile, decryptedSin, decryptedAddress }) => {
   const { t } = useTranslation();
@@ -36,7 +36,7 @@ const PersonalProfile = ({ profile, decryptedSin, decryptedAddress }) => {
     }
   }
 
-  const formattedDob = profile.dob ? format(new Date(profile.dob + 'T00:00:00'), 'dd/MM/yyyy') : 'N/A';
+  const formattedDob = profile.dob ? format(parseISO(profile.dob), 'dd/MM/yyyy') : 'N/A';
 
   return (
     <div className="space-y-6">

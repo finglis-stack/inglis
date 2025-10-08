@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNewUser } from '@/context/NewUserContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { showSuccess, showError } from '@/utils/toast';
@@ -69,12 +68,8 @@ const Step5Review = () => {
   };
 
   return (
-    <Card className="w-full max-w-lg mx-auto">
-      <CardHeader>
-        <CardTitle>{t('dashboard.corporateSteps.step5_title')}</CardTitle>
-        <CardDescription>{t('dashboard.corporateSteps.step5_desc')}</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div>
+      <div className="space-y-4">
         <div>
           <h4 className="font-semibold">{t('dashboard.corporateSteps.companyName')}</h4>
           <p className="text-muted-foreground">{t('dashboard.corporateSteps.legal')}: {userData.legalName}</p>
@@ -104,14 +99,14 @@ const Step5Review = () => {
             </p>
           </div>
         </div>
-      </CardContent>
-      <CardFooter className="flex justify-between">
+      </div>
+      <div className="flex justify-between mt-8">
         <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/corporate/step-4')} disabled={loading}>{t('dashboard.sharedSteps.previous')}</Button>
         <Button onClick={handleSubmit} disabled={loading}>
           {loading ? t('dashboard.corporateSteps.submitting') : t('dashboard.corporateSteps.submit')}
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 };
 
