@@ -93,6 +93,7 @@ const UserProfile = () => {
         .select('*')
         .eq('profile_id', profile.id);
       if (debitAccountsError) throw debitAccountsError;
+      setDebitAccounts(debitAccountsData || []);
     } catch (e) {
       showError(`Erreur lors de la récupération des comptes : ${e.message}`);
     }
