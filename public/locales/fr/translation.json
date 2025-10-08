@@ -172,7 +172,18 @@
     "cards": {
       "title": "Liste des cartes",
       "subtitle": "Gérez les cartes de vos utilisateurs ici.",
-      "addCard": "Ajouter une carte"
+      "addCard": "Ajouter une carte",
+      "listTitle": "Cartes émises",
+      "listDesc": "Voici la liste de toutes les cartes émises pour votre institution.",
+      "colHolder": "Titulaire",
+      "colProgram": "Programme",
+      "colNumber": "Numéro de carte",
+      "colStatus": "Statut",
+      "colDate": "Date d'émission",
+      "colActions": "Actions",
+      "noCards": "Aucune carte n'a encore été émise.",
+      "actionView": "Voir les détails",
+      "actionDeactivate": "Désactiver"
     },
     "newCard": {
       "title": "Créer une nouvelle carte",

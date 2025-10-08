@@ -172,7 +172,18 @@
     "cards": {
       "title": "Card List",
       "subtitle": "Manage your users' cards here.",
-      "addCard": "Add Card"
+      "addCard": "Add Card",
+      "listTitle": "Issued Cards",
+      "listDesc": "Here is the list of all cards issued for your institution.",
+      "colHolder": "Cardholder",
+      "colProgram": "Program",
+      "colNumber": "Card Number",
+      "colStatus": "Status",
+      "colDate": "Issue Date",
+      "colActions": "Actions",
+      "noCards": "No cards have been issued yet.",
+      "actionView": "View Details",
+      "actionDeactivate": "Deactivate"
     },
     "newCard": {
       "title": "Create a new card",
