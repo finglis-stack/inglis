@@ -36,6 +36,11 @@ import CardPrograms from "@/pages/dashboard/settings/CardPrograms";
 import NewCardProgram from "@/pages/dashboard/settings/NewCardProgram";
 import CardProgramLayout from "@/pages/dashboard/settings/CardProgramLayout";
 import NewUserLayout from "@/pages/dashboard/users/NewUserLayout";
+import { NewCardProvider } from "@/context/NewCardContext";
+import CreateCardLayout from "@/pages/dashboard/cards/CreateCardLayout";
+import CreateCardStep1 from "@/pages/dashboard/cards/CreateCardStep1";
+import CreateCardStep2 from "@/pages/dashboard/cards/CreateCardStep2";
+import CreateCardStep3 from "@/pages/dashboard/cards/CreateCardStep3";
 
 const queryClient = new QueryClient();
 
@@ -80,6 +85,14 @@ const App = () => (
               <Route path="/dashboard/users/new/corporate/step-3" element={<Step3AddressCorp />} />
               <Route path="/dashboard/users/new/corporate/step-4" element={<Step4SetPin />} />
               <Route path="/dashboard/users/new/corporate/step-5" element={<Step5ReviewCorp />} />
+            </Route>
+          </Route>
+
+          <Route element={<NewCardProvider />}>
+            <Route element={<CreateCardLayout />}>
+              <Route path="/dashboard/cards/new" element={<CreateCardStep1 />} />
+              <Route path="/dashboard/cards/new/step-2" element={<CreateCardStep2 />} />
+              <Route path="/dashboard/cards/new/step-3" element={<CreateCardStep3 />} />
             </Route>
           </Route>
 

@@ -171,7 +171,27 @@
     },
     "cards": {
       "title": "Card List",
-      "subtitle": "Manage your users' cards here."
+      "subtitle": "Manage your users' cards here.",
+      "addCard": "Add Card"
+    },
+    "newCard": {
+      "title": "Create a new card",
+      "cancel": "Cancel",
+      "step1_title": "Select User",
+      "step1_desc": "Search for and choose the profile.",
+      "step2_title": "Select Program",
+      "step2_desc": "Choose a card program.",
+      "step3_title": "Review",
+      "step3_desc": "Review and confirm creation.",
+      "select": "Select",
+      "selected": "Selected",
+      "reviewTitle": "Card Summary",
+      "user": "User",
+      "program": "Program",
+      "cardType": "Card Type",
+      "createButton": "Create Card",
+      "creating": "Creating...",
+      "successMessage": "Card created successfully!"
     },
     "transactions": {
       "title": "Transactions",
