@@ -276,6 +276,7 @@
     "newUser": {
       "title": "Ajouter un nouvel utilisateur",
       "subtitle": "Quel type de compte souhaitez-vous créer ?",
+      "selection_prompt": "Sélectionnez le type de profil à créer pour continuer.",
       "personalTitle": "Personnel",
       "personalDesc": "Pour les individus et les clients particuliers.",
       "select": "Sélectionner",
