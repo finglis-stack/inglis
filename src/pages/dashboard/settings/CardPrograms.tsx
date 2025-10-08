@@ -1,14 +1,37 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PlusCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '@/integrations/supabase/client';
+import { showError } from '@/utils/toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const CardPrograms = () => {
   const { t } = useTranslation();
-  // Données fictives en attendant la suite
-  const programs: any[] = [];
+  const [programs, setPrograms] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('card_programs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        showError(`Erreur lors de la récupération des programmes : ${error.message}`);
+      } else {
+        setPrograms(data);
+      }
+      setLoading(false);
+    };
+
+    fetchPrograms();
+  }, []);
 
   return (
     <div>
@@ -38,12 +61,22 @@ const CardPrograms = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {programs.length > 0 ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : programs.length > 0 ? (
                 programs.map((program) => (
                   <TableRow key={program.id}>
-                    <TableCell>{program.name}</TableCell>
-                    <TableCell>{program.id}</TableCell>
-                    <TableCell>{program.type}</TableCell>
+                    <TableCell className="font-medium">{program.program_name}</TableCell>
+                    <TableCell>{program.program_id}</TableCell>
+                    <TableCell>{program.card_type}</TableCell>
                     <TableCell>{program.status}</TableCell>
                   </TableRow>
                 ))
