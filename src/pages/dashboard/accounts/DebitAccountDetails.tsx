@@ -8,11 +8,13 @@ import { ArrowLeft, DollarSign, CreditCard, User, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import DebitAccountAccessLog from '../../../components/dashboard/DebitAccountAccessLog';
 
 const DebitAccountDetails = () => {
   const { accountId } = useParams();
   const [account, setAccount] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [accessLogs, setAccessLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,6 +22,15 @@ const DebitAccountDetails = () => {
       if (!accountId) return;
       setLoading(true);
 
+      // Record access
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('debit_account_access_logs')
+          .insert({ debit_account_id: accountId, visitor_user_id: user.id });
+      }
+
+      // Fetch account details
       const { data: accountData, error: accountError } = await supabase
         .from('debit_accounts')
         .select(`
@@ -37,6 +48,7 @@ const DebitAccountDetails = () => {
       }
       setAccount(accountData);
 
+      // Fetch transactions
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
         .select('*')
@@ -47,6 +59,16 @@ const DebitAccountDetails = () => {
         showError(`Erreur lors de la récupération des transactions: ${transactionsError.message}`);
       } else {
         setTransactions(transactionsData);
+      }
+
+      // Fetch logs (including the one just added)
+      const { data: logsData, error: logsError } = await supabase.rpc('get_debit_account_access_logs', {
+        p_account_id: accountId,
+      });
+      if (logsError) {
+        showError(`Erreur lors de la récupération de l'historique d'accès: ${logsError.message}`);
+      } else {
+        setAccessLogs(logsData || []);
       }
 
       setLoading(false);
@@ -63,6 +85,7 @@ const DebitAccountDetails = () => {
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-32 w-full md:col-span-2" />
         </div>
+        <Skeleton className="h-48 w-full" />
         <Skeleton className="h-48 w-full" />
       </div>
     );
@@ -169,6 +192,7 @@ const DebitAccountDetails = () => {
             </Button>
           </CardContent>
         </Card>
+        <DebitAccountAccessLog logs={accessLogs} className="md:col-span-2" />
       </div>
     </div>
   );
