@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn, calculateAge } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 
-const PersonalProfile = ({ profile, decryptedSin }) => {
+const PersonalProfile = ({ profile, decryptedSin, decryptedAddress }) => {
   const { t } = useTranslation();
 
   const getStatusInfo = (status) => {
@@ -78,9 +78,15 @@ const PersonalProfile = ({ profile, decryptedSin }) => {
             <CardTitle>{t('dashboard.userProfile.address')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
-            <p>{profile.address?.street}</p>
-            <p>{profile.address?.city}, {profile.address?.province} {profile.address?.postalCode}</p>
-            <p>{profile.address?.country}</p>
+            {decryptedAddress ? (
+              <>
+                <p>{decryptedAddress.street}</p>
+                <p>{decryptedAddress.city}, {decryptedAddress.province} {decryptedAddress.postalCode}</p>
+                <p>{decryptedAddress.country}</p>
+              </>
+            ) : (
+              <p>{profile.address ? t('dashboard.userProfile.addressLocked') : t('dashboard.userProfile.addressNotProvided')}</p>
+            )}
           </CardContent>
         </Card>
         <Card className="md:col-span-2">

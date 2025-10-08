@@ -374,6 +374,8 @@
       "email": "Email",
       "phone": "Phone",
       "address": "Address",
+      "addressLocked": "Locked",
+      "addressNotProvided": "Not provided",
       "identityInfo": "Identity Information",
       "dob": "Date of Birth",
       "sin": "Social Insurance Number",

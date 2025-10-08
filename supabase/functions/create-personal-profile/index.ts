@@ -39,13 +39,12 @@ serve(async (req) => {
       .single()
     if (institutionError) throw institutionError;
 
-    // Préparer l'enregistrement à insérer. Le NAS est envoyé en clair.
-    // La base de données le chiffrera automatiquement grâce au chiffrement transparent.
+    // Préparer l'enregistrement à insérer.
     const recordToInsert = {
       institution_id: institution.id,
       type: 'personal',
       full_name: profileData.full_name,
-      address: profileData.address,
+      address: JSON.stringify(profileData.address), // Convertir l'objet adresse en chaîne de caractères pour le chiffrement
       phone: profileData.phone,
       email: profileData.email,
       dob: profileData.dob,

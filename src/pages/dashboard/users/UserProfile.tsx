@@ -21,6 +21,7 @@ const UserProfile = () => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [accessLogs, setAccessLogs] = useState([]);
   const [decryptedSin, setDecryptedSin] = useState(null);
+  const [decryptedAddress, setDecryptedAddress] = useState(null);
 
   const fetchLogs = useCallback(async () => {
     if (!id) return;
@@ -69,19 +70,36 @@ const UserProfile = () => {
 
     setIsUnlocked(true);
 
-    if (profile.sin) {
-      try {
-        const { data, error } = await supabase.functions.invoke('get-decrypted-sin', {
-          body: { profile_id: profile.id },
-        });
+    if (profile.type === 'personal') {
+      if (profile.sin) {
+        try {
+          const { data, error } = await supabase.functions.invoke('get-decrypted-sin', {
+            body: { profile_id: profile.id },
+          });
 
-        if (error) {
-          const functionError = await error.context.json();
-          throw new Error(functionError.error || error.message);
+          if (error) {
+            const functionError = await error.context.json();
+            throw new Error(functionError.error || error.message);
+          }
+          setDecryptedSin(data.sin);
+        } catch (e) {
+          showError(`Impossible de déchiffrer le NAS: ${e.message}`);
         }
-        setDecryptedSin(data.sin);
-      } catch (e) {
-        showError(`Impossible de déchiffrer le NAS: ${e.message}`);
+      }
+      if (profile.address) {
+        try {
+          const { data, error } = await supabase.functions.invoke('get-decrypted-address', {
+            body: { profile_id: profile.id },
+          });
+
+          if (error) {
+            const functionError = await error.context.json();
+            throw new Error(functionError.error || error.message);
+          }
+          setDecryptedAddress(data.address);
+        } catch (e) {
+          showError(`Impossible de déchiffrer l'adresse: ${e.message}`);
+        }
       }
     }
     
@@ -119,7 +137,7 @@ const UserProfile = () => {
         {!isUnlocked && profile.pin && <PinLock onUnlock={handleUnlock} />}
         
         <div className={cn({ 'blur-sm pointer-events-none': !isUnlocked && profile.pin })}>
-          {profile.type === 'personal' && <PersonalProfile profile={profile} decryptedSin={decryptedSin} />}
+          {profile.type === 'personal' && <PersonalProfile profile={profile} decryptedSin={decryptedSin} decryptedAddress={decryptedAddress} />}
           {profile.type === 'corporate' && <CorporateProfile profile={profile} />}
         </div>
 

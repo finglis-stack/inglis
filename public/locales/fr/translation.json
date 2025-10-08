@@ -374,6 +374,8 @@
       "email": "Email",
       "phone": "Téléphone",
       "address": "Adresse",
+      "addressLocked": "Verrouillée",
+      "addressNotProvided": "Non fournie",
       "identityInfo": "Informations d'Identité",
       "dob": "Date de naissance",
       "sin": "Numéro d'assurance sociale",
