@@ -205,6 +205,8 @@ serve(async (req) => {
       console.error("Failed to set PIN setup token:", tokenUpdateError);
     } else if (profile.email) {
       const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+      const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'Inglis Dominium <onboarding@resend.dev>';
+      
       if (RESEND_API_KEY) {
         const profileName = profile.type === 'personal' ? profile.full_name : profile.legal_name;
         const cardNumber = `${user_initials} ${issuer_id} ${random_letters} ${unique_identifier.slice(0,4)} ${unique_identifier.slice(4)} ${check_digit}`;
@@ -226,7 +228,7 @@ serve(async (req) => {
             'Authorization': `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: 'Inglis Dominium <onboarding@resend.dev>',
+            from: fromEmail,
             to: [profile.email],
             subject: "Votre nouvelle carte Inglis Dominium est prête",
             html: emailHtml,
