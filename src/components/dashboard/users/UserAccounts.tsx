@@ -1,11 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { CreditCard, Wallet, Settings } from 'lucide-react';
+import { CreditCard, Wallet, Settings, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import ResetPinDialog from './ResetPinDialog';
 
-const UserAccounts = ({ cards, creditAccounts, debitAccounts, className }) => {
+const UserAccounts = ({ cards, creditAccounts, debitAccounts, className, profileId }) => {
   const getStatusVariant = (status) => {
     switch ((status || '').toLowerCase()) {
       case 'active':
@@ -75,13 +82,28 @@ const UserAccounts = ({ cards, creditAccounts, debitAccounts, className }) => {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      {account?.type === 'debit' && (
-                        <Button asChild variant="outline" size="sm">
-                          <Link to={`/dashboard/accounts/debit/${account.id}`}>
-                            <Settings className="mr-2 h-4 w-4" /> Gérer
-                          </Link>
-                        </Button>
-                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          {account?.type === 'debit' && (
+                            <DropdownMenuItem asChild>
+                              <Link to={`/dashboard/accounts/debit/${account.id}`}>
+                                Gérer le compte
+                              </Link>
+                            </DropdownMenuItem>
+                          )}
+                          <ResetPinDialog profileId={profileId} cardId={card.id}>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                              <KeyRound className="mr-2 h-4 w-4" />
+                              Réinitialiser NIP carte
+                            </DropdownMenuItem>
+                          </ResetPinDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );

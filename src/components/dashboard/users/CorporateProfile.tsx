@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import UserAccounts from './UserAccounts';
 
-const CorporateProfile = ({ profile, cards, creditAccounts, debitAccounts }) => {
+const CorporateProfile = ({ profile, cards, creditAccounts, debitAccounts, profileId }) => {
   const { t } = useTranslation();
 
   const getStatusInfo = (status) => {
@@ -69,7 +69,7 @@ const CorporateProfile = ({ profile, cards, creditAccounts, debitAccounts }) => 
             <p>{profile.business_address?.country}</p>
           </CardContent>
         </Card>
-        <UserAccounts cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} className="md:col-span-2" />
+        <UserAccounts cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} className="md:col-span-2" profileId={profileId} />
       </div>
     </div>
   );

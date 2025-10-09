@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { format, parseISO } from 'date-fns';
 import UserAccounts from './UserAccounts';
 
-const PersonalProfile = ({ profile, decryptedSin, decryptedAddress, cards, creditAccounts, debitAccounts }) => {
+const PersonalProfile = ({ profile, decryptedSin, decryptedAddress, cards, creditAccounts, debitAccounts, profileId }) => {
   const { t } = useTranslation();
 
   const getStatusInfo = (status) => {
@@ -96,7 +96,7 @@ const PersonalProfile = ({ profile, decryptedSin, decryptedAddress, cards, credi
           </CardContent>
         </Card>
         
-        <UserAccounts cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} className="md:col-span-2" />
+        <UserAccounts cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} className="md:col-span-2" profileId={profileId} />
 
         <Card className="md:col-span-2">
           <CardHeader>

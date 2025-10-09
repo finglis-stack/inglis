@@ -8,6 +8,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import PinLock from '@/components/dashboard/users/PinLock';
 import AccessLog from '@/components/dashboard/users/AccessLog';
 import ChangePinDialog from '@/components/dashboard/users/ChangePinDialog';
+import ResetPinDialog from '@/components/dashboard/users/ResetPinDialog';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { showError } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
@@ -165,15 +167,18 @@ const UserProfile = () => {
         {!isUnlocked && profile.pin && <PinLock onUnlock={handleUnlock} />}
         
         <div className={cn({ 'blur-sm pointer-events-none': !isUnlocked && profile.pin })}>
-          {profile.type === 'personal' && <PersonalProfile profile={profile} decryptedSin={decryptedSin} decryptedAddress={decryptedAddress} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} />}
-          {profile.type === 'corporate' && <CorporateProfile profile={profile} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} />}
+          {profile.type === 'personal' && <PersonalProfile profile={profile} decryptedSin={decryptedSin} decryptedAddress={decryptedAddress} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} profileId={profile.id} />}
+          {profile.type === 'corporate' && <CorporateProfile profile={profile} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} profileId={profile.id} />}
         </div>
 
         {isUnlocked && (
           <div className="grid md:grid-cols-2 gap-6 mt-6">
             <AccessLog logs={accessLogs} />
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center gap-4">
               <ChangePinDialog profileId={profile.id} onPinChanged={handlePinChanged} />
+              <ResetPinDialog profileId={profile.id}>
+                <Button variant="secondary">Réinitialiser NIP profil</Button>
+              </ResetPinDialog>
             </div>
           </div>
         )}
