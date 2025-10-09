@@ -92,6 +92,7 @@ const UserAccounts = ({ cards, creditAccounts, debitAccounts, className, profile
                           {account?.type === 'debit' && (
                             <DropdownMenuItem asChild>
                               <Link to={`/dashboard/accounts/debit/${account.id}`}>
+                                <Settings className="mr-2 h-4 w-4" />
                                 Gérer le compte
                               </Link>
                             </DropdownMenuItem>
