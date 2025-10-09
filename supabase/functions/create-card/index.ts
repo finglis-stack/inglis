@@ -80,11 +80,11 @@ const getEmailHtml = (details) => {
       .header { padding: 24px; text-align: center; background-color: #f1f3f5; }
       .content { padding: 32px; }
       .card-wrapper { margin: 24px 0; }
-      .card { border-radius: 12px; padding: 24px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 8px 16px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: space-between; height: 180px; color: ${textColor}; background: ${details.cardColor}; }
+      .card { border-radius: 12px; padding: 24px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 8px 16px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: space-between; height: 190px; color: ${textColor}; background: ${details.cardColor}; }
       .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-      .card-details { font-size: 22px; letter-spacing: 2px; margin-top: 16px; }
+      .card-details { font-size: 20px; letter-spacing: 2px; margin-top: 16px; word-spacing: 12px; }
       .card-footer { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; text-transform: uppercase; }
-      .button { display: inline-block; background-color: #000080; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 24px; }
+      .button { display: inline-block; background-color: #374151; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 24px; }
       .footer { padding: 24px; text-align: center; font-size: 12px; color: #6c757d; background-color: #f1f3f5; }
     </style>
   </head>
@@ -116,7 +116,7 @@ const getEmailHtml = (details) => {
           </div>
         </div>
         <p>Pour activer votre carte, la première étape est de configurer votre numéro d'identification personnel (NIP). Veuillez cliquer sur le bouton ci-dessous pour le faire en toute sécurité.</p>
-        <a href="${details.pinSetupLink}" class="button">Configurer mon NIP</a>
+        <a href="${details.pinSetupLink}" class="button">Configurer mon NIP de carte</a>
         <p style="font-size: 12px; color: #6c757d; margin-top: 24px;">Ce lien est unique et expirera dans 24 heures. Si vous n'avez pas demandé cette carte, veuillez contacter notre support immédiatement.</p>
       </div>
       <div class="footer">
@@ -173,6 +173,9 @@ serve(async (req) => {
     const expires_at_db = expires_at.toISOString().split('T')[0];
     const expires_at_display = `${(expires_at.getMonth() + 1).toString().padStart(2, '0')}/${expires_at.getFullYear().toString().slice(-2)}`;
 
+    const pinSetupToken = crypto.randomUUID();
+    const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
     const { data: newCard, error: insertError } = await supabaseAdmin.from('cards').insert({
       profile_id,
       card_program_id,
@@ -183,6 +186,8 @@ serve(async (req) => {
       check_digit,
       status: 'active',
       expires_at: expires_at_db,
+      pin_setup_token: pinSetupToken,
+      pin_setup_token_expires_at: tokenExpiresAt,
     }).select('id').single();
 
     if (insertError) throw insertError;
@@ -196,20 +201,13 @@ serve(async (req) => {
         if (accountError) throw accountError;
     }
 
-    const pinSetupToken = crypto.randomUUID();
-    const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-    const { error: tokenUpdateError } = await supabaseAdmin.from('profiles').update({ pin_setup_token: pinSetupToken, pin_setup_token_expires_at: tokenExpiresAt }).eq('id', profile_id);
-
-    if (tokenUpdateError) {
-      console.error("Failed to set PIN setup token:", tokenUpdateError);
-    } else if (profile.email) {
+    if (profile.email) {
       const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
       const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'Inglis Dominium <onboarding@resend.dev>';
       
       if (RESEND_API_KEY) {
         const profileName = profile.type === 'personal' ? profile.full_name : profile.legal_name;
-        const cardNumber = `${user_initials} ${issuer_id} ${random_letters} ${unique_identifier.slice(0,4)} ${unique_identifier.slice(4)} ${check_digit}`;
+        const cardNumber = `${user_initials} ${issuer_id} ${random_letters} ${unique_identifier.slice(0,4)}**** ${check_digit}`;
         
         const emailHtml = getEmailHtml({
           profileName,
@@ -218,7 +216,7 @@ serve(async (req) => {
           cardColor: program.card_color,
           cardNumber,
           expiresAt: expires_at_display,
-          pinSetupLink: `https://inglisdominium.ca/set-pin/${pinSetupToken}`,
+          pinSetupLink: `https://inglisdominium.ca/set-card-pin/${pinSetupToken}`,
         });
 
         const res = await fetch('https://api.resend.com/emails', {

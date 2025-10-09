@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,21 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { showError, showSuccess } from '@/utils/toast';
 import { Loader2 } from 'lucide-react';
 
-const SetPin = () => {
+const SetCardPin = () => {
   const { token } = useParams();
   const navigate = useNavigate();
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    if (!token) {
-      setIsValidToken(false);
-    } else {
-      setIsValidToken(true);
-    }
-  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +27,7 @@ const SetPin = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.functions.invoke('set-pin-from-token', {
+      const { error } = await supabase.functions.invoke('set-card-pin', {
         body: { token, pin },
       });
 
@@ -45,7 +36,7 @@ const SetPin = () => {
         throw new Error(functionError.error || "Le lien est invalide ou a expiré.");
       }
 
-      showSuccess("Votre NIP a été configuré avec succès !");
+      showSuccess("Le NIP de votre carte a été configuré avec succès !");
       navigate('/login');
     } catch (err) {
       showError(err.message);
@@ -54,35 +45,18 @@ const SetPin = () => {
     }
   };
 
-  if (isValidToken === null) {
-    return <div className="flex justify-center items-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  }
-
-  if (!isValidToken) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Lien Invalide</CardTitle>
-            <CardDescription>Ce lien de configuration de NIP est invalide ou a déjà été utilisé.</CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Configurez votre NIP</CardTitle>
+          <CardTitle>Configurez le NIP de votre carte</CardTitle>
           <CardDescription>Choisissez un NIP à 4 chiffres pour votre nouvelle carte. Ne le partagez avec personne.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="space-y-4">
               <div className="flex flex-col items-center space-y-2">
-                <label htmlFor="pin">Nouveau NIP</label>
+                <label htmlFor="pin">Nouveau NIP de carte</label>
                 <InputOTP id="pin" maxLength={4} value={pin} onChange={setPin}>
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
@@ -115,4 +89,4 @@ const SetPin = () => {
   );
 };
 
-export default SetPin;
+export default SetCardPin;
