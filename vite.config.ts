@@ -5,8 +5,12 @@ import path from "path";
 
 export default defineConfig(() => ({
   server: {
-    host: "::",
-    port: 8080,
+    host: true, // Écoute sur toutes les adresses, y compris 0.0.0.0
+    port: Number(process.env.PORT) || 8080,
+  },
+  preview: {
+    host: true, // Important pour que le conteneur soit accessible
+    port: Number(process.env.PORT) || 8080,
   },
   plugins: [dyadComponentTagger(), react()],
   resolve: {
