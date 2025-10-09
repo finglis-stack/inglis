@@ -49,7 +49,7 @@ serve(async (req) => {
     const recordToInsert = {
       institution_id: institution.id,
       type: 'personal',
-      full_name: profileData.full_name,
+      full_name: profileData.fullName,
       phone: profileData.phone,
       email: profileData.email,
       dob: profileData.dob,
