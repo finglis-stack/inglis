@@ -82,10 +82,11 @@ const getEmailHtml = (details) => {
       .card-wrapper { margin: 24px 0; }
       .card { border-radius: 12px; padding: 24px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 8px 16px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: space-between; height: 190px; color: ${textColor}; background: ${details.cardColor}; }
       .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-      .card-details { font-size: 20px; letter-spacing: 2px; margin-top: 16px; word-spacing: 12px; }
+      .card-details { font-size: 20px; letter-spacing: 2px; margin-top: 16px; }
       .card-footer { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; text-transform: uppercase; }
-      .button { display: inline-block; background-color: #374151; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 24px; }
+      .button { display: inline-block; background-color: #1F2937; color: #ffffff !important; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 24px; }
       .footer { padding: 24px; text-align: center; font-size: 12px; color: #6c757d; background-color: #f1f3f5; }
+      .footer a { color: #6c757d; text-decoration: none; }
     </style>
   </head>
   <body>
@@ -103,7 +104,7 @@ const getEmailHtml = (details) => {
                 <p style="margin:0; font-size: 12px; opacity: 0.8;">${details.programName}</p>
                 <p style="margin:0; font-size: 16px; font-weight: bold; text-transform: uppercase;">${details.cardType}</p>
               </div>
-              <img src="https://inglisdominium.ca/logo.png" alt="Logo" style="height: 32px; filter: ${logoFilter};">
+              <img src="https://www.inglisdominion.ca/logo.png" alt="Logo" style="height: 32px; filter: ${logoFilter};">
             </div>
             <div>
               <div style="width: 48px; height: 32px; background-color: #ffca28; border-radius: 6px; margin-bottom: 8px;"></div>
@@ -116,11 +117,11 @@ const getEmailHtml = (details) => {
           </div>
         </div>
         <p>Pour activer votre carte, la première étape est de configurer votre numéro d'identification personnel (NIP). Veuillez cliquer sur le bouton ci-dessous pour le faire en toute sécurité.</p>
-        <a href="${details.pinSetupLink}" class="button">Configurer mon NIP de carte</a>
+        <a href="${details.pinSetupLink}" class="button" style="color: #ffffff !important;">Configurer mon NIP de carte</a>
         <p style="font-size: 12px; color: #6c757d; margin-top: 24px;">Ce lien est unique et expirera dans 24 heures. Si vous n'avez pas demandé cette carte, veuillez contacter notre support immédiatement.</p>
       </div>
       <div class="footer">
-        <p>&copy; ${new Date().getFullYear()} Inglis Dominium. Tous droits réservés.</p>
+        <p><a href="https://www.inglisdominion.ca/">&copy; ${new Date().getFullYear()} Inglis Dominium. Tous droits réservés.</a></p>
       </div>
     </div>
   </body>
@@ -207,7 +208,7 @@ serve(async (req) => {
       
       if (RESEND_API_KEY) {
         const profileName = profile.type === 'personal' ? profile.full_name : profile.legal_name;
-        const cardNumber = `${user_initials} ${issuer_id} ${random_letters} ${unique_identifier.slice(0,4)}**** ${check_digit}`;
+        const cardNumber = `${user_initials}&nbsp;${issuer_id}&nbsp;${random_letters}&nbsp;****${unique_identifier.slice(-3)}&nbsp;${check_digit}`;
         
         const emailHtml = getEmailHtml({
           profileName,
@@ -216,7 +217,7 @@ serve(async (req) => {
           cardColor: program.card_color,
           cardNumber,
           expiresAt: expires_at_display,
-          pinSetupLink: `https://inglisdominium.ca/set-card-pin/${pinSetupToken}`,
+          pinSetupLink: `https://www.inglisdominion.ca/set-card-pin/${pinSetupToken}`,
         });
 
         const res = await fetch('https://api.resend.com/emails', {
