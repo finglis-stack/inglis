@@ -69,7 +69,17 @@ const UserProfile = () => {
   }, [isUnlocked, fetchLogs]);
 
   const handleUnlock = async (pin) => {
-    if (pin !== profile.pin) {
+    const { data: isValid, error } = await supabase.rpc('verify_profile_pin', {
+      p_profile_id: profile.id,
+      p_pin_to_verify: pin,
+    });
+
+    if (error) {
+      showError(`Erreur de vérification: ${error.message}`);
+      return false;
+    }
+
+    if (!isValid) {
       return false;
     }
 
