@@ -24,7 +24,7 @@ const Step5Review = () => {
     }
 
     const profileData = {
-      full_name: userData.fullName,
+      fullName: userData.fullName,
       address: userData.address,
       phone: userData.phone,
       email: userData.email,
