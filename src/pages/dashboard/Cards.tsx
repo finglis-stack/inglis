@@ -16,11 +16,13 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Cards = () => {
   const { t } = useTranslation();
   const [cards, setCards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchCards = async () => {
@@ -50,6 +52,79 @@ const Cards = () => {
         return 'outline';
     }
   };
+
+  const renderActions = (card: any) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {card.card_type === 'debit' && card.debit_account_id && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link to={`/dashboard/accounts/debit/${card.debit_account_id}`}>
+                <Settings className="mr-2 h-4 w-4" />
+                Gérer le compte
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        <DropdownMenuItem>{t('dashboard.cards.actionView')}</DropdownMenuItem>
+        <DropdownMenuItem>{t('dashboard.cards.actionDeactivate')}</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
+  if (isMobile) {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold">{t('dashboard.cards.title')}</h1>
+          <Button asChild size="sm">
+            <Link to="/dashboard/cards/new">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              {t('dashboard.cards.addCard')}
+            </Link>
+          </Button>
+        </div>
+        {loading ? (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}
+          </div>
+        ) : cards.length > 0 ? (
+          <div className="space-y-4">
+            {cards.map((card) => (
+              <Card key={card.card_id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-base">{card.profile_name}</CardTitle>
+                      <CardDescription className="text-xs">{card.program_name}</CardDescription>
+                    </div>
+                    {renderActions(card)}
+                  </div>
+                </CardHeader>
+                <CardContent className="text-sm space-y-2">
+                  <p className="font-mono text-xs">{card.card_number}</p>
+                  <div className="flex items-center justify-between">
+                    <Badge variant={getStatusVariant(card.card_status)}>{card.card_status}</Badge>
+                    <p className="text-muted-foreground text-xs">
+                      {new Date(card.card_created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground py-8">{t('dashboard.cards.noCards')}</p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -100,28 +175,7 @@ const Cards = () => {
                     </TableCell>
                     <TableCell>{new Date(card.card_created_at).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          {card.card_type === 'debit' && card.debit_account_id && (
-                            <>
-                              <DropdownMenuItem asChild>
-                                <Link to={`/dashboard/accounts/debit/${card.debit_account_id}`}>
-                                  <Settings className="mr-2 h-4 w-4" />
-                                  Gérer le compte
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                            </>
-                          )}
-                          <DropdownMenuItem>{t('dashboard.cards.actionView')}</DropdownMenuItem>
-                          <DropdownMenuItem>{t('dashboard.cards.actionDeactivate')}</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {renderActions(card)}
                     </TableCell>
                   </TableRow>
                 ))

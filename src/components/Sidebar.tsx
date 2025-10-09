@@ -3,7 +3,12 @@ import { CreditCard, LayoutDashboard, Users, ArrowRightLeft, Settings, FileText 
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 
-export const Sidebar = () => {
+interface SidebarProps {
+  className?: string;
+  onLinkClick?: () => void;
+}
+
+export const Sidebar = ({ className, onLinkClick }: SidebarProps) => {
   const { t } = useTranslation();
 
   const navItems = [
@@ -16,7 +21,7 @@ export const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-64 flex-shrink-0 bg-gray-100 p-4 flex flex-col border-r">
+    <aside className={cn("w-64 flex-shrink-0 bg-gray-100 p-4 flex flex-col border-r", className)}>
       <div className="mb-8">
         <NavLink to="/">
           <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="h-10" />
@@ -28,6 +33,7 @@ export const Sidebar = () => {
             key={item.to}
             to={item.to}
             end={item.to === '/dashboard'}
+            onClick={onLinkClick}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-gray-600 transition-all hover:bg-gray-200 hover:text-gray-900',

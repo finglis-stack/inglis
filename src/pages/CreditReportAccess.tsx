@@ -173,6 +173,28 @@ const CreditReportAccess = () => {
             border: 1px solid #808080 !important;
           }
         }
+        @media (max-width: 768px) {
+          .win95-window {
+            padding: 0.5rem;
+            border: none;
+            box-shadow: none;
+          }
+          .win95-content {
+            padding: 0.5rem;
+          }
+          h1 {
+            font-size: 1.125rem; /* text-lg */
+          }
+          .grid-cols-2 {
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+          }
+          .text-5xl {
+            font-size: 2.25rem; /* text-4xl */
+          }
+          .win95-button {
+            padding: 0.5rem 1rem;
+          }
+        }
       `}</style>
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="win95-window w-full max-w-3xl">
@@ -227,7 +249,7 @@ const CreditReportAccess = () => {
 
             {report && (
               <div>
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start flex-wrap gap-4">
                   <div>
                     <h2 className="text-2xl font-bold print-text-black">{report.full_name}</h2>
                     <p className="print-text-black">NAS: ***-***-{report.ssn.slice(6)}</p>
@@ -240,7 +262,7 @@ const CreditReportAccess = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
                     <h3 className="font-bold print-text-black">Informations Personnelles</h3>
                     <div className="p-2 bg-white border-2 border-t-gray-500 border-l-gray-500 border-b-white border-r-white mt-1 print-border">
@@ -285,8 +307,8 @@ const CreditReportAccess = () => {
                   </div>
                 </div>
                 
-                <div className="text-right mt-4 print-hidden">
-                  <button onClick={handlePrint} className="win95-button mr-2">
+                <div className="text-right mt-4 print-hidden flex flex-wrap gap-2 justify-end">
+                  <button onClick={handlePrint} className="win95-button">
                     <Printer className="inline-block mr-2 h-4 w-4" />
                     IMPRIMER PDF
                   </button>

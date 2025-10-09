@@ -19,12 +19,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Badge } from '@/components/ui/badge';
 
 const CardPrograms = () => {
   const { t } = useTranslation();
   const [programs, setPrograms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchPrograms = async () => {
@@ -65,6 +68,71 @@ const CardPrograms = () => {
       setDeletingId(null);
     }
   };
+
+  const renderDeleteAction = (program: any) => (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" disabled={deletingId === program.id}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t('dashboard.cardPrograms.deleteTitle')}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {t('dashboard.cardPrograms.deleteDesc')}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t('dashboard.cardPrograms.deleteCancel')}</AlertDialogCancel>
+          <AlertDialogAction onClick={() => handleDeleteProgram(program.id)}>
+            {deletingId === program.id ? t('dashboard.cardPrograms.deleteProgress') : t('dashboard.cardPrograms.deleteConfirm')}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  if (isMobile) {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold">{t('dashboard.cardPrograms.title')}</h1>
+          <Button asChild size="sm">
+            <Link to="/dashboard/settings/card-programs/new">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              {t('dashboard.cardPrograms.createProgram')}
+            </Link>
+          </Button>
+        </div>
+        {loading ? (
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+          </div>
+        ) : programs.length > 0 ? (
+          <div className="space-y-4">
+            {programs.map((program) => (
+              <Card key={program.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-base">{program.program_name}</CardTitle>
+                    {renderDeleteAction(program)}
+                  </div>
+                  <CardDescription className="text-xs">{program.program_id}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex items-center justify-between text-sm">
+                  <Badge variant={program.status === 'active' ? 'default' : 'secondary'}>{program.status}</Badge>
+                  <span className="capitalize text-muted-foreground">{program.card_type}</span>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <p className="text-center text-muted-foreground py-8">{t('dashboard.cardPrograms.noPrograms')}</p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -113,27 +181,7 @@ const CardPrograms = () => {
                     <TableCell>{program.card_type}</TableCell>
                     <TableCell>{program.status}</TableCell>
                     <TableCell className="text-right">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" disabled={deletingId === program.id}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t('dashboard.cardPrograms.deleteTitle')}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {t('dashboard.cardPrograms.deleteDesc')}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t('dashboard.cardPrograms.deleteCancel')}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteProgram(program.id)}>
-                              {deletingId === program.id ? t('dashboard.cardPrograms.deleteProgress') : t('dashboard.cardPrograms.deleteConfirm')}
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      {renderDeleteAction(program)}
                     </TableCell>
                   </TableRow>
                 ))
