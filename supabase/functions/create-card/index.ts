@@ -206,7 +206,7 @@ serve(async (req) => {
       console.error("Failed to set PIN setup token:", tokenUpdateError);
     } else if (profile.email) {
       const client = new SmtpClient();
-      await client.connect({
+      await client.connectTLS({
         hostname: Deno.env.get('SMTP_HOST'),
         port: Number(Deno.env.get('SMTP_PORT')),
         username: Deno.env.get('SMTP_USER'),
@@ -227,7 +227,7 @@ serve(async (req) => {
           cardColor: program.card_color,
           cardNumber,
           expiresAt: expires_at_display,
-          pinSetupLink: `https://inglisdominion.ca/set-pin/${pinSetupToken}`,
+          pinSetupLink: `https://inglisdominium.ca/set-pin/${pinSetupToken}`,
         }),
       });
       await client.close();
