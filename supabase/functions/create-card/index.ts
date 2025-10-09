@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
-import { SMTPClient } from "https://deno.land/x/deno_smtp@0.4.0/mod.ts";
+import { Mailer } from "https://deno.land/x/deno_mailer@2.0.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -205,22 +205,18 @@ serve(async (req) => {
     if (tokenUpdateError) {
       console.error("Failed to set PIN setup token:", tokenUpdateError);
     } else if (profile.email) {
-      const client = new SMTPClient({
-        connection: {
-          hostname: Deno.env.get('SMTP_HOST'),
-          port: Number(Deno.env.get('SMTP_PORT')),
-          tls: true,
-          auth: {
-            username: Deno.env.get('SMTP_USER'),
-            password: Deno.env.get('SMTP_PASS'),
-          },
-        },
+      const mailer = new Mailer({
+        hostname: Deno.env.get('SMTP_HOST'),
+        port: Number(Deno.env.get('SMTP_PORT')),
+        username: Deno.env.get('SMTP_USER'),
+        password: Deno.env.get('SMTP_PASS'),
+        useSSL: true,
       });
 
       const profileName = profile.type === 'personal' ? profile.full_name : profile.legal_name;
       const cardNumber = `${user_initials} ${issuer_id} ${random_letters} ${unique_identifier.slice(0,4)} ${unique_identifier.slice(4)} ${check_digit}`;
 
-      await client.send({
+      await mailer.send({
         from: Deno.env.get('SMTP_USER'),
         to: profile.email,
         subject: "Votre nouvelle carte Inglis Dominium est prête",
@@ -234,7 +230,6 @@ serve(async (req) => {
           pinSetupLink: `https://inglisdominium.ca/set-pin/${pinSetupToken}`,
         }),
       });
-      await client.close();
     }
 
     return new Response(JSON.stringify({ message: "Card created successfully" }), {
