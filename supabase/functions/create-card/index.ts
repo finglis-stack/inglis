@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
-import { SmtpClient } from "https://deno.land/x/deno_mailer@v1.0.0/mod.ts";
+import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -206,7 +206,7 @@ serve(async (req) => {
       console.error("Failed to set PIN setup token:", tokenUpdateError);
     } else if (profile.email) {
       const client = new SmtpClient();
-      await client.connectTLS({
+      await client.connect({
         hostname: Deno.env.get('SMTP_HOST'),
         port: Number(Deno.env.get('SMTP_PORT')),
         username: Deno.env.get('SMTP_USER'),
