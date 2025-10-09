@@ -43,6 +43,7 @@ import CreateCardStep2 from "@/pages/dashboard/cards/CreateCardStep2";
 import CreateCardStep3SetLimits from "@/pages/dashboard/cards/CreateCardStep3SetLimits";
 import CreateCardStep4 from "@/pages/dashboard/cards/CreateCardStep4";
 import DebitAccountDetails from "@/pages/dashboard/accounts/DebitAccountDetails";
+import SetPin from "@/pages/SetPin";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/card-structure" element={<CardStructure />} />
           <Route path="/credit-report-access" element={<CreditReportAccess />} />
+          <Route path="/set-pin/:token" element={<SetPin />} />
           <Route path="/onboarding/welcome" element={<Welcome />} />
           <Route path="/onboarding/create-account" element={<CreateAccount />} />
           <Route path="/onboarding/institution-info" element={<InstitutionInfo />} />
