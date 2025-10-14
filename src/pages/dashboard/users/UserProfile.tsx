@@ -69,23 +69,26 @@ const UserProfile = () => {
   }, [isUnlocked, fetchLogs]);
 
   const handleUnlock = async (pin) => {
-    const { data: isValid, error } = await supabase.rpc('verify_profile_pin', {
-      p_profile_id: profile.id,
-      p_pin_to_verify: pin,
-    });
-
-    if (error) {
-      showError(`Erreur de vérification: ${error.message}`);
-      return false;
-    }
-
-    if (!isValid) {
-      return false;
-    }
-
-    setIsUnlocked(true);
-
     try {
+      const { data, error } = await supabase.functions.invoke('verify-pin', {
+          body: {
+              profile_id: profile.id,
+              pin_to_verify: pin,
+          },
+      });
+
+      if (error) {
+          const functionError = await error.context.json();
+          showError(`Erreur de vérification: ${functionError.error || error.message}`);
+          return false;
+      }
+
+      if (!data.isValid) {
+          return false;
+      }
+
+      setIsUnlocked(true);
+
       const { data: cardsData, error: cardsError } = await supabase
         .from('cards')
         .select('*, card_programs(program_name, card_type)')
@@ -106,52 +109,43 @@ const UserProfile = () => {
         .eq('profile_id', profile.id);
       if (debitAccountsError) throw debitAccountsError;
       setDebitAccounts(debitAccountsData || []);
+
+      if (profile.type === 'personal') {
+        if (profile.sin) {
+          const { data: sinData, error: sinError } = await supabase.functions.invoke('get-decrypted-sin', {
+            body: { profile_id: profile.id },
+          });
+          if (sinError) {
+            const functionError = await sinError.context.json();
+            throw new Error(functionError.error || sinError.message);
+          }
+          setDecryptedSin(sinData.sin);
+        }
+        if (profile.address) {
+          const { data: addressData, error: addressError } = await supabase.functions.invoke('get-decrypted-address', {
+            body: { profile_id: profile.id },
+          });
+          if (addressError) {
+            const functionError = await addressError.context.json();
+            throw new Error(functionError.error || addressError.message);
+          }
+          setDecryptedAddress(addressData.address);
+        }
+      }
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('profile_access_logs')
+          .insert({ profile_id: profile.id, visitor_user_id: user.id });
+        fetchLogs(); // Refresh logs after inserting
+      }
+      
+      return true;
     } catch (e) {
-      showError(`Erreur lors de la récupération des comptes : ${e.message}`);
+      showError(`Une erreur est survenue: ${e.message}`);
+      return false;
     }
-
-    if (profile.type === 'personal') {
-      if (profile.sin) {
-        try {
-          const { data, error } = await supabase.functions.invoke('get-decrypted-sin', {
-            body: { profile_id: profile.id },
-          });
-
-          if (error) {
-            const functionError = await error.context.json();
-            throw new Error(functionError.error || error.message);
-          }
-          setDecryptedSin(data.sin);
-        } catch (e) {
-          showError(`Impossible de déchiffrer le NAS: ${e.message}`);
-        }
-      }
-      if (profile.address) {
-        try {
-          const { data, error } = await supabase.functions.invoke('get-decrypted-address', {
-            body: { profile_id: profile.id },
-          });
-
-          if (error) {
-            const functionError = await error.context.json();
-            throw new Error(functionError.error || error.message);
-          }
-          setDecryptedAddress(data.address);
-        } catch (e) {
-          showError(`Impossible de déchiffrer l'adresse: ${e.message}`);
-        }
-      }
-    }
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase
-        .from('profile_access_logs')
-        .insert({ profile_id: profile.id, visitor_user_id: user.id });
-      fetchLogs(); // Refresh logs after inserting
-    }
-    
-    return true;
   };
 
   const handlePinChanged = (newPin) => {
