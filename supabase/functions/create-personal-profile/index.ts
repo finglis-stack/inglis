@@ -38,16 +38,33 @@ serve(async (req) => {
       .single();
     if (institutionError) throw institutionError;
 
+    // Generate a new UUID for the profile beforehand
+    const { data: uuidData, error: uuidError } = await supabaseAdmin.rpc('gen_random_uuid');
+    if (uuidError) throw uuidError;
+    const newProfileId = uuidData;
+
+    // Encrypt sensitive data BEFORE inserting
+    const [pinRes, sinRes, addressRes] = await Promise.all([
+      profileData.pin ? supabaseAdmin.rpc('rpc_encrypt', { p_value: profileData.pin, p_associated_data: newProfileId }) : Promise.resolve({ data: null }),
+      profileData.sin ? supabaseAdmin.rpc('rpc_encrypt', { p_value: profileData.sin, p_associated_data: newProfileId }) : Promise.resolve({ data: null }),
+      profileData.address ? supabaseAdmin.rpc('rpc_encrypt', { p_value: JSON.stringify(profileData.address), p_associated_data: newProfileId }) : Promise.resolve({ data: null }),
+    ]);
+
+    if (pinRes.error) throw pinRes.error;
+    if (sinRes.error) throw sinRes.error;
+    if (addressRes.error) throw addressRes.error;
+
     const recordToInsert = {
+      id: newProfileId, // Use the pre-generated UUID
       institution_id: institution.id,
       type: 'personal',
       full_name: profileData.fullName,
       phone: profileData.phone,
       email: profileData.email,
       dob: profileData.dob,
-      address: profileData.address ? JSON.stringify(profileData.address) : null,
-      pin: profileData.pin,
-      sin: profileData.sin,
+      address: addressRes.data,
+      pin: pinRes.data,
+      sin: sinRes.data,
     };
 
     const { error: insertError } = await supabaseAdmin.from('profiles').insert(recordToInsert);

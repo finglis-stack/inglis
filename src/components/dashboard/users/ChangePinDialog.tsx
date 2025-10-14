@@ -22,10 +22,12 @@ const ChangePinDialog = ({ profileId, onPinChanged }) => {
 
   const handleSave = async () => {
     setLoading(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({ pin: newPin })
-      .eq('id', profileId);
+    const { error } = await supabase.functions.invoke('update-profile-pin', {
+      body: {
+        profile_id: profileId,
+        new_pin: newPin,
+      }
+    });
 
     if (error) {
       showError(`Erreur: ${error.message}`);
