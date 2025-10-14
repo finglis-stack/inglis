@@ -17,54 +17,24 @@ const Step5Review = () => {
 
   const handleSubmit = async () => {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const { error } = await supabase.functions.invoke('create-corporate-profile', {
+        body: userData,
+      });
 
-    if (!user) {
-      showError("Vous n'êtes pas authentifié. Veuillez vous reconnecter.");
-      setLoading(false);
-      navigate('/login');
-      return;
-    }
+      if (error) {
+        const functionError = await error.context.json();
+        throw new Error(functionError.error || error.message);
+      }
 
-    if (consent) {
-      // TODO: Implement corporate credit bureau logic when available.
-      // For now, we just acknowledge the consent.
-      console.log("Consent given for corporate profile:", userData.legalName);
-    }
-
-    const { data: institution, error: institutionError } = await supabase
-      .from('institutions')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (institutionError || !institution) {
-      showError("Impossible de trouver l'institution associée à votre compte.");
-      setLoading(false);
-      return;
-    }
-
-    const profileData = {
-      institution_id: institution.id,
-      type: 'corporate',
-      legal_name: userData.legalName,
-      operating_name: userData.operatingName || null,
-      business_number: userData.businessNumber,
-      jurisdiction: userData.jurisdiction,
-      business_address: userData.businessAddress,
-      pin: userData.pin,
-    };
-
-    const { error } = await supabase.from('profiles').insert([profileData]);
-
-    if (error) {
-      showError(`Erreur lors de la création de l'utilisateur : ${error.message}`);
-    } else {
       showSuccess('Nouvel utilisateur corporatif créé avec succès !');
       resetUser();
       navigate('/dashboard/users');
+    } catch (error) {
+      showError(`Erreur lors de la création de l'utilisateur : ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
