@@ -62,16 +62,22 @@ const Cards = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         {card.card_type === 'debit' && card.debit_account_id && (
-          <>
-            <DropdownMenuItem asChild>
-              <Link to={`/dashboard/accounts/debit/${card.debit_account_id}`}>
-                <Settings className="mr-2 h-4 w-4" />
-                Gérer le compte
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
+          <DropdownMenuItem asChild>
+            <Link to={`/dashboard/accounts/debit/${card.debit_account_id}`}>
+              <Settings className="mr-2 h-4 w-4" />
+              Gérer le compte
+            </Link>
+          </DropdownMenuItem>
         )}
+        {card.card_type === 'credit' && card.credit_account_id && (
+          <DropdownMenuItem asChild>
+            <Link to={`/dashboard/accounts/credit/${card.credit_account_id}`}>
+              <Settings className="mr-2 h-4 w-4" />
+              Gérer le compte
+            </Link>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
         <DropdownMenuItem>{t('dashboard.cards.actionView')}</DropdownMenuItem>
         <DropdownMenuItem>{t('dashboard.cards.actionDeactivate')}</DropdownMenuItem>
       </DropdownMenuContent>

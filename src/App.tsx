@@ -43,6 +43,7 @@ import CreateCardStep2 from "@/pages/dashboard/cards/CreateCardStep2";
 import CreateCardStep3SetLimits from "@/pages/dashboard/cards/CreateCardStep3SetLimits";
 import CreateCardStep4 from "@/pages/dashboard/cards/CreateCardStep4";
 import DebitAccountDetails from "@/pages/dashboard/accounts/DebitAccountDetails";
+import CreditAccountDetails from "@/pages/dashboard/accounts/CreditAccountDetails";
 import SetCardPin from "@/pages/SetCardPin";
 import SetProfilePin from "@/pages/SetProfilePin";
 
@@ -77,6 +78,7 @@ const App = () => (
             <Route path="users" element={<Users />} />
             <Route path="users/profile/:id" element={<UserProfile />} />
             <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
+            <Route path="accounts/credit/:accountId" element={<CreditAccountDetails />} />
           </Route>
 
           <Route element={<NewUserProvider />}>

@@ -97,6 +97,14 @@ const UserAccounts = ({ cards, creditAccounts, debitAccounts, className, profile
                               </Link>
                             </DropdownMenuItem>
                           )}
+                          {account?.type === 'credit' && (
+                            <DropdownMenuItem asChild>
+                              <Link to={`/dashboard/accounts/credit/${account.id}`}>
+                                <Settings className="mr-2 h-4 w-4" />
+                                Gérer le compte
+                              </Link>
+                            </DropdownMenuItem>
+                          )}
                           <ResetPinDialog profileId={profileId} cardId={card.id}>
                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                               <KeyRound className="mr-2 h-4 w-4" />
