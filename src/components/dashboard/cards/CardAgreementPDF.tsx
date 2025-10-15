@@ -27,9 +27,11 @@ interface CardAgreementPDFProps {
   program: any;
   institution: any;
   validationCode: string;
+  interestRate?: string;
+  cashAdvanceRate?: string;
 }
 
-export const CardAgreementPDF = ({ t, program, institution, validationCode }: CardAgreementPDFProps) => {
+export const CardAgreementPDF = ({ t, program, institution, validationCode, interestRate, cashAdvanceRate }: CardAgreementPDFProps) => {
   const isCredit = program.card_type === 'credit';
   const feeModel = program.fee_model;
 
@@ -49,8 +51,8 @@ export const CardAgreementPDF = ({ t, program, institution, validationCode }: Ca
               </View>
               <View style={styles.tableRow}>
                 <View style={{...styles.tableCol, ...styles.col25}}><Text style={styles.bold}>{t('dashboard.newCard.pdf.regularRate')}</Text></View>
-                <View style={{...styles.tableCol, ...styles.col25}}><Text>19,99 %</Text></View>
-                <View style={{...styles.tableCol, ...styles.col50, borderRightWidth: 0}}><Text>22,99 %</Text></View>
+                <View style={{...styles.tableCol, ...styles.col25}}><Text>{interestRate ? `${parseFloat(interestRate).toFixed(2).replace('.', ',')} %` : 'N/A'}</Text></View>
+                <View style={{...styles.tableCol, ...styles.col50, borderRightWidth: 0}}><Text>{cashAdvanceRate ? `${parseFloat(cashAdvanceRate).toFixed(2).replace('.', ',')} %` : 'N/A'}</Text></View>
               </View>
             </View>
             <Text style={styles.subText}>{t('dashboard.newCard.pdf.ratesDisclaimer')}</Text>

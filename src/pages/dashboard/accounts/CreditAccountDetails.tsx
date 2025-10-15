@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, DollarSign, CreditCard, User, Clock, Landmark } from 'lucide-react';
+import { ArrowLeft, DollarSign, CreditCard, User, Clock, Landmark, Percent } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -127,7 +127,7 @@ const CreditAccountDetails = () => {
         </Card>
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Limites du Compte</CardTitle>
+            <CardTitle>Limites et Taux du Compte</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
             <div>
@@ -137,6 +137,14 @@ const CreditAccountDetails = () => {
             <div>
               <p className="text-sm text-muted-foreground">Avance de fonds</p>
               <p className="text-2xl font-semibold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.cash_advance_limit)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Taux d'intérêt (achats)</p>
+              <p className="text-2xl font-semibold">{account.interest_rate}%</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Taux d'intérêt (avances)</p>
+              <p className="text-2xl font-semibold">{account.cash_advance_rate}%</p>
             </div>
           </CardContent>
         </Card>

@@ -135,7 +135,7 @@ serve(async (req) => {
   }
 
   try {
-    const { profile_id, card_program_id, credit_limit, cash_advance_limit } = await req.json();
+    const { profile_id, card_program_id, credit_limit, cash_advance_limit, interest_rate, cash_advance_rate } = await req.json();
     if (!profile_id || !card_program_id) throw new Error("Profile ID and Program ID are required.");
 
     const authHeader = req.headers.get('Authorization')!;
@@ -194,8 +194,15 @@ serve(async (req) => {
     if (insertError) throw insertError;
 
     if (program.card_type === 'credit') {
-        if (!credit_limit) throw new Error("Credit limit is required for credit cards.");
-        const { error: accountError } = await supabaseAdmin.from('credit_accounts').insert({ profile_id, card_id: newCard.id, credit_limit, cash_advance_limit: cash_advance_limit || null });
+        if (!credit_limit || !interest_rate || !cash_advance_rate) throw new Error("Credit limit and interest rates are required for credit cards.");
+        const { error: accountError } = await supabaseAdmin.from('credit_accounts').insert({ 
+          profile_id, 
+          card_id: newCard.id, 
+          credit_limit, 
+          cash_advance_limit: cash_advance_limit || null,
+          interest_rate,
+          cash_advance_rate
+        });
         if (accountError) throw accountError;
     } else if (program.card_type === 'debit') {
         const { error: accountError } = await supabaseAdmin.from('debit_accounts').insert({ profile_id, card_id: newCard.id, current_balance: 0 });

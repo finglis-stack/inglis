@@ -22,6 +22,8 @@ const CreateCardStep3SetLimits = () => {
   const [isBlockedMinor, setIsBlockedMinor] = useState(false);
   const [creditLimit, setCreditLimit] = useState(cardData.creditLimit || '');
   const [cashAdvanceLimit, setCashAdvanceLimit] = useState(cardData.cashAdvanceLimit || '');
+  const [interestRate, setInterestRate] = useState(cardData.interestRate || '19.99');
+  const [cashAdvanceRate, setCashAdvanceRate] = useState(cardData.cashAdvanceRate || '22.99');
 
   useEffect(() => {
     if (!cardData.profileId || !cardData.programId) {
@@ -66,7 +68,7 @@ const CreateCardStep3SetLimits = () => {
 
   const handleNext = () => {
     if (program?.card_type === 'credit') {
-      updateCard({ creditLimit, cashAdvanceLimit });
+      updateCard({ creditLimit, cashAdvanceLimit, interestRate, cashAdvanceRate });
     }
     navigate('/dashboard/cards/new/step-4');
   };
@@ -113,10 +115,18 @@ const CreateCardStep3SetLimits = () => {
           <Label htmlFor="cashAdvanceLimit">{t('dashboard.newCard.cashAdvanceLimit')}</Label>
           <Input id="cashAdvanceLimit" type="number" placeholder="500.00" value={cashAdvanceLimit} onChange={(e) => setCashAdvanceLimit(e.target.value)} />
         </div>
+        <div className="grid gap-2">
+          <Label htmlFor="interestRate">{t('dashboard.newCard.interestRatePurchases')}</Label>
+          <Input id="interestRate" type="number" step="0.01" placeholder="19.99" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} required />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="cashAdvanceRate">{t('dashboard.newCard.interestRateCashAdvances')}</Label>
+          <Input id="cashAdvanceRate" type="number" step="0.01" placeholder="22.99" value={cashAdvanceRate} onChange={(e) => setCashAdvanceRate(e.target.value)} required />
+        </div>
       </div>
       <div className="flex justify-between mt-8">
         <Button variant="outline" onClick={() => navigate('/dashboard/cards/new/step-2')}>{t('dashboard.sharedSteps.previous')}</Button>
-        <Button onClick={handleNext} disabled={!creditLimit}>{t('dashboard.sharedSteps.next')}</Button>
+        <Button onClick={handleNext} disabled={!creditLimit || !interestRate || !cashAdvanceRate}>{t('dashboard.sharedSteps.next')}</Button>
       </div>
     </div>
   );

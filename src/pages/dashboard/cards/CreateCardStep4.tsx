@@ -77,6 +77,8 @@ const CreateCardStep4 = () => {
           card_program_id: cardData.programId,
           credit_limit: cardData.creditLimit,
           cash_advance_limit: cardData.cashAdvanceLimit,
+          interest_rate: cardData.interestRate,
+          cash_advance_rate: cardData.cashAdvanceRate,
         },
       });
 
@@ -118,10 +120,20 @@ const CreateCardStep4 = () => {
                 <p className="text-muted-foreground">{program.program_name}</p>
               </div>
               {program.card_type === 'credit' && (
-                <div>
-                  <h4 className="font-semibold">{t('dashboard.newCard.creditLimit')}</h4>
-                  <p className="text-muted-foreground">${cardData.creditLimit}</p>
-                </div>
+                <>
+                  <div>
+                    <h4 className="font-semibold">{t('dashboard.newCard.creditLimit')}</h4>
+                    <p className="text-muted-foreground">${cardData.creditLimit}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">{t('dashboard.newCard.interestRatePurchases')}</h4>
+                    <p className="text-muted-foreground">{cardData.interestRate}%</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">{t('dashboard.newCard.interestRateCashAdvances')}</h4>
+                    <p className="text-muted-foreground">{cardData.cashAdvanceRate}%</p>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -143,7 +155,7 @@ const CreateCardStep4 = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <PDFDownloadLink
-            document={<CardAgreementPDF t={t} program={program} institution={institution} validationCode={validationCode} />}
+            document={<CardAgreementPDF t={t} program={program} institution={institution} validationCode={validationCode} interestRate={cardData.interestRate} cashAdvanceRate={cardData.cashAdvanceRate} />}
             fileName={`${t('dashboard.newCard.pdf.fileName')}_${userName?.replace(/\s/g, '_')}.pdf`}
           >
             {({ loading: pdfLoading }) => (
