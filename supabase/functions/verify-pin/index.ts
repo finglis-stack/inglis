@@ -7,18 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-function decodeBytea(byteaString) {
-  if (!byteaString || !byteaString.startsWith('\\x')) {
-    return byteaString;
-  }
-  const hex = byteaString.substring(2);
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
-  }
-  return new TextDecoder().decode(bytes);
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -60,8 +48,7 @@ serve(async (req) => {
       })
     }
 
-    const decryptedPin = decodeBytea(profile.pin);
-    const isValid = decryptedPin === pin_to_verify;
+    const isValid = profile.pin === pin_to_verify;
 
     return new Response(JSON.stringify({ isValid }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

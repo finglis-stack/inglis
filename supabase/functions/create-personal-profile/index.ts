@@ -38,31 +38,16 @@ serve(async (req) => {
       .single();
     if (institutionError) throw institutionError;
 
-    const { data: uuidData, error: uuidError } = await supabaseAdmin.rpc('gen_random_uuid');
-    if (uuidError) throw uuidError;
-    const newProfileId = uuidData;
-
-    const [pinRes, sinRes, addressRes] = await Promise.all([
-      profileData.pin ? supabaseAdmin.rpc('rpc_encrypt', { p_value: profileData.pin, p_associated_data: newProfileId }) : Promise.resolve({ data: null }),
-      profileData.sin ? supabaseAdmin.rpc('rpc_encrypt', { p_value: profileData.sin, p_associated_data: newProfileId }) : Promise.resolve({ data: null }),
-      profileData.address ? supabaseAdmin.rpc('rpc_encrypt', { p_value: JSON.stringify(profileData.address), p_associated_data: newProfileId }) : Promise.resolve({ data: null }),
-    ]);
-
-    if (pinRes.error) throw pinRes.error;
-    if (sinRes.error) throw sinRes.error;
-    if (addressRes.error) throw addressRes.error;
-
     const recordToInsert = {
-      id: newProfileId,
       institution_id: institution.id,
       type: 'personal',
       full_name: profileData.fullName,
       phone: profileData.phone,
       email: profileData.email,
       dob: profileData.dob,
-      address: addressRes.data,
-      pin: pinRes.data,
-      sin: sinRes.data,
+      address: profileData.address, // Already a JSON object
+      pin: profileData.pin, // Plain text
+      sin: profileData.sin, // Plain text
     };
 
     const { error: insertError } = await supabaseAdmin.from('profiles').insert(recordToInsert);

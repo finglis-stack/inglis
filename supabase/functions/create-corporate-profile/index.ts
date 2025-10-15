@@ -38,28 +38,15 @@ serve(async (req) => {
       .single();
     if (institutionError) throw institutionError;
 
-    const { data: uuidData, error: uuidError } = await supabaseAdmin.rpc('gen_random_uuid');
-    if (uuidError) throw uuidError;
-    const newProfileId = uuidData;
-
-    const [pinRes, addressRes] = await Promise.all([
-      profileData.pin ? supabaseAdmin.rpc('rpc_encrypt', { p_value: profileData.pin, p_associated_data: newProfileId }) : Promise.resolve({ data: null }),
-      profileData.businessAddress ? supabaseAdmin.rpc('rpc_encrypt', { p_value: JSON.stringify(profileData.businessAddress), p_associated_data: newProfileId }) : Promise.resolve({ data: null }),
-    ]);
-
-    if (pinRes.error) throw pinRes.error;
-    if (addressRes.error) throw addressRes.error;
-
     const recordToInsert = {
-      id: newProfileId,
       institution_id: institution.id,
       type: 'corporate',
       legal_name: profileData.legalName,
       operating_name: profileData.operatingName,
       business_number: profileData.businessNumber,
       jurisdiction: profileData.jurisdiction,
-      business_address: addressRes.data,
-      pin: pinRes.data,
+      business_address: profileData.businessAddress, // Already a JSON object
+      pin: profileData.pin, // Plain text
     };
 
     const { error: insertError } = await supabaseAdmin.from('profiles').insert(recordToInsert);

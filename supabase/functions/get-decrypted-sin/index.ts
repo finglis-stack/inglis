@@ -7,19 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Fonction pour décoder la chaîne hexadécimale (format bytea) en texte lisible.
-function decodeBytea(byteaString) {
-  if (!byteaString || !byteaString.startsWith('\\x')) {
-    return byteaString; // Retourne tel quel si ce n'est pas le format attendu ou si c'est nul.
-  }
-  const hex = byteaString.substring(2);
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
-  }
-  return new TextDecoder().decode(bytes);
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -49,14 +36,11 @@ serve(async (req) => {
     const { data: profile, error: profileError } = await supabaseAdmin.from('profiles').select('id').eq('id', profile_id).eq('institution_id', institution.id).single()
     if (profileError || !profile) throw new Error('Permission denied to access this profile');
 
-    // Sélectionner le NAS. La base de données le déchiffrera automatiquement pour le service_role.
+    // Sélectionner le NAS.
     const { data: sinData, error: selectError } = await supabaseAdmin.from('profiles').select('sin').eq('id', profile_id).single()
     if (selectError) throw selectError
 
-    // Décoder le NAS avant de le renvoyer.
-    const decryptedSin = decodeBytea(sinData.sin);
-
-    return new Response(JSON.stringify({ sin: decryptedSin }), {
+    return new Response(JSON.stringify({ sin: sinData.sin }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })

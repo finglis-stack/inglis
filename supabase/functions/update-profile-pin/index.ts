@@ -15,7 +15,7 @@ serve(async (req) => {
   try {
     const { profile_id, new_pin } = await req.json();
     if (!profile_id || !new_pin) throw new Error("Profile ID and new PIN are required.");
-    if (new_pin.length !== 4) throw new Error("PIN must be 4 digits.");
+    if (new_pin.length !== 4 || !/^\d{4}$/.test(new_pin)) throw new Error("PIN must be 4 digits.");
 
     const authHeader = req.headers.get('Authorization')!;
     const supabaseClient = createClient(
@@ -39,17 +39,10 @@ serve(async (req) => {
     const { data: profile, error: profileError } = await supabaseAdmin.from('profiles').select('id').eq('id', profile_id).eq('institution_id', institution.id).single();
     if (profileError || !profile) throw new Error("Profile not found or access denied.");
 
-    // Encrypt the new PIN
-    const { data: encryptedPin, error: encryptError } = await supabaseAdmin.rpc('rpc_encrypt', {
-      p_value: new_pin,
-      p_associated_data: profile_id
-    });
-    if (encryptError) throw encryptError;
-
-    // Update the profile
+    // Update the profile with the new plaintext PIN
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
-      .update({ pin: encryptedPin })
+      .update({ pin: new_pin })
       .eq('id', profile_id);
     if (updateError) throw updateError;
 
