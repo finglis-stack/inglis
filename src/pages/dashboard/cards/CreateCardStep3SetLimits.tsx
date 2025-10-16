@@ -22,8 +22,8 @@ const CreateCardStep3SetLimits = () => {
   const [isBlockedMinor, setIsBlockedMinor] = useState(false);
   const [creditLimit, setCreditLimit] = useState(cardData.creditLimit || '');
   const [cashAdvanceLimit, setCashAdvanceLimit] = useState(cardData.cashAdvanceLimit || '');
-  const [interestRate, setInterestRate] = useState(cardData.interestRate || '19.99');
-  const [cashAdvanceRate, setCashAdvanceRate] = useState(cardData.cashAdvanceRate || '22.99');
+  const [interestRate, setInterestRate] = useState(cardData.interestRate || '');
+  const [cashAdvanceRate, setCashAdvanceRate] = useState(cardData.cashAdvanceRate || '');
 
   useEffect(() => {
     if (!cardData.profileId || !cardData.programId) {
@@ -41,7 +41,7 @@ const CreateCardStep3SetLimits = () => {
 
       const { data: programData, error: programError } = await supabase
         .from('card_programs')
-        .select('id, card_type')
+        .select('*')
         .eq('id', cardData.programId)
         .single();
 
@@ -55,6 +55,8 @@ const CreateCardStep3SetLimits = () => {
       setProgram(programData);
 
       if (programData.card_type === 'credit') {
+        setInterestRate(cardData.interestRate || programData.default_interest_rate || '19.99');
+        setCashAdvanceRate(cardData.cashAdvanceRate || programData.default_cash_advance_rate || '22.99');
         const age = calculateAge(profileData.dob);
         if (age !== null && age < 18 && !profileData.is_emancipated) {
           setIsBlockedMinor(true);
@@ -64,7 +66,7 @@ const CreateCardStep3SetLimits = () => {
     };
 
     fetchData();
-  }, [cardData, navigate]);
+  }, [cardData.profileId, cardData.programId, navigate]);
 
   const handleNext = () => {
     if (program?.card_type === 'credit') {
@@ -117,11 +119,37 @@ const CreateCardStep3SetLimits = () => {
         </div>
         <div className="grid gap-2">
           <Label htmlFor="interestRate">{t('dashboard.newCard.interestRatePurchases')}</Label>
-          <Input id="interestRate" type="number" step="0.01" placeholder="19.99" value={interestRate} onChange={(e) => setInterestRate(e.target.value)} required />
+          <Input 
+            id="interestRate" 
+            type="number" 
+            step="0.01" 
+            placeholder="19.99" 
+            value={interestRate} 
+            onChange={(e) => setInterestRate(e.target.value)} 
+            min={program?.min_interest_rate}
+            max={program?.max_interest_rate}
+            required 
+          />
+          {program?.min_interest_rate && program?.max_interest_rate && (
+            <p className="text-xs text-muted-foreground">Entre {program.min_interest_rate}% et {program.max_interest_rate}%</p>
+          )}
         </div>
         <div className="grid gap-2">
           <Label htmlFor="cashAdvanceRate">{t('dashboard.newCard.interestRateCashAdvances')}</Label>
-          <Input id="cashAdvanceRate" type="number" step="0.01" placeholder="22.99" value={cashAdvanceRate} onChange={(e) => setCashAdvanceRate(e.target.value)} required />
+          <Input 
+            id="cashAdvanceRate" 
+            type="number" 
+            step="0.01" 
+            placeholder="22.99" 
+            value={cashAdvanceRate} 
+            onChange={(e) => setCashAdvanceRate(e.target.value)} 
+            min={program?.min_cash_advance_rate}
+            max={program?.max_cash_advance_rate}
+            required 
+          />
+          {program?.min_cash_advance_rate && program?.max_cash_advance_rate && (
+            <p className="text-xs text-muted-foreground">Entre {program.min_cash_advance_rate}% et {program.max_cash_advance_rate}%</p>
+          )}
         </div>
       </div>
       <div className="flex justify-between mt-8">

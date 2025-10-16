@@ -19,6 +19,12 @@ interface FormData {
   programId: string;
   cardType: 'credit' | 'debit';
   gracePeriod: string;
+  default_interest_rate: string;
+  min_interest_rate: string;
+  max_interest_rate: string;
+  default_cash_advance_rate: string;
+  min_cash_advance_rate: string;
+  max_cash_advance_rate: string;
   feeModel: 'none' | 'annual_user' | 'per_transaction_user' | 'custom';
   issuanceFee: string;
   merchantTransactionFee: string;
@@ -37,6 +43,12 @@ const NewCardProgram = () => {
     programId: '',
     cardType: 'credit',
     gracePeriod: '21',
+    default_interest_rate: '19.99',
+    min_interest_rate: '12.99',
+    max_interest_rate: '24.99',
+    default_cash_advance_rate: '22.99',
+    min_cash_advance_rate: '14.99',
+    max_cash_advance_rate: '29.99',
     feeModel: 'none',
     issuanceFee: '',
     merchantTransactionFee: '',
@@ -106,6 +118,12 @@ const NewCardProgram = () => {
         program_id: formData.programId,
         card_type: formData.cardType,
         grace_period: formData.cardType === 'credit' ? parseInt(formData.gracePeriod) : null,
+        default_interest_rate: formData.cardType === 'credit' ? parseFloat(formData.default_interest_rate) : null,
+        min_interest_rate: formData.cardType === 'credit' ? parseFloat(formData.min_interest_rate) : null,
+        max_interest_rate: formData.cardType === 'credit' ? parseFloat(formData.max_interest_rate) : null,
+        default_cash_advance_rate: formData.cardType === 'credit' ? parseFloat(formData.default_cash_advance_rate) : null,
+        min_cash_advance_rate: formData.cardType === 'credit' ? parseFloat(formData.min_cash_advance_rate) : null,
+        max_cash_advance_rate: formData.cardType === 'credit' ? parseFloat(formData.max_cash_advance_rate) : null,
         fee_model: formData.feeModel,
         issuance_fee: formData.issuanceFee ? parseFloat(formData.issuanceFee) : null,
         merchant_transaction_fee: formData.merchantTransactionFee ? parseFloat(formData.merchantTransactionFee) : null,
@@ -195,9 +213,28 @@ const NewCardProgram = () => {
                 </div>
               </RadioGroup>
               {formData.cardType === 'credit' && (
-                <div className="grid gap-2 pt-4">
-                  <Label htmlFor="gracePeriod">{t('dashboard.newCardProgram.gracePeriodLabel')}</Label>
-                  <Input id="gracePeriod" type="number" value={formData.gracePeriod} onChange={handleChange} />
+                <div className="space-y-6 pt-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="gracePeriod">{t('dashboard.newCardProgram.gracePeriodLabel')}</Label>
+                    <Input id="gracePeriod" type="number" value={formData.gracePeriod} onChange={handleChange} />
+                  </div>
+                  <Separator />
+                  <div>
+                    <Label>Taux d'intérêt sur les achats (%)</Label>
+                    <div className="grid grid-cols-3 gap-4 mt-2">
+                      <div className="grid gap-1"><Label htmlFor="min_interest_rate" className="text-xs text-muted-foreground">Min.</Label><Input id="min_interest_rate" type="number" step="0.01" value={formData.min_interest_rate} onChange={handleChange} /></div>
+                      <div className="grid gap-1"><Label htmlFor="default_interest_rate" className="text-xs text-muted-foreground">Défaut</Label><Input id="default_interest_rate" type="number" step="0.01" value={formData.default_interest_rate} onChange={handleChange} /></div>
+                      <div className="grid gap-1"><Label htmlFor="max_interest_rate" className="text-xs text-muted-foreground">Max.</Label><Input id="max_interest_rate" type="number" step="0.01" value={formData.max_interest_rate} onChange={handleChange} /></div>
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Taux d'intérêt sur les avances de fonds (%)</Label>
+                    <div className="grid grid-cols-3 gap-4 mt-2">
+                      <div className="grid gap-1"><Label htmlFor="min_cash_advance_rate" className="text-xs text-muted-foreground">Min.</Label><Input id="min_cash_advance_rate" type="number" step="0.01" value={formData.min_cash_advance_rate} onChange={handleChange} /></div>
+                      <div className="grid gap-1"><Label htmlFor="default_cash_advance_rate" className="text-xs text-muted-foreground">Défaut</Label><Input id="default_cash_advance_rate" type="number" step="0.01" value={formData.default_cash_advance_rate} onChange={handleChange} /></div>
+                      <div className="grid gap-1"><Label htmlFor="max_cash_advance_rate" className="text-xs text-muted-foreground">Max.</Label><Input id="max_cash_advance_rate" type="number" step="0.01" value={formData.max_cash_advance_rate} onChange={handleChange} /></div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
