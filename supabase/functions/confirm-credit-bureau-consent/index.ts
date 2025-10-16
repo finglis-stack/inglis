@@ -7,23 +7,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function pushDataToCreditBureau(supabaseAdmin, profile) {
+async function pushDataToCreditBureau(supabaseAdmin, profile, institutionName) {
   if (!profile.sin) {
     console.warn(`Profil ${profile.id} n'a pas de NAS, impossible de pousser les données.`);
     return;
   }
 
-  // Fetch credit accounts
+  // Fetch credit accounts with card and program info
   const { data: creditAccounts, error: creditAccountsError } = await supabaseAdmin
     .from('credit_accounts')
-    .select('credit_limit, current_balance, created_at, status')
+    .select('*, cards(*, card_programs(program_name))')
     .eq('profile_id', profile.id);
   if (creditAccountsError) throw creditAccountsError;
 
-  // Fetch debit accounts
+  // Fetch debit accounts with card and program info
   const { data: debitAccounts, error: debitAccountsError } = await supabaseAdmin
     .from('debit_accounts')
-    .select('current_balance, created_at, status')
+    .select('*, cards(*, card_programs(program_name))')
     .eq('profile_id', profile.id);
   if (debitAccountsError) throw debitAccountsError;
 
@@ -31,19 +31,21 @@ async function pushDataToCreditBureau(supabaseAdmin, profile) {
 
   creditAccounts.forEach(acc => {
     const debtRatio = acc.credit_limit > 0 ? (acc.current_balance / acc.credit_limit) * 100 : 0;
+    const programName = acc.cards?.card_programs?.program_name || 'N/A';
     newHistoryEntries.push({
       date: new Date().toISOString().split('T')[0],
       type: 'Mise à jour de compte de crédit',
-      details: `Limite: ${acc.credit_limit}, Solde: ${acc.current_balance}, Ratio d'endettement: ${debtRatio.toFixed(2)}%. Tentatives de dépassement (mois): 0 (non suivi).`,
+      details: `Produit: Carte de Crédit - ${programName}. Fourni par: ${institutionName}. Limite: ${acc.credit_limit}, Solde: ${acc.current_balance}, Ratio d'endettement: ${debtRatio.toFixed(2)}%. Tentatives de dépassement (mois): 0 (non suivi).`,
       status: acc.status
     });
   });
 
   debitAccounts.forEach(acc => {
+    const programName = acc.cards?.card_programs?.program_name || 'N/A';
     newHistoryEntries.push({
       date: new Date().toISOString().split('T')[0],
       type: 'Mise à jour de compte de débit',
-      details: `Solde: ${acc.current_balance}.`,
+      details: `Produit: Carte de Débit - ${programName}. Fourni par: ${institutionName}. Solde: ${acc.current_balance}.`,
       status: acc.status
     });
   });
@@ -95,7 +97,7 @@ serve(async (req) => {
       throw new Error("Jeton expiré.");
     }
 
-    await pushDataToCreditBureau(supabaseAdmin, profile);
+    await pushDataToCreditBureau(supabaseAdmin, profile, profile.institutions.name);
 
     const { error: updateProfileError } = await supabaseAdmin
       .from('profiles')
