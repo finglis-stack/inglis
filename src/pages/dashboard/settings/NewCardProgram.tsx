@@ -36,7 +36,7 @@ const NewCardProgram = () => {
     programName: '',
     programId: '',
     cardType: 'credit',
-    gracePeriod: '30',
+    gracePeriod: '21',
     feeModel: 'none',
     issuanceFee: '',
     merchantTransactionFee: '',
