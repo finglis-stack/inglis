@@ -49,6 +49,12 @@ const ConfirmCreditPull = () => {
               <p className="text-muted-foreground">
                 En cliquant sur "Confirmer et autoriser", vous donnez votre consentement explicite à votre institution financière pour qu'elle consulte votre dossier de crédit complet via la plateforme Inglis Dominium.
               </p>
+              <div className="p-4 bg-gray-50 rounded-md border">
+                <h4 className="font-semibold">Conditions de consultation</h4>
+                <p className="text-sm text-muted-foreground mt-2">
+                  En donnant votre autorisation, vous permettez à votre institution financière de consulter votre dossier de crédit pour une durée limitée à <strong>4 jours</strong>. Passé ce délai, l'accès sera automatiquement révoqué.
+                </p>
+              </div>
               <Button onClick={handleConfirm} className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Confirmer et autoriser
