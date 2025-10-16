@@ -13,18 +13,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { showError, showSuccess } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
-import { UploadCloud, Loader2 } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { UploadCloud, DownloadCloud, Loader2 } from 'lucide-react';
+import CreditReportDisplay from '@/components/dashboard/users/CreditReportDisplay';
 
 const UserProfile = () => {
   const { id } = useParams();
@@ -40,6 +30,8 @@ const UserProfile = () => {
   const [creditAccounts, setCreditAccounts] = useState([]);
   const [debitAccounts, setDebitAccounts] = useState([]);
   const [isPushing, setIsPushing] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [pulledReport, setPulledReport] = useState(null);
 
   const fetchLogs = useCallback(async () => {
     if (!id) return;
@@ -75,22 +67,55 @@ const UserProfile = () => {
     }
   };
 
+  const handleRequestReport = async () => {
+    setIsRequesting(true);
+    try {
+      const { error } = await supabase.functions.invoke('request-credit-report-pull', {
+        body: { profile_id: profile.id },
+      });
+      if (error) {
+        const functionError = await error.context.json();
+        throw new Error(functionError.error || "Une erreur est survenue.");
+      }
+      showSuccess("L'e-mail de demande de consultation a été envoyé à l'utilisateur.");
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileAndReport = async () => {
       if (!id) return;
       setLoading(true);
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single();
-      if (error) {
+      
+      const { data: profileData, error: profileError } = await supabase.from('profiles').select('*').eq('id', id).single();
+      if (profileError) {
         setError(t('dashboard.userProfile.loadingError'));
-      } else {
-        setProfile(data);
-        if (!data.pin) {
-          setIsUnlocked(true);
-        }
+        setLoading(false);
+        return;
       }
+      setProfile(profileData);
+      if (!profileData.pin) {
+        setIsUnlocked(true);
+      }
+
+      const { data: reportData, error: reportError } = await supabase
+        .from('pulled_credit_reports')
+        .select('report_data')
+        .eq('profile_id', id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (reportData) {
+        setPulledReport(reportData);
+      }
+
       setLoading(false);
     };
-    fetchProfile();
+    fetchProfileAndReport();
   }, [id, t]);
 
   useEffect(() => {
@@ -203,7 +228,11 @@ const UserProfile = () => {
         
         <div className={cn({ 'blur-sm pointer-events-none': !isUnlocked && profile.pin })}>
           {profile.type === 'personal' && (
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-end gap-2 mb-4">
+              <Button variant="outline" onClick={handleRequestReport} disabled={isRequesting || !profile.sin}>
+                {isRequesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DownloadCloud className="mr-2 h-4 w-4" />}
+                Demander le dossier de crédit
+              </Button>
               <Button onClick={handlePushToCreditBureau} disabled={isPushing || !profile.sin}>
                 {isPushing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
                 Pousser au bureau de crédit
@@ -213,6 +242,10 @@ const UserProfile = () => {
           {profile.type === 'personal' && <PersonalProfile profile={profile} decryptedSin={decryptedSin} decryptedAddress={decryptedAddress} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} profileId={profile.id} />}
           {profile.type === 'corporate' && <CorporateProfile profile={profile} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} profileId={profile.id} />}
         </div>
+
+        {isUnlocked && pulledReport && (
+          <CreditReportDisplay report={pulledReport.report_data} />
+        )}
 
         {isUnlocked && (
           <div className="grid md:grid-cols-2 gap-6 mt-6">
