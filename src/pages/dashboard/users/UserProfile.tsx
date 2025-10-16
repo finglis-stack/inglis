@@ -11,8 +11,20 @@ import ChangePinDialog from '@/components/dashboard/users/ChangePinDialog';
 import ResetPinDialog from '@/components/dashboard/users/ResetPinDialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { showError } from '@/utils/toast';
+import { showError, showSuccess } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
+import { UploadCloud, Loader2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const UserProfile = () => {
   const { id } = useParams();
@@ -27,6 +39,7 @@ const UserProfile = () => {
   const [cards, setCards] = useState([]);
   const [creditAccounts, setCreditAccounts] = useState([]);
   const [debitAccounts, setDebitAccounts] = useState([]);
+  const [isPushing, setIsPushing] = useState(false);
 
   const fetchLogs = useCallback(async () => {
     if (!id) return;
@@ -43,6 +56,24 @@ const UserProfile = () => {
       showError(`Erreur lors de la récupération de l'historique d'accès: ${e.message}`);
     }
   }, [id]);
+
+  const handlePushToCreditBureau = async () => {
+    setIsPushing(true);
+    try {
+      const { error } = await supabase.functions.invoke('request-credit-bureau-consent', {
+        body: { profile_id: profile.id },
+      });
+      if (error) {
+        const functionError = await error.context.json();
+        throw new Error(functionError.error || "Une erreur est survenue.");
+      }
+      showSuccess("L'e-mail de demande de consentement a été envoyé à l'utilisateur.");
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setIsPushing(false);
+    }
+  };
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -171,6 +202,14 @@ const UserProfile = () => {
         {!isUnlocked && profile.pin && <PinLock onUnlock={handleUnlock} />}
         
         <div className={cn({ 'blur-sm pointer-events-none': !isUnlocked && profile.pin })}>
+          {profile.type === 'personal' && (
+            <div className="flex justify-end mb-4">
+              <Button onClick={handlePushToCreditBureau} disabled={isPushing || !profile.sin}>
+                {isPushing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
+                Pousser au bureau de crédit
+              </Button>
+            </div>
+          )}
           {profile.type === 'personal' && <PersonalProfile profile={profile} decryptedSin={decryptedSin} decryptedAddress={decryptedAddress} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} profileId={profile.id} />}
           {profile.type === 'corporate' && <CorporateProfile profile={profile} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} profileId={profile.id} />}
         </div>

@@ -19,18 +19,9 @@ const Step5Review = () => {
   const handleSubmit = async () => {
     setLoading(true);
 
-    if (consent && userData.sin) {
-      // ... (logique du bureau de crédit reste la même)
-    }
-
     const profileData = {
-      fullName: userData.fullName,
-      address: userData.address,
-      phone: userData.phone,
-      email: userData.email,
-      dob: userData.dob,
-      pin: userData.pin,
-      sin: userData.sin || null,
+      ...userData,
+      consent: consent,
     };
 
     try {
@@ -94,7 +85,7 @@ const Step5Review = () => {
       </div>
       <div className="flex justify-between mt-8">
         <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/personal/step-4')} disabled={loading}>{t('dashboard.sharedSteps.previous')}</Button>
-        <Button onClick={handleSubmit} disabled={loading}>
+        <Button onClick={handleSubmit} disabled={loading || (userData.sin && !consent)}>
           {loading ? t('dashboard.personalSteps.submitting') : t('dashboard.personalSteps.submit')}
         </Button>
       </div>

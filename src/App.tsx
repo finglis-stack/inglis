@@ -46,6 +46,7 @@ import DebitAccountDetails from "@/pages/dashboard/accounts/DebitAccountDetails"
 import CreditAccountDetails from "@/pages/dashboard/accounts/CreditAccountDetails";
 import SetCardPin from "@/pages/SetCardPin";
 import SetProfilePin from "@/pages/SetProfilePin";
+import ConfirmCreditConsent from "@/pages/ConfirmCreditConsent";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +63,7 @@ const App = () => (
           <Route path="/credit-report-access" element={<CreditReportAccess />} />
           <Route path="/set-card-pin/:token" element={<SetCardPin />} />
           <Route path="/set-profile-pin/:token" element={<SetProfilePin />} />
+          <Route path="/confirm-credit-consent/:token" element={<ConfirmCreditConsent />} />
           <Route path="/onboarding/welcome" element={<Welcome />} />
           <Route path="/onboarding/create-account" element={<CreateAccount />} />
           <Route path="/onboarding/institution-info" element={<InstitutionInfo />} />
