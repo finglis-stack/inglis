@@ -13,8 +13,9 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { showError, showSuccess } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
-import { UploadCloud, DownloadCloud, Loader2 } from 'lucide-react';
+import { UploadCloud, DownloadCloud, Loader2, Info, AlertTriangle } from 'lucide-react';
 import CreditReportDisplay from '@/components/dashboard/users/CreditReportDisplay';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const UserProfile = () => {
   const { id } = useParams();
@@ -32,6 +33,7 @@ const UserProfile = () => {
   const [isPushing, setIsPushing] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
   const [pulledReport, setPulledReport] = useState(null);
+  const [isReportExpired, setIsReportExpired] = useState(false);
 
   const fetchLogs = useCallback(async () => {
     if (!id) return;
@@ -103,14 +105,18 @@ const UserProfile = () => {
 
       const { data: reportData, error: reportError } = await supabase
         .from('pulled_credit_reports')
-        .select('report_data')
+        .select('report_data, created_at, expires_at')
         .eq('profile_id', id)
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
       
       if (reportData) {
-        setPulledReport(reportData);
+        const isExpired = new Date(reportData.expires_at) < new Date();
+        setIsReportExpired(isExpired);
+        if (!isExpired) {
+          setPulledReport(reportData);
+        }
       }
 
       setLoading(false);
@@ -243,8 +249,26 @@ const UserProfile = () => {
           {profile.type === 'corporate' && <CorporateProfile profile={profile} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} profileId={profile.id} />}
         </div>
 
-        {isUnlocked && pulledReport && (
-          <CreditReportDisplay report={pulledReport.report_data} />
+        {isUnlocked && pulledReport && !isReportExpired && (
+          <>
+            <Alert className="mt-6">
+              <Info className="h-4 w-4" />
+              <AlertTitle>Dossier de crédit disponible</AlertTitle>
+              <AlertDescription>
+                Ce dossier est disponible pour consultation jusqu'au {new Date(pulledReport.expires_at).toLocaleString('fr-CA')}.
+              </AlertDescription>
+            </Alert>
+            <CreditReportDisplay report={pulledReport.report_data} />
+          </>
+        )}
+        {isUnlocked && isReportExpired && (
+          <Alert variant="destructive" className="mt-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Consultation expirée</AlertTitle>
+            <AlertDescription>
+              La période de consultation pour le dernier dossier de crédit a expiré. Vous pouvez faire une nouvelle demande.
+            </AlertDescription>
+          </Alert>
         )}
 
         {isUnlocked && (

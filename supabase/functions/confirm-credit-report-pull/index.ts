@@ -45,12 +45,17 @@ serve(async (req) => {
       throw new Error("Dossier de crédit non trouvé pour ce profil.");
     }
 
+    const createdAt = new Date();
+    const expiresAt = new Date(createdAt.getTime() + 4 * 24 * 60 * 60 * 1000);
+
     const { error: insertError } = await supabaseAdmin
       .from('pulled_credit_reports')
       .insert({
         profile_id: profile.id,
         institution_id: profile.institution_id,
         report_data: report,
+        created_at: createdAt.toISOString(),
+        expires_at: expiresAt.toISOString(),
       });
     if (insertError) throw insertError;
 
@@ -65,7 +70,12 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       message: "Consentement confirmé. Le dossier de crédit est maintenant disponible pour votre institution.",
-      institutionName: profile.institutions.name
+      institutionName: profile.institutions.name,
+      viewingWindow: {
+        start: createdAt.toISOString(),
+        end: expiresAt.toISOString(),
+        durationDays: 4
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,

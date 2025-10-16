@@ -10,6 +10,7 @@ const ConfirmCreditPull = () => {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [viewingWindow, setViewingWindow] = useState(null);
 
   const handleConfirm = async () => {
     setLoading(true);
@@ -26,6 +27,7 @@ const ConfirmCreditPull = () => {
       
       setStatus('success');
       setMessage(data.message);
+      setViewingWindow(data.viewingWindow);
     } catch (err) {
       setStatus('error');
       setMessage(err.message);
@@ -58,6 +60,14 @@ const ConfirmCreditPull = () => {
             <div className="text-center space-y-4">
               <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
               <p>{message}</p>
+              {viewingWindow && (
+                <div className="p-4 bg-gray-100 rounded-md text-sm text-left border">
+                  <p className="font-semibold">Période de consultation autorisée :</p>
+                  <p><strong>Début :</strong> {new Date(viewingWindow.start).toLocaleString('fr-CA')}</p>
+                  <p><strong>Fin :</strong> {new Date(viewingWindow.end).toLocaleString('fr-CA')}</p>
+                  <p><strong>Durée :</strong> {viewingWindow.durationDays} jours</p>
+                </div>
+              )}
               <Button asChild className="w-full"><a href="https://www.inglisdominion.ca">Fermer</a></Button>
             </div>
           )}
