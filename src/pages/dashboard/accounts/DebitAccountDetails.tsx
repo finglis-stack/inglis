@@ -8,7 +8,7 @@ import { ArrowLeft, DollarSign, CreditCard, User, Clock, PlusCircle, RefreshCw }
 import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import DebitAccountAccessLog from '@/components/DebitAccountAccessLog';
+import DebitAccountAccessLog from '@/components/dashboard/accounts/DebitAccountAccessLog';
 import { useDebitAccountBalance } from '@/hooks/useDebitAccountBalance';
 import { useTranslation } from 'react-i18next';
 

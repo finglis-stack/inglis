@@ -4,11 +4,11 @@ import { Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const AccessLog = ({ logs }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t('dashboard.userProfile.accessLogTitle')}</CardTitle>
+        <CardTitle>{t('userProfile.accessLogTitle')}</CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-48">
@@ -17,11 +17,11 @@ const AccessLog = ({ logs }) => {
               <li key={index} className="text-sm text-muted-foreground flex items-center gap-2">
                 <Clock className="h-4 w-4 flex-shrink-0" />
                 <span>
-                  {t('dashboard.userProfile.accessedBy')} <strong>{log.visitor_email || t('dashboard.userProfile.unknownUser')}</strong> {t('dashboard.userProfile.on')} {new Date(log.created_at).toLocaleString('fr-CA')}
+                  {t('userProfile.accessedBy')} <strong>{log.visitor_email || t('userProfile.unknownUser')}</strong> {t('userProfile.on')} {new Date(log.created_at).toLocaleString('fr-CA')}
                 </span>
               </li>
             ))}
-            {logs.length === 0 && <p>{t('dashboard.userProfile.noAccess')}</p>}
+            {logs.length === 0 && <p>{t('userProfile.noAccess')}</p>}
           </ul>
         </ScrollArea>
       </CardContent>
