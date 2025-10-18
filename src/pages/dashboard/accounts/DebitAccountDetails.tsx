@@ -20,7 +20,7 @@ const DebitAccountDetails = () => {
   const [loading, setLoading] = useState(true);
 
   // Utiliser le hook pour obtenir le solde calculé dynamiquement
-  const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance } = useDebitAccountBalance(accountId!);
+  const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance, secondsUntilRefresh } = useDebitAccountBalance(accountId!);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -136,9 +136,14 @@ const DebitAccountDetails = () => {
             {balanceLoading ? (
               <Skeleton className="h-12 w-full" />
             ) : (
-              <p className="text-4xl font-bold">
-                {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(currentBalance)}
-              </p>
+              <>
+                <p className="text-sm text-muted-foreground mb-1">
+                  <span className="text-xs">({secondsUntilRefresh}s)</span>
+                </p>
+                <p className="text-4xl font-bold">
+                  {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(currentBalance)}
+                </p>
+              </>
             )}
           </CardContent>
         </Card>

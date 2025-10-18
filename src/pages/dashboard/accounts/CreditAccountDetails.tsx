@@ -25,7 +25,7 @@ const CreditAccountDetails = () => {
   const [paymentAmount, setPaymentAmount] = useState('');
 
   // Utiliser le hook pour obtenir le solde calculé dynamiquement
-  const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance } = useCreditAccountBalance(accountId!);
+  const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance, secondsUntilRefresh } = useCreditAccountBalance(accountId!);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -187,7 +187,9 @@ const CreditAccountDetails = () => {
             ) : (
               <>
                 <div>
-                  <p className="text-sm text-muted-foreground">Solde Actuel</p>
+                  <p className="text-sm text-muted-foreground">
+                    Solde Actuel <span className="text-xs">({secondsUntilRefresh}s)</span>
+                  </p>
                   <p className="text-2xl font-bold">
                     {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(currentBalance)}
                   </p>
