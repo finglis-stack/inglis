@@ -4,13 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, DollarSign, CreditCard, User, Clock, Landmark, Percent } from 'lucide-react';
+import { ArrowLeft, DollarSign, CreditCard, User, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError, showSuccess } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import CreditAccountAccessLog from '@/components/dashboard/accounts/CreditAccountAccessLog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 const CreditAccountDetails = () => {
   const { accountId } = useParams();
@@ -26,7 +27,12 @@ const CreditAccountDetails = () => {
       if (!accountId) return;
       setLoading(true);
 
-      // ... (le code existant pour l'enregistrement de l'accès et la récupération des logs reste le même)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('credit_account_access_logs')
+          .insert({ credit_account_id: accountId, visitor_user_id: user.id });
+      }
 
       const { data: accountData, error: accountError } = await supabase
         .from('credit_accounts')
@@ -66,7 +72,14 @@ const CreditAccountDetails = () => {
         if (!statementError) setStatement(statementData);
       }
 
-      // ... (le code de récupération des logs reste le même)
+      const { data: logsData, error: logsError } = await supabase.rpc('get_credit_account_access_logs', {
+        p_account_id: accountId,
+      });
+      if (logsError) {
+        showError(`Erreur lors de la récupération de l'historique d'accès: ${logsError.message}`);
+      } else {
+        setAccessLogs(logsData || []);
+      }
 
       setLoading(false);
     };
@@ -92,8 +105,6 @@ const CreditAccountDetails = () => {
       if (error) throw error;
 
       showSuccess("Paiement traité avec succès !");
-      // Re-fetch data to update UI
-      // (Dans une vraie app, on utiliserait une librairie de state management pour une mise à jour optimiste)
       window.location.reload();
     } catch (error) {
       showError(`Erreur lors du paiement: ${error.message}`);
@@ -101,7 +112,17 @@ const CreditAccountDetails = () => {
   };
 
   if (loading) {
-    return <div className="space-y-4"><Skeleton className="h-96 w-full" /></div>;
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-1/4" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full md:col-span-2" />
+        </div>
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    );
   }
 
   if (!account) {
@@ -126,38 +147,48 @@ const CreditAccountDetails = () => {
         <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-1">
           <CardHeader>
-            <CardTitle>Résumé du Compte</CardTitle>
+            <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5" /> Solde et Relevé</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="space-y-1">
+          <CardContent className="space-y-4">
+            <div>
               <p className="text-sm text-muted-foreground">Solde Actuel</p>
               <p className="text-2xl font-bold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.current_balance)}</p>
+              <p className="text-xs text-muted-foreground">sur {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.credit_limit)}</p>
             </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Limite de crédit</p>
-              <p className="text-2xl font-semibold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.credit_limit)}</p>
-            </div>
-            <div className="space-y-1">
+            <Separator />
+            <div>
               <p className="text-sm text-muted-foreground">Paiement Minimum</p>
-              <p className="text-2xl font-semibold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(statement?.minimum_payment || 0)}</p>
+              <p className="text-lg font-semibold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(statement?.minimum_payment || 0)}</p>
             </div>
-            <div className="space-y-1">
+            <div>
               <p className="text-sm text-muted-foreground">Date d'échéance</p>
               <p className="text-lg font-semibold">{statement ? new Date(statement.payment_due_date).toLocaleDateString('fr-CA') : 'N/A'}</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader><CardTitle>Effectuer un paiement</CardTitle></CardHeader>
-          <CardContent className="flex gap-2">
-            <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="payment">Montant</Label>
-              <Input id="payment" type="number" placeholder="0.00" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Actions sur le Compte</CardTitle>
+            <CardDescription>Effectuez des opérations sur ce compte de crédit.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="payment" className="font-semibold">Effectuer un paiement</Label>
+              <div className="flex gap-2 mt-2">
+                <Input id="payment" type="number" placeholder="0.00" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} />
+                <Button onClick={handlePayment}>Payer</Button>
+              </div>
             </div>
-            <Button onClick={handlePayment} className="self-end">Payer</Button>
+            <Separator />
+            <div>
+              <h4 className="font-semibold">Actions de sécurité</h4>
+              <div className="flex flex-wrap gap-4 mt-2">
+                <Button variant="destructive">Bloquer le compte</Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -201,7 +232,26 @@ const CreditAccountDetails = () => {
         </CardContent>
       </Card>
 
-      {/* Les autres cartes (Carte Associée, Titulaire, Logs) restent ici */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" /> Carte Associée</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
+            <p className="font-mono">{cardNumber}</p>
+            <p className="text-sm text-muted-foreground">Programme: {account.cards.card_programs.program_name}</p>
+            <p className="text-sm text-muted-foreground">Statut de la carte: <Badge variant={account.cards.status === 'active' ? 'default' : 'destructive'}>{account.cards.status}</Badge></p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-5 w-5" /> Titulaire du Compte</CardTitle></CardHeader>
+          <CardContent>
+            <p className="font-semibold">{profileName}</p>
+            <Button variant="link" asChild className="p-0 h-auto mt-2">
+              <Link to={`/dashboard/users/profile/${account.profile_id}`}>Voir le profil complet</Link>
+            </Button>
+          </CardContent>
+        </Card>
+        <CreditAccountAccessLog logs={accessLogs} className="md:col-span-2" />
+      </div>
     </div>
   );
 };

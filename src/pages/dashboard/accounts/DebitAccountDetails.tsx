@@ -157,7 +157,8 @@ const DebitAccountDetails = () => {
                     <TableCell>{new Date(tx.created_at).toLocaleString('fr-CA')}</TableCell>
                     <TableCell>{tx.description || 'N/A'}</TableCell>
                     <TableCell><Badge variant="outline" className="capitalize">{tx.type}</Badge></TableCell>
-                    <TableCell className={`text-right font-medium ${tx.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    <TableCell className={`text-right font-medium ${tx.type === 'payment' ? 'text-green-600' : 'text-red-600'}`}>
+                      {tx.type === 'payment' ? '+' : '-'}
                       {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(tx.amount)}
                     </TableCell>
                   </TableRow>
