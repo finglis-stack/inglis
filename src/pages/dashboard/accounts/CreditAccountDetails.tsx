@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, DollarSign, CreditCard, User, Clock, PlusCircle } from 'lucide-react';
+import { ArrowLeft, DollarSign, CreditCard, User, Clock, PlusCircle, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError, showSuccess } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,6 +12,7 @@ import CreditAccountAccessLog from '@/components/dashboard/accounts/CreditAccoun
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { useCreditAccountBalance } from '@/hooks/useCreditAccountBalance';
 
 const CreditAccountDetails = () => {
   const { accountId } = useParams();
@@ -22,6 +23,9 @@ const CreditAccountDetails = () => {
   const [statement, setStatement] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [paymentAmount, setPaymentAmount] = useState('');
+
+  // Utiliser le hook pour obtenir le solde calculé dynamiquement
+  const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance } = useCreditAccountBalance(accountId!);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -106,7 +110,16 @@ const CreditAccountDetails = () => {
       if (error) throw error;
 
       showSuccess("Paiement traité avec succès !");
-      window.location.reload();
+      setPaymentAmount('');
+      // Rafraîchir le solde immédiatement
+      refetchBalance();
+      // Rafraîchir les transactions
+      const { data: transactionsData } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('credit_account_id', accountId)
+        .order('created_at', { ascending: false });
+      setTransactions(transactionsData || []);
     } catch (error) {
       showError(`Erreur lors du paiement: ${error.message}`);
     }
@@ -133,6 +146,9 @@ const CreditAccountDetails = () => {
   const profileName = account.profiles.type === 'personal' ? account.profiles.full_name : account.profiles.legal_name;
   const cardNumber = `${account.cards.user_initials} ${account.cards.issuer_id} ${account.cards.random_letters} ****${account.cards.unique_identifier.slice(-3)} ${account.cards.check_digit}`;
 
+  const currentBalance = balanceData?.current_balance || 0;
+  const availableCredit = balanceData?.available_credit || account.credit_limit;
+
   return (
     <div className="space-y-6">
       <Link to="/dashboard/cards" className="flex items-center text-sm text-muted-foreground hover:text-primary">
@@ -145,20 +161,48 @@ const CreditAccountDetails = () => {
           <h1 className="text-3xl font-bold">Gestion du Compte de Crédit</h1>
           <p className="text-muted-foreground">Compte de {profileName}</p>
         </div>
-        <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => refetchBalance()}
+            disabled={balanceLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${balanceLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-1">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5" /> Solde et Relevé</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5" /> Solde et Relevé
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Solde Actuel</p>
-              <p className="text-2xl font-bold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.current_balance)}</p>
-              <p className="text-xs text-muted-foreground">sur {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.credit_limit)}</p>
-            </div>
+            {balanceLoading ? (
+              <Skeleton className="h-16 w-full" />
+            ) : (
+              <>
+                <div>
+                  <p className="text-sm text-muted-foreground">Solde Actuel</p>
+                  <p className="text-2xl font-bold">
+                    {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(currentBalance)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    sur {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.credit_limit)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Crédit Disponible</p>
+                  <p className="text-lg font-semibold text-green-600">
+                    {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(availableCredit)}
+                  </p>
+                </div>
+              </>
+            )}
             <Separator />
             <div>
               <p className="text-sm text-muted-foreground">Paiement Minimum</p>

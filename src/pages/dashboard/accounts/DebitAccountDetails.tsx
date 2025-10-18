@@ -4,11 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, DollarSign, CreditCard, User, Clock, PlusCircle } from 'lucide-react';
+import { ArrowLeft, DollarSign, CreditCard, User, Clock, PlusCircle, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import DebitAccountAccessLog from '@/components/DebitAccountAccessLog';
+import { useDebitAccountBalance } from '@/hooks/useDebitAccountBalance';
 
 const DebitAccountDetails = () => {
   const { accountId } = useParams();
@@ -18,12 +19,14 @@ const DebitAccountDetails = () => {
   const [accessLogs, setAccessLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Utiliser le hook pour obtenir le solde calculé dynamiquement
+  const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance } = useDebitAccountBalance(accountId!);
+
   useEffect(() => {
     const fetchDetails = async () => {
       if (!accountId) return;
       setLoading(true);
 
-      // Record access
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
@@ -31,7 +34,6 @@ const DebitAccountDetails = () => {
           .insert({ debit_account_id: accountId, visitor_user_id: user.id });
       }
 
-      // Fetch account details
       const { data: accountData, error: accountError } = await supabase
         .from('debit_accounts')
         .select(`
@@ -49,7 +51,6 @@ const DebitAccountDetails = () => {
       }
       setAccount(accountData);
 
-      // Fetch transactions
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
         .select('*')
@@ -62,7 +63,6 @@ const DebitAccountDetails = () => {
         setTransactions(transactionsData);
       }
 
-      // Fetch logs (including the one just added)
       const { data: logsData, error: logsError } = await supabase.rpc('get_debit_account_access_logs', {
         p_account_id: accountId,
       });
@@ -99,6 +99,8 @@ const DebitAccountDetails = () => {
   const profileName = account.profiles.type === 'personal' ? account.profiles.full_name : account.profiles.legal_name;
   const cardNumber = `${account.cards.user_initials} ${account.cards.issuer_id} ${account.cards.random_letters} ****${account.cards.unique_identifier.slice(-3)} ${account.cards.check_digit}`;
 
+  const currentBalance = balanceData?.current_balance || 0;
+
   return (
     <div className="space-y-6">
       <Link to="/dashboard/cards" className="flex items-center text-sm text-muted-foreground hover:text-primary">
@@ -112,7 +114,17 @@ const DebitAccountDetails = () => {
           <p className="text-muted-foreground">Compte de {profileName}</p>
           <p className="text-xs text-muted-foreground font-mono mt-1">ID: {account.id}</p>
         </div>
-        <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => refetchBalance()}
+            disabled={balanceLoading}
+          >
+            <RefreshCw className={`h-4 w-4 ${balanceLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -121,9 +133,13 @@ const DebitAccountDetails = () => {
             <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5" /> Solde Actuel</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-4xl font-bold">
-              {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.current_balance)}
-            </p>
+            {balanceLoading ? (
+              <Skeleton className="h-12 w-full" />
+            ) : (
+              <p className="text-4xl font-bold">
+                {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(currentBalance)}
+              </p>
+            )}
           </CardContent>
         </Card>
         <Card className="md:col-span-2">
