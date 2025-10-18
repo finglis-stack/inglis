@@ -11,6 +11,10 @@
     "creditFiles": "Credit Files",
     "settings": "Settings"
   },
+  "sharedSteps": {
+    "next": "Next",
+    "previous": "Previous"
+  },
   "cards": {
     "title": "Card List",
     "subtitle": "Manage your users' cards here.",
@@ -31,6 +35,8 @@
   "newCard": {
     "title": "Create a new card",
     "cancel": "Cancel",
+    "select": "Select",
+    "selected": "Selected",
     "step1_title": "Select User",
     "step1_desc": "Search for and choose the profile.",
     "step2_title": "Select Program",
@@ -189,7 +195,8 @@
     "noResults": "No results found.",
     "typePersonal": "Personal",
     "typeCorporate": "Corporate",
-    "searchError": "Please enter a search term."
+    "searchError": "Please enter a search term.",
+    "loading": "Loading..."
   },
   "newUser": {
     "title": "Add a new user",
@@ -271,6 +278,9 @@
     "noAccess": "No access recorded.",
     "changePinTitle": "Change PIN",
     "changePinDesc": "Enter a new 4-digit PIN for this profile.",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
     "statusActive": "Active",
     "statusAttention": "Attention",
     "statusRisky": "Risky",
@@ -325,9 +335,13 @@
     "creditReportDesc": "This report was retrieved with the user's consent.",
     "creditScore": "CREDIT SCORE",
     "creditHistory": "Credit History",
-    "noCreditHistory": "No credit history available"
+    "noCreditHistory": "No credit history available",
+    "date": "Date",
+    "type": "Type",
+    "status": "Status"
   },
   "accounts": {
+    "error": "Error",
     "backToCards": "Back to card list",
     "debitAccountManagement": "Debit Account Management",
     "creditAccountManagement": "Credit Account Management",
@@ -368,7 +382,8 @@
     "cancelSuccess": "Authorization cancelled successfully!",
     "expired": "Expired",
     "captureImmediatelyDesc": "The transaction will be processed and finalized instantly.",
-    "captureLaterDesc": "An authorization will be placed on the account, to be manually captured later."
+    "captureLaterDesc": "An authorization will be placed on the account, to be manually captured later.",
+    "description": "Description"
   },
   "newTransaction": {
     "title": "Add Manual Transaction",
@@ -405,6 +420,7 @@
     "createAuthorization": "Create Authorization",
     "submitting": "Submitting...",
     "successHold": "Authorization created successfully! Code: {{code}}",
-    "successCapture": "Transaction captured successfully!"
+    "successCapture": "Transaction captured successfully!",
+    "amount": "Amount"
   }
 }

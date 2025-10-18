@@ -11,6 +11,10 @@
     "creditFiles": "Dossier de crédit",
     "settings": "Paramètres"
   },
+  "sharedSteps": {
+    "next": "Suivant",
+    "previous": "Précédent"
+  },
   "cards": {
     "title": "Liste des cartes",
     "subtitle": "Gérez les cartes de vos utilisateurs ici.",
@@ -31,6 +35,8 @@
   "newCard": {
     "title": "Créer une nouvelle carte",
     "cancel": "Annuler",
+    "select": "Sélectionner",
+    "selected": "Sélectionné",
     "step1_title": "Sélectionner l'utilisateur",
     "step1_desc": "Recherchez et choisissez le profil.",
     "step2_title": "Sélectionner le programme",
@@ -189,7 +195,8 @@
     "noResults": "Aucun résultat trouvé.",
     "typePersonal": "Personnel",
     "typeCorporate": "Corporatif",
-    "searchError": "Veuillez entrer un terme de recherche."
+    "searchError": "Veuillez entrer un terme de recherche.",
+    "loading": "Chargement..."
   },
   "newUser": {
     "title": "Ajouter un nouvel utilisateur",
@@ -199,7 +206,8 @@
     "personalDesc": "Pour les individus et les clients particuliers.",
     "corporateTitle": "Corporatif",
     "corporateDesc": "Pour les entreprises, les sociétés et les organisations.",
-    "cancel": "Annuler et retourner à la liste"
+    "cancel": "Annuler et retourner à la liste",
+    "select": "Sélectionner"
   },
   "personalSteps": {
     "step1_title": "Identité",
@@ -270,6 +278,9 @@
     "noAccess": "Aucun accès enregistré.",
     "changePinTitle": "Modifier le NIP",
     "changePinDesc": "Entrez un nouveau NIP à 4 chiffres pour ce profil.",
+    "cancel": "Annuler",
+    "save": "Sauvegarder",
+    "saving": "Sauvegarde...",
     "statusActive": "Actif",
     "statusAttention": "Attention",
     "statusRisky": "Risqué",
@@ -324,9 +335,13 @@
     "creditReportDesc": "Ce dossier a été récupéré avec le consentement de l'utilisateur.",
     "creditScore": "SCORE DE CRÉDIT",
     "creditHistory": "Historique de Crédit",
-    "noCreditHistory": "Aucun historique de crédit disponible"
+    "noCreditHistory": "Aucun historique de crédit disponible",
+    "date": "Date",
+    "type": "Type",
+    "status": "Statut"
   },
   "accounts": {
+    "error": "Erreur",
     "backToCards": "Retour à la liste des cartes",
     "debitAccountManagement": "Gestion du Compte de Débit",
     "creditAccountManagement": "Gestion du Compte de Crédit",
@@ -367,7 +382,8 @@
     "cancelSuccess": "Autorisation annulée avec succès !",
     "expired": "Expiré",
     "captureImmediatelyDesc": "La transaction sera traitée et finalisée instantanément.",
-    "captureLaterDesc": "Une autorisation sera placée sur le compte, à capturer manuellement plus tard."
+    "captureLaterDesc": "Une autorisation sera placée sur le compte, à capturer manuellement plus tard.",
+    "description": "Description"
   },
   "newTransaction": {
     "title": "Ajouter une Transaction Manuelle",
@@ -404,6 +420,7 @@
     "createAuthorization": "Créer l'Autorisation",
     "submitting": "Soumission...",
     "successHold": "Autorisation créée avec succès ! Code: {{code}}",
-    "successCapture": "Transaction capturée avec succès !"
+    "successCapture": "Transaction capturée avec succès !",
+    "amount": "Montant"
   }
 }
