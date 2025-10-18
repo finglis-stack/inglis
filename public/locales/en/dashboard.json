@@ -338,6 +338,7 @@
     "noCreditHistory": "No credit history available",
     "date": "Date",
     "type": "Type",
+    "details": "Details",
     "status": "Status"
   },
   "accounts": {
