@@ -316,6 +316,7 @@
     "card": "Card",
     "program": "Program",
     "associatedAccount": "Associated Account",
+    "actions": "Actions",
     "noCards": "No cards associated with this profile.",
     "creditAccount": "Credit",
     "debitAccount": "Debit",
