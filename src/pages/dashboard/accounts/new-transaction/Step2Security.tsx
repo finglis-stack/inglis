@@ -59,7 +59,7 @@ const Step2Security = () => {
         </div>
       </div>
       <div className="flex justify-between mt-8">
-        <Button type="button" variant="outline" onClick={() => navigate('../step-1')}>Précédent</Button>
+        <Button type="button" variant="outline" onClick={() => navigate('..')}>Précédent</Button>
         <Button type="submit">Suivant</Button>
       </div>
     </form>

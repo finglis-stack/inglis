@@ -16,11 +16,13 @@ const NewTransactionLayout = () => {
   const backUrl = `/dashboard/accounts/${accountType}/${accountId}`;
 
   const path = location.pathname;
-  let currentStepId = 1;
-  if (path.endsWith('step-2')) {
-    currentStepId = 2;
-  } else if (path.endsWith('step-3')) {
+  let currentStepId;
+  if (path.endsWith('step-3')) {
     currentStepId = 3;
+  } else if (path.endsWith('step-2')) {
+    currentStepId = 2;
+  } else {
+    currentStepId = 1;
   }
   
   const steps = transactionSteps(t);

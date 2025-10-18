@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import Welcome from "@/pages/onboarding/Welcome";
@@ -93,8 +93,7 @@ const App = () => (
             
             <Route element={<NewTransactionProvider />}>
               <Route path="accounts/:accountType(debit|credit)/:accountId/new-transaction" element={<NewTransactionLayout />}>
-                <Route index element={<Navigate to="step-1" replace />} />
-                <Route path="step-1" element={<Step1Details />} />
+                <Route index element={<Step1Details />} />
                 <Route path="step-2" element={<Step2Security />} />
                 <Route path="step-3" element={<Step3Review />} />
               </Route>
