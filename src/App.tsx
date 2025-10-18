@@ -90,13 +90,14 @@ const App = () => (
             <Route path="users/profile/:id" element={<UserProfile />} />
             <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
             <Route path="accounts/credit/:accountId" element={<CreditAccountDetails />} />
-            
-            <Route element={<NewTransactionProvider />}>
-              <Route path="accounts/:accountType(debit|credit)/:accountId/new-transaction" element={<NewTransactionLayout />}>
-                <Route index element={<Step1Details />} />
-                <Route path="step-2" element={<Step2Security />} />
-                <Route path="step-3" element={<Step3Review />} />
-              </Route>
+          </Route>
+
+          {/* Routes de transaction HORS du DashboardLayout */}
+          <Route element={<NewTransactionProvider />}>
+            <Route path="/dashboard/accounts/:accountType(debit|credit)/:accountId/new-transaction" element={<NewTransactionLayout />}>
+              <Route index element={<Step1Details />} />
+              <Route path="step-2" element={<Step2Security />} />
+              <Route path="step-3" element={<Step3Review />} />
             </Route>
           </Route>
 
