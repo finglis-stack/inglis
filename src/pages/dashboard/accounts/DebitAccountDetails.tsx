@@ -133,7 +133,7 @@ const DebitAccountDetails = () => {
           </CardHeader>
           <CardContent className="flex flex-wrap gap-4">
             <Button asChild>
-              <Link to={`/dashboard/accounts/debit/${accountId}/new-transaction/step-1`}>
+              <Link to={`/dashboard/accounts/debit/${accountId}/new-transaction`}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Ajouter un débit
               </Link>

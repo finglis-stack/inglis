@@ -93,7 +93,7 @@ const App = () => (
             
             <Route element={<NewTransactionProvider />}>
               <Route path="accounts/:accountType(debit|credit)/:accountId/new-transaction" element={<NewTransactionLayout />}>
-                <Route path="step-1" element={<Step1Details />} />
+                <Route index element={<Step1Details />} />
                 <Route path="step-2" element={<Step2Security />} />
                 <Route path="step-3" element={<Step3Review />} />
               </Route>

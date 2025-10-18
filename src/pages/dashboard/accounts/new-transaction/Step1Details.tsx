@@ -25,7 +25,7 @@ const Step1Details = () => {
       return;
     }
     updateTransaction({ amount: parsedAmount, description });
-    navigate('../step-2');
+    navigate(`../step-2`);
   };
 
   return (
