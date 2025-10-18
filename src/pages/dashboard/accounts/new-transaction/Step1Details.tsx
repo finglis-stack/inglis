@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
 import { showError } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 const Step1Details = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { transactionData, updateTransaction } = useNewTransaction();
   
@@ -21,11 +23,11 @@ const Step1Details = () => {
     e.preventDefault();
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      showError("Veuillez entrer un montant valide.");
+      showError(t('dashboard.accounts.invalidAmount'));
       return;
     }
     if (!description.trim()) {
-      showError("Veuillez entrer une description (nom du marchand).");
+      showError(t('dashboard.accounts.invalidDescription'));
       return;
     }
     
@@ -43,29 +45,29 @@ const Step1Details = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid gap-2">
-        <Label htmlFor="amount">Montant de la transaction</Label>
+        <Label htmlFor="amount">{t('dashboard.newTransaction.transactionAmount')}</Label>
         <Input id="amount" type="number" step="0.01" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} required />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="description">Description (Marchand)</Label>
-        <Input id="description" placeholder="Ex: Café Central" value={description} onChange={(e) => setDescription(e.target.value)} required />
+        <Label htmlFor="description">{t('dashboard.accounts.description')} ({t('dashboard.newTransaction.merchantName')})</Label>
+        <Input id="description" placeholder={t('dashboard.newTransaction.merchantPlaceholder')} value={description} onChange={(e) => setDescription(e.target.value)} required />
       </div>
       
       <div className="grid gap-4 p-4 border rounded-md bg-gray-50">
-        <Label>Délai de capture</Label>
+        <Label>{t('dashboard.newTransaction.captureDelay')}</Label>
         <RadioGroup value={captureOption} onValueChange={setCaptureOption} className="space-y-3">
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="now" id="now" />
             <Label htmlFor="now" className="font-normal cursor-pointer">
-              Capturer immédiatement
-              <span className="block text-xs text-muted-foreground">Le montant sera débité tout de suite</span>
+              {t('dashboard.newTransaction.immediately')}
+              <span className="block text-xs text-muted-foreground">{t('dashboard.accounts.captureImmediatelyDesc')}</span>
             </Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="later" id="later" />
             <Label htmlFor="later" className="font-normal cursor-pointer">
-              Capturer plus tard (Hold)
-              <span className="block text-xs text-muted-foreground">Réserver le montant maintenant, capturer plus tard</span>
+              {t('dashboard.newTransaction.later')} (Hold)
+              <span className="block text-xs text-muted-foreground">{t('dashboard.accounts.captureLaterDesc')}</span>
             </Label>
           </div>
         </RadioGroup>
@@ -73,7 +75,7 @@ const Step1Details = () => {
         {captureOption === 'later' && (
           <div className="grid gap-3 pt-2 pl-6 border-l-2 border-primary">
             <Label htmlFor="captureHours">
-              Capturer dans <strong>{captureHours[0]}</strong> heure{captureHours[0] > 1 ? 's' : ''}
+              {t('dashboard.newTransaction.captureIn', { hours: captureHours[0] })}
             </Label>
             <Slider 
               id="captureHours" 
@@ -85,14 +87,14 @@ const Step1Details = () => {
               className="w-full"
             />
             <p className="text-xs text-muted-foreground">
-              Maximum: 96 heures (4 jours). L'autorisation expirera automatiquement si elle n'est pas capturée.
+              {t('dashboard.newTransaction.captureDelayDesc')}
             </p>
           </div>
         )}
       </div>
 
       <div className="flex justify-end mt-8">
-        <Button type="submit">Suivant</Button>
+        <Button type="submit">{t('dashboard.sharedSteps.next')}</Button>
       </div>
     </form>
   );

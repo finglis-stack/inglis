@@ -18,8 +18,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useTranslation } from 'react-i18next';
 
 const PendingAuthorizations = () => {
+  const { t } = useTranslation();
   const { accountId } = useParams();
   const [authorizations, setAuthorizations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +33,6 @@ const PendingAuthorizations = () => {
       if (!accountId) return;
       setLoading(true);
 
-      // Déterminer le type de compte
       const { data: debitCheck } = await supabase
         .from('debit_accounts')
         .select('id')
@@ -51,7 +52,7 @@ const PendingAuthorizations = () => {
         .order('authorized_at', { ascending: false });
 
       if (error) {
-        showError(`Erreur: ${error.message}`);
+        showError(`${t('dashboard.accounts.error')}: ${error.message}`);
       } else {
         setAuthorizations(data || []);
       }
@@ -59,7 +60,7 @@ const PendingAuthorizations = () => {
     };
 
     fetchAuthorizations();
-  }, [accountId]);
+  }, [accountId, t]);
 
   const handleCapture = async (transactionId: string) => {
     setProcessingId(transactionId);
@@ -70,10 +71,10 @@ const PendingAuthorizations = () => {
 
       if (error) throw error;
 
-      showSuccess("Autorisation capturée avec succès !");
+      showSuccess(t('dashboard.accounts.captureSuccess'));
       setAuthorizations(authorizations.filter(a => a.id !== transactionId));
     } catch (err) {
-      showError(`Erreur: ${err.message}`);
+      showError(`${t('dashboard.accounts.error')}: ${err.message}`);
     } finally {
       setProcessingId(null);
     }
@@ -88,10 +89,10 @@ const PendingAuthorizations = () => {
 
       if (error) throw error;
 
-      showSuccess("Autorisation annulée avec succès !");
+      showSuccess(t('dashboard.accounts.cancelSuccess'));
       setAuthorizations(authorizations.filter(a => a.id !== transactionId));
     } catch (err) {
-      showError(`Erreur: ${err.message}`);
+      showError(`${t('dashboard.accounts.error')}: ${err.message}`);
     } finally {
       setProcessingId(null);
     }
@@ -104,7 +105,7 @@ const PendingAuthorizations = () => {
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
     
-    if (diffMs < 0) return 'Expiré';
+    if (diffMs < 0) return t('dashboard.accounts.expired');
     if (diffHours > 0) return `${diffHours}h ${diffMinutes}m`;
     return `${diffMinutes}m`;
   };
@@ -113,32 +114,32 @@ const PendingAuthorizations = () => {
     <div className="space-y-6">
       <Link to={`/dashboard/accounts/${accountType}/${accountId}`} className="flex items-center text-sm text-muted-foreground hover:text-primary">
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Retour au compte
+        {t('dashboard.newTransaction.backToAccount')}
       </Link>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Autorisations en Attente
+            {t('dashboard.accounts.pendingAuthTitle')}
           </CardTitle>
           <CardDescription>
-            Gérez les autorisations (holds) qui n'ont pas encore été capturées. Les autorisations expirent automatiquement après 4 jours.
+            {t('dashboard.accounts.pendingAuthDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">Chargement...</div>
+            <div className="text-center py-8">{t('dashboard.users.loading')}</div>
           ) : authorizations.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Code d'autorisation</TableHead>
-                  <TableHead>Marchand</TableHead>
-                  <TableHead>Montant</TableHead>
-                  <TableHead>Autorisé le</TableHead>
-                  <TableHead>Expire dans</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t('dashboard.accounts.authorizationCode')}</TableHead>
+                  <TableHead>{t('dashboard.newTransaction.merchantName')}</TableHead>
+                  <TableHead>{t('dashboard.newTransaction.amount')}</TableHead>
+                  <TableHead>{t('dashboard.transactions.authorizedOn')}</TableHead>
+                  <TableHead>{t('dashboard.accounts.expiresIn')}</TableHead>
+                  <TableHead className="text-right">{t('dashboard.users.colActions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -170,22 +171,22 @@ const PendingAuthorizations = () => {
                               ) : (
                                 <>
                                   <CheckCircle className="mr-2 h-4 w-4" />
-                                  Capturer
+                                  {t('dashboard.accounts.capture')}
                                 </>
                               )}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Capturer cette autorisation ?</AlertDialogTitle>
+                              <AlertDialogTitle>{t('dashboard.accounts.captureConfirmTitle')}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Le montant de {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(auth.amount)} sera définitivement débité du compte.
+                                {t('dashboard.accounts.captureConfirmDesc', { amount: new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(auth.amount) })}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Annuler</AlertDialogCancel>
+                              <AlertDialogCancel>{t('dashboard.userProfile.cancel')}</AlertDialogCancel>
                               <AlertDialogAction onClick={() => handleCapture(auth.id)}>
-                                Confirmer la capture
+                                {t('dashboard.accounts.confirmCapture')}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -199,20 +200,20 @@ const PendingAuthorizations = () => {
                               disabled={processingId === auth.id}
                             >
                               <XCircle className="mr-2 h-4 w-4" />
-                              Annuler
+                              {t('dashboard.accounts.cancel')}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Annuler cette autorisation ?</AlertDialogTitle>
+                              <AlertDialogTitle>{t('dashboard.accounts.cancelConfirmTitle')}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Le hold sera libéré et le montant redeviendra disponible pour le client.
+                                {t('dashboard.accounts.cancelConfirmDesc')}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>Retour</AlertDialogCancel>
+                              <AlertDialogCancel>{t('dashboard.userProfile.cancel')}</AlertDialogCancel>
                               <AlertDialogAction onClick={() => handleCancel(auth.id)}>
-                                Confirmer l'annulation
+                                {t('dashboard.accounts.confirmCancel')}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -226,7 +227,7 @@ const PendingAuthorizations = () => {
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Aucune autorisation en attente</p>
+              <p>{t('dashboard.accounts.noPendingAuth')}</p>
             </div>
           )}
         </CardContent>
