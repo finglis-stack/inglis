@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Clock, CheckCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 const Step3Review = () => {
   const navigate = useNavigate();
@@ -41,16 +42,21 @@ const Step3Review = () => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.rpc('process_transaction', {
+      const { data, error } = await supabase.rpc('create_authorization', {
         p_card_id: cardId,
         p_amount: transactionData.amount,
-        p_type: 'purchase',
         p_description: transactionData.description,
+        p_capture_delay_hours: transactionData.captureHours || 0,
       });
 
       if (error) throw error;
 
-      showSuccess("Transaction manuelle ajoutée avec succès !");
+      const isImmediate = transactionData.captureHours === 0;
+      showSuccess(
+        isImmediate 
+          ? "Transaction capturée avec succès !" 
+          : `Autorisation créée avec succès ! Code: ${data.authorization_code}`
+      );
       resetTransaction();
       navigate(finalBackUrl);
     } catch (err) {
@@ -59,6 +65,11 @@ const Step3Review = () => {
       setLoading(false);
     }
   };
+
+  const isImmediate = transactionData.captureHours === 0;
+  const expiresAt = transactionData.captureHours > 0 
+    ? new Date(Date.now() + transactionData.captureHours * 60 * 60 * 1000)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -76,6 +87,29 @@ const Step3Review = () => {
             <p>{transactionData.description}</p>
           </div>
           <div>
+            <p className="text-sm font-semibold text-muted-foreground">Type de capture</p>
+            <div className="flex items-center gap-2 mt-1">
+              {isImmediate ? (
+                <>
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <Badge variant="default">Capture Immédiate</Badge>
+                </>
+              ) : (
+                <>
+                  <Clock className="h-4 w-4 text-orange-600" />
+                  <Badge variant="secondary">Autorisation (Hold)</Badge>
+                </>
+              )}
+            </div>
+            {!isImmediate && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Capture prévue dans <strong>{transactionData.captureHours} heure{transactionData.captureHours > 1 ? 's' : ''}</strong>
+                <br />
+                <span className="text-xs">Expire le: {expiresAt?.toLocaleString('fr-CA')}</span>
+              </p>
+            )}
+          </div>
+          <div>
             <p className="text-sm font-semibold text-muted-foreground">Justification</p>
             <p className="text-sm italic bg-gray-50 p-2 rounded-md border">{transactionData.reason}</p>
           </div>
@@ -85,7 +119,7 @@ const Step3Review = () => {
         <Button type="button" variant="outline" onClick={() => navigate('../step-2')} disabled={loading}>Précédent</Button>
         <Button onClick={handleSubmit} disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {loading ? 'Soumission...' : 'Confirmer et Soumettre'}
+          {loading ? 'Soumission...' : (isImmediate ? 'Confirmer et Capturer' : 'Créer l\'Autorisation')}
         </Button>
       </div>
     </div>

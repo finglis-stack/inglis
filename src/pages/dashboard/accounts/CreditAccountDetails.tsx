@@ -23,6 +23,7 @@ const CreditAccountDetails = () => {
   const [statement, setStatement] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [paymentAmount, setPaymentAmount] = useState('');
+  const [pendingAuthCount, setPendingAuthCount] = useState(0);
 
   // Utiliser le hook pour obtenir le solde calculé dynamiquement
   const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance, secondsUntilRefresh } = useCreditAccountBalance(accountId!);
@@ -68,6 +69,14 @@ const CreditAccountDetails = () => {
         setTransactions(transactionsData);
       }
 
+      // Compter les autorisations en attente
+      const { count } = await supabase
+        .from('transactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('credit_account_id', accountId)
+        .eq('status', 'authorized');
+      setPendingAuthCount(count || 0);
+
       if (accountData.current_statement_id) {
         const { data: statementData, error: statementError } = await supabase
           .from('statements')
@@ -111,9 +120,7 @@ const CreditAccountDetails = () => {
 
       showSuccess("Paiement traité avec succès !");
       setPaymentAmount('');
-      // Rafraîchir le solde immédiatement
       refetchBalance();
-      // Rafraîchir les transactions
       const { data: transactionsData } = await supabase
         .from('transactions')
         .select('*')
@@ -239,6 +246,15 @@ const CreditAccountDetails = () => {
                     Ajouter un débit
                   </Link>
                 </Button>
+                <Button asChild variant="outline">
+                  <Link to={`/dashboard/accounts/credit/${accountId}/pending-authorizations`}>
+                    <Clock className="mr-2 h-4 w-4" />
+                    Autorisations en attente
+                    {pendingAuthCount > 0 && (
+                      <Badge variant="secondary" className="ml-2">{pendingAuthCount}</Badge>
+                    )}
+                  </Link>
+                </Button>
                 <Button variant="destructive">Bloquer le compte</Button>
               </div>
             </div>
@@ -257,6 +273,7 @@ const CreditAccountDetails = () => {
                 <TableHead>Date</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Statut</TableHead>
                 <TableHead className="text-right">Montant</TableHead>
               </TableRow>
             </TableHeader>
@@ -267,6 +284,16 @@ const CreditAccountDetails = () => {
                     <TableCell>{new Date(tx.created_at).toLocaleString('fr-CA')}</TableCell>
                     <TableCell>{tx.description || 'N/A'}</TableCell>
                     <TableCell><Badge variant="outline" className="capitalize">{tx.type.replace('_', ' ')}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        tx.status === 'captured' || tx.status === 'completed' ? 'default' :
+                        tx.status === 'authorized' ? 'secondary' :
+                        tx.status === 'expired' || tx.status === 'cancelled' ? 'destructive' :
+                        'outline'
+                      }>
+                        {tx.status}
+                      </Badge>
+                    </TableCell>
                     <TableCell className={`text-right font-medium ${tx.type === 'payment' ? 'text-green-600' : 'text-red-600'}`}>
                       {tx.type === 'payment' ? '-' : '+'}
                       {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(tx.amount)}
@@ -275,7 +302,7 @@ const CreditAccountDetails = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center h-24">
+                  <TableCell colSpan={5} className="text-center h-24">
                     Aucune transaction trouvée pour ce compte.
                   </TableCell>
                 </TableRow>

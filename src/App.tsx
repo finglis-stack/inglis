@@ -54,6 +54,7 @@ import Step1Details from "@/pages/dashboard/accounts/new-transaction/Step1Detail
 import Step2Security from "@/pages/dashboard/accounts/new-transaction/Step2Security";
 import Step3Review from "@/pages/dashboard/accounts/new-transaction/Step3Review";
 import TransactionDetails from "@/pages/dashboard/accounts/TransactionDetails";
+import PendingAuthorizations from "@/pages/dashboard/accounts/PendingAuthorizations";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +91,8 @@ const App = () => (
             <Route path="users/profile/:id" element={<UserProfile />} />
             <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
             <Route path="accounts/credit/:accountId" element={<CreditAccountDetails />} />
+            <Route path="accounts/debit/:accountId/pending-authorizations" element={<PendingAuthorizations />} />
+            <Route path="accounts/credit/:accountId/pending-authorizations" element={<PendingAuthorizations />} />
           </Route>
 
           {/* Routes de transaction pour DEBIT - HORS du DashboardLayout */}

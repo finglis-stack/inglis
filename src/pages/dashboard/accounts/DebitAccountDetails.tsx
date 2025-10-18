@@ -18,6 +18,7 @@ const DebitAccountDetails = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [accessLogs, setAccessLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingAuthCount, setPendingAuthCount] = useState(0);
 
   // Utiliser le hook pour obtenir le solde calculé dynamiquement
   const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance, secondsUntilRefresh } = useDebitAccountBalance(accountId!);
@@ -62,6 +63,14 @@ const DebitAccountDetails = () => {
       } else {
         setTransactions(transactionsData);
       }
+
+      // Compter les autorisations en attente
+      const { count } = await supabase
+        .from('transactions')
+        .select('*', { count: 'exact', head: true })
+        .eq('debit_account_id', accountId)
+        .eq('status', 'authorized');
+      setPendingAuthCount(count || 0);
 
       const { data: logsData, error: logsError } = await supabase.rpc('get_debit_account_access_logs', {
         p_account_id: accountId,
@@ -159,6 +168,15 @@ const DebitAccountDetails = () => {
                 Ajouter un débit
               </Link>
             </Button>
+            <Button asChild variant="outline">
+              <Link to={`/dashboard/accounts/debit/${accountId}/pending-authorizations`}>
+                <Clock className="mr-2 h-4 w-4" />
+                Autorisations en attente
+                {pendingAuthCount > 0 && (
+                  <Badge variant="secondary" className="ml-2">{pendingAuthCount}</Badge>
+                )}
+              </Link>
+            </Button>
             <Button variant="destructive">Bloquer le compte</Button>
           </CardContent>
         </Card>
@@ -175,6 +193,7 @@ const DebitAccountDetails = () => {
                 <TableHead>Date</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Statut</TableHead>
                 <TableHead className="text-right">Montant</TableHead>
               </TableRow>
             </TableHeader>
@@ -185,6 +204,16 @@ const DebitAccountDetails = () => {
                     <TableCell>{new Date(tx.created_at).toLocaleString('fr-CA')}</TableCell>
                     <TableCell>{tx.description || 'N/A'}</TableCell>
                     <TableCell><Badge variant="outline" className="capitalize">{tx.type}</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        tx.status === 'captured' || tx.status === 'completed' ? 'default' :
+                        tx.status === 'authorized' ? 'secondary' :
+                        tx.status === 'expired' || tx.status === 'cancelled' ? 'destructive' :
+                        'outline'
+                      }>
+                        {tx.status}
+                      </Badge>
+                    </TableCell>
                     <TableCell className={`text-right font-medium ${tx.type === 'payment' ? 'text-green-600' : 'text-red-600'}`}>
                       {tx.type === 'payment' ? '+' : '-'}
                       {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(tx.amount)}
@@ -193,7 +222,7 @@ const DebitAccountDetails = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center h-24">
+                  <TableCell colSpan={5} className="text-center h-24">
                     Aucune transaction trouvée pour ce compte.
                   </TableCell>
                 </TableRow>
