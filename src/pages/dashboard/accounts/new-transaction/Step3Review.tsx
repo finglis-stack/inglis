@@ -32,7 +32,7 @@ const Step3Review = () => {
         .single();
 
       if (error || !data) {
-        showError(t('accountNotFound', { ns: 'common' }));
+        showError(t('accounts.accountNotFound'));
         navigate(finalBackUrl);
       } else {
         setCardId(data.card_id);
@@ -62,7 +62,7 @@ const Step3Review = () => {
       resetTransaction();
       navigate(finalBackUrl);
     } catch (err) {
-      showError(`${t('error', { ns: 'common' })}: ${err.message}`);
+      showError(`${t('accounts.error')}: ${err.message}`);
     } finally {
       setLoading(false);
     }

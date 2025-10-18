@@ -24,11 +24,11 @@ const Step2Security = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!reason.trim()) {
-      showError(t('justificationRequired', { ns: 'common' }));
+      showError(t('newTransaction.justificationRequired'));
       return;
     }
     if (enteredCode !== securityCode) {
-      showError(t('incorrectSecurityCode', { ns: 'common' }));
+      showError(t('newTransaction.incorrectSecurityCode'));
       return;
     }
     updateTransaction({ reason });
@@ -61,8 +61,8 @@ const Step2Security = () => {
         </div>
       </div>
       <div className="flex justify-between mt-8">
-        <Button type="button" variant="outline" onClick={() => navigate('..')}>{t('previous', { ns: 'common' })}</Button>
-        <Button type="submit">{t('next', { ns: 'common' })}</Button>
+        <Button type="button" variant="outline" onClick={() => navigate('..')}>{t('sharedSteps.previous')}</Button>
+        <Button type="submit">{t('sharedSteps.next')}</Button>
       </div>
     </form>
   );

@@ -383,7 +383,14 @@
     "expired": "Expired",
     "captureImmediatelyDesc": "The transaction will be processed and finalized instantly.",
     "captureLaterDesc": "An authorization will be placed on the account, to be manually captured later.",
-    "description": "Description"
+    "description": "Description",
+    "invalidPaymentAmount": "Please enter a valid payment amount.",
+    "paymentReceived": "Payment received",
+    "paymentSuccess": "Payment made successfully!",
+    "paymentError": "Error during payment",
+    "accountNotFound": "Account not found.",
+    "transactionError": "Error fetching transactions",
+    "accessLogError": "Error fetching access history"
   },
   "newTransaction": {
     "title": "Add Manual Transaction",
@@ -421,6 +428,10 @@
     "submitting": "Submitting...",
     "successHold": "Authorization created successfully! Code: {{code}}",
     "successCapture": "Transaction captured successfully!",
-    "amount": "Amount"
+    "amount": "Amount",
+    "justificationRequired": "Please enter a justification for this manual transaction.",
+    "incorrectSecurityCode": "The security code is incorrect.",
+    "invalidAmount": "Please enter a valid amount.",
+    "invalidDescription": "Please enter a valid description."
   }
 }

@@ -20,16 +20,5 @@
   "pin_title": "Sécurité",
   "pin_desc": "Choisissez un NIP à 4 chiffres pour sécuriser l'accès aux informations sensibles de ce profil.",
   "pin_title_short": "Sécurité",
-  "pin_desc_short": "Définition du NIP.",
-  "justificationRequired": "Veuillez entrer une justification pour cette transaction manuelle.",
-  "incorrectSecurityCode": "Le code de sécurité est incorrect.",
-  "invalidAmount": "Veuillez entrer un montant valide.",
-  "invalidDescription": "Veuillez entrer une description valide.",
-  "invalidPaymentAmount": "Veuillez entrer un montant de paiement valide.",
-  "paymentReceived": "Paiement reçu",
-  "paymentSuccess": "Paiement effectué avec succès !",
-  "paymentError": "Erreur lors du paiement",
-  "accountNotFound": "Compte non trouvé.",
-  "transactionError": "Erreur lors de la récupération des transactions",
-  "accessLogError": "Erreur lors de la récupération de l'historique d'accès"
+  "pin_desc_short": "Définition du NIP."
 }

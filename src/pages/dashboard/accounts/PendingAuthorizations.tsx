@@ -21,7 +21,7 @@ import {
 import { useTranslation } from 'react-i18next';
 
 const PendingAuthorizations = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const { accountId } = useParams();
   const [authorizations, setAuthorizations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,7 @@ const PendingAuthorizations = () => {
         .order('authorized_at', { ascending: false });
 
       if (error) {
-        showError(`${t('dashboard.accounts.error')}: ${error.message}`);
+        showError(`${t('accounts.error')}: ${error.message}`);
       } else {
         setAuthorizations(data || []);
       }
@@ -71,10 +71,10 @@ const PendingAuthorizations = () => {
 
       if (error) throw error;
 
-      showSuccess(t('dashboard.accounts.captureSuccess'));
+      showSuccess(t('accounts.captureSuccess'));
       setAuthorizations(authorizations.filter(a => a.id !== transactionId));
     } catch (err) {
-      showError(`${t('dashboard.accounts.error')}: ${err.message}`);
+      showError(`${t('accounts.error')}: ${err.message}`);
     } finally {
       setProcessingId(null);
     }
@@ -89,10 +89,10 @@ const PendingAuthorizations = () => {
 
       if (error) throw error;
 
-      showSuccess(t('dashboard.accounts.cancelSuccess'));
+      showSuccess(t('accounts.cancelSuccess'));
       setAuthorizations(authorizations.filter(a => a.id !== transactionId));
     } catch (err) {
-      showError(`${t('dashboard.accounts.error')}: ${err.message}`);
+      showError(`${t('accounts.error')}: ${err.message}`);
     } finally {
       setProcessingId(null);
     }
@@ -105,7 +105,7 @@ const PendingAuthorizations = () => {
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
     
-    if (diffMs < 0) return t('dashboard.accounts.expired');
+    if (diffMs < 0) return t('accounts.expired');
     if (diffHours > 0) return `${diffHours}h ${diffMinutes}m`;
     return `${diffMinutes}m`;
   };
@@ -114,32 +114,32 @@ const PendingAuthorizations = () => {
     <div className="space-y-6">
       <Link to={`/dashboard/accounts/${accountType}/${accountId}`} className="flex items-center text-sm text-muted-foreground hover:text-primary">
         <ArrowLeft className="mr-2 h-4 w-4" />
-        {t('dashboard.newTransaction.backToAccount')}
+        {t('newTransaction.backToAccount')}
       </Link>
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            {t('dashboard.accounts.pendingAuthTitle')}
+            {t('accounts.pendingAuthTitle')}
           </CardTitle>
           <CardDescription>
-            {t('dashboard.accounts.pendingAuthDesc')}
+            {t('accounts.pendingAuthDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">{t('dashboard.users.loading')}</div>
+            <div className="text-center py-8">{t('users.loading')}</div>
           ) : authorizations.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('dashboard.accounts.authorizationCode')}</TableHead>
-                  <TableHead>{t('dashboard.newTransaction.merchantName')}</TableHead>
-                  <TableHead>{t('dashboard.newTransaction.amount')}</TableHead>
-                  <TableHead>{t('dashboard.transactions.authorizedOn')}</TableHead>
-                  <TableHead>{t('dashboard.accounts.expiresIn')}</TableHead>
-                  <TableHead className="text-right">{t('dashboard.users.colActions')}</TableHead>
+                  <TableHead>{t('accounts.authorizationCode')}</TableHead>
+                  <TableHead>{t('newTransaction.merchantName')}</TableHead>
+                  <TableHead>{t('newTransaction.amount')}</TableHead>
+                  <TableHead>{t('transactions.authorizedOn')}</TableHead>
+                  <TableHead>{t('accounts.expiresIn')}</TableHead>
+                  <TableHead className="text-right">{t('users.colActions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -171,22 +171,22 @@ const PendingAuthorizations = () => {
                               ) : (
                                 <>
                                   <CheckCircle className="mr-2 h-4 w-4" />
-                                  {t('dashboard.accounts.capture')}
+                                  {t('accounts.capture')}
                                 </>
                               )}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>{t('dashboard.accounts.captureConfirmTitle')}</AlertDialogTitle>
+                              <AlertDialogTitle>{t('accounts.captureConfirmTitle')}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                {t('dashboard.accounts.captureConfirmDesc', { amount: new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(auth.amount) })}
+                                {t('accounts.captureConfirmDesc', { amount: new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(auth.amount) })}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>{t('dashboard.userProfile.cancel')}</AlertDialogCancel>
+                              <AlertDialogCancel>{t('userProfile.cancel')}</AlertDialogCancel>
                               <AlertDialogAction onClick={() => handleCapture(auth.id)}>
-                                {t('dashboard.accounts.confirmCapture')}
+                                {t('accounts.confirmCapture')}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -200,20 +200,20 @@ const PendingAuthorizations = () => {
                               disabled={processingId === auth.id}
                             >
                               <XCircle className="mr-2 h-4 w-4" />
-                              {t('dashboard.accounts.cancel')}
+                              {t('accounts.cancel')}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>{t('dashboard.accounts.cancelConfirmTitle')}</AlertDialogTitle>
+                              <AlertDialogTitle>{t('accounts.cancelConfirmTitle')}</AlertDialogTitle>
                               <AlertDialogDescription>
-                                {t('dashboard.accounts.cancelConfirmDesc')}
+                                {t('accounts.cancelConfirmDesc')}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel>{t('dashboard.userProfile.cancel')}</AlertDialogCancel>
+                              <AlertDialogCancel>{t('userProfile.cancel')}</AlertDialogCancel>
                               <AlertDialogAction onClick={() => handleCancel(auth.id)}>
-                                {t('dashboard.accounts.confirmCancel')}
+                                {t('accounts.confirmCancel')}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -227,7 +227,7 @@ const PendingAuthorizations = () => {
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>{t('dashboard.accounts.noPendingAuth')}</p>
+              <p>{t('accounts.noPendingAuth')}</p>
             </div>
           )}
         </CardContent>

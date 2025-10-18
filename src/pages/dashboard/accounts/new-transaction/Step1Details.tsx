@@ -10,7 +10,7 @@ import { showError } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
 const Step1Details = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const navigate = useNavigate();
   const { transactionData, updateTransaction } = useNewTransaction();
   
@@ -23,11 +23,11 @@ const Step1Details = () => {
     e.preventDefault();
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      showError(t('dashboard.accounts.invalidAmount'));
+      showError(t('newTransaction.invalidAmount'));
       return;
     }
     if (!description.trim()) {
-      showError(t('dashboard.accounts.invalidDescription'));
+      showError(t('newTransaction.invalidDescription'));
       return;
     }
     
@@ -45,29 +45,29 @@ const Step1Details = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid gap-2">
-        <Label htmlFor="amount">{t('dashboard.newTransaction.transactionAmount')}</Label>
+        <Label htmlFor="amount">{t('newTransaction.transactionAmount')}</Label>
         <Input id="amount" type="number" step="0.01" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} required />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="description">{t('dashboard.accounts.description')} ({t('dashboard.newTransaction.merchantName')})</Label>
-        <Input id="description" placeholder={t('dashboard.newTransaction.merchantPlaceholder')} value={description} onChange={(e) => setDescription(e.target.value)} required />
+        <Label htmlFor="description">{t('accounts.description')} ({t('newTransaction.merchantName')})</Label>
+        <Input id="description" placeholder={t('newTransaction.merchantPlaceholder')} value={description} onChange={(e) => setDescription(e.target.value)} required />
       </div>
       
       <div className="grid gap-4 p-4 border rounded-md bg-gray-50">
-        <Label>{t('dashboard.newTransaction.captureDelay')}</Label>
+        <Label>{t('newTransaction.captureDelay')}</Label>
         <RadioGroup value={captureOption} onValueChange={setCaptureOption} className="space-y-3">
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="now" id="now" />
             <Label htmlFor="now" className="font-normal cursor-pointer">
-              {t('dashboard.newTransaction.immediately')}
-              <span className="block text-xs text-muted-foreground">{t('dashboard.accounts.captureImmediatelyDesc')}</span>
+              {t('newTransaction.immediately')}
+              <span className="block text-xs text-muted-foreground">{t('accounts.captureImmediatelyDesc')}</span>
             </Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="later" id="later" />
             <Label htmlFor="later" className="font-normal cursor-pointer">
-              {t('dashboard.newTransaction.later')} (Hold)
-              <span className="block text-xs text-muted-foreground">{t('dashboard.accounts.captureLaterDesc')}</span>
+              {t('newTransaction.later')} (Hold)
+              <span className="block text-xs text-muted-foreground">{t('accounts.captureLaterDesc')}</span>
             </Label>
           </div>
         </RadioGroup>
@@ -75,7 +75,7 @@ const Step1Details = () => {
         {captureOption === 'later' && (
           <div className="grid gap-3 pt-2 pl-6 border-l-2 border-primary">
             <Label htmlFor="captureHours">
-              {t('dashboard.newTransaction.captureIn', { hours: captureHours[0] })}
+              {t('newTransaction.captureIn', { hours: captureHours[0] })}
             </Label>
             <Slider 
               id="captureHours" 
@@ -87,14 +87,14 @@ const Step1Details = () => {
               className="w-full"
             />
             <p className="text-xs text-muted-foreground">
-              {t('dashboard.newTransaction.captureDelayDesc')}
+              {t('newTransaction.captureDelayDesc')}
             </p>
           </div>
         )}
       </div>
 
       <div className="flex justify-end mt-8">
-        <Button type="submit">{t('dashboard.sharedSteps.next')}</Button>
+        <Button type="submit">{t('sharedSteps.next')}</Button>
       </div>
     </form>
   );
