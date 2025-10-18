@@ -29,6 +29,7 @@ async function pushDataToCreditBureau(supabaseAdmin, profile, institutionName) {
   if (debitAccountsError) throw debitAccountsError;
 
   const newHistoryEntries = [];
+  const currencyFormatter = new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' });
 
   // Process Credit Accounts
   for (const acc of creditAccounts) {
@@ -46,9 +47,9 @@ async function pushDataToCreditBureau(supabaseAdmin, profile, institutionName) {
 
     newHistoryEntries.push({
       date: new Date().toISOString().split('T')[0],
-      type: 'Credit Account Update',
-      details: `Product: Credit Card - ${programName}. Provided by: ${institutionName}. Limit: ${acc.credit_limit}, Balance: ${current_balance}, Debt Ratio: ${debtRatio.toFixed(2)}%.`,
-      status: acc.status === 'active' ? 'Active' : 'Inactive'
+      type: programName,
+      details: `Émetteur: ${institutionName}, Solde: ${currencyFormatter.format(current_balance)}, Ratio d'endettement: ${debtRatio.toFixed(2)}%`,
+      status: acc.status === 'active' ? 'Actif' : 'Inactif'
     });
   }
 
@@ -67,9 +68,9 @@ async function pushDataToCreditBureau(supabaseAdmin, profile, institutionName) {
 
     newHistoryEntries.push({
       date: new Date().toISOString().split('T')[0],
-      type: 'Debit Account Update',
-      details: `Product: Debit Card - ${programName}. Provided by: ${institutionName}. Balance: ${current_balance}.`,
-      status: acc.status === 'active' ? 'Active' : 'Inactive'
+      type: programName,
+      details: `Émetteur: ${institutionName}, Solde: ${currencyFormatter.format(current_balance)}`,
+      status: acc.status === 'active' ? 'Actif' : 'Inactif'
     });
   }
 
@@ -83,7 +84,7 @@ async function pushDataToCreditBureau(supabaseAdmin, profile, institutionName) {
 
   // Filter out old entries from this specific institution to prevent duplicates
   const filteredHistory = (report?.credit_history || []).filter(entry => 
-    !entry.details.includes(`Provided by: ${institutionName}`)
+    !entry.details.includes(`Émetteur: ${institutionName}`)
   );
 
   const updatedHistory = filteredHistory.concat(newHistoryEntries);
