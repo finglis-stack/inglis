@@ -188,7 +188,7 @@ const CreditAccountDetails = () => {
               <h4 className="font-semibold">Autres actions</h4>
               <div className="flex flex-wrap gap-4 mt-2">
                 <Button asChild>
-                  <Link to={`/dashboard/accounts/credit/${accountId}/new-transaction`}>
+                  <Link to={`/dashboard/accounts/credit/${accountId}/new-transaction/step-1`}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Ajouter un débit
                   </Link>

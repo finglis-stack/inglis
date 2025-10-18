@@ -48,7 +48,11 @@ import SetCardPin from "@/pages/SetCardPin";
 import SetProfilePin from "@/pages/SetProfilePin";
 import ConfirmCreditConsent from "@/pages/ConfirmCreditConsent";
 import ConfirmCreditPull from "@/pages/ConfirmCreditPull";
-import NewTransaction from "@/pages/dashboard/accounts/NewTransaction";
+import { NewTransactionProvider } from "@/context/NewTransactionContext";
+import NewTransactionLayout from "@/pages/dashboard/accounts/NewTransactionLayout";
+import Step1Details from "@/pages/dashboard/accounts/new-transaction/Step1Details";
+import Step2Security from "@/pages/dashboard/accounts/new-transaction/Step2Security";
+import Step3Review from "@/pages/dashboard/accounts/new-transaction/Step3Review";
 import TransactionDetails from "@/pages/dashboard/accounts/TransactionDetails";
 
 const queryClient = new QueryClient();
@@ -86,8 +90,14 @@ const App = () => (
             <Route path="users/profile/:id" element={<UserProfile />} />
             <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
             <Route path="accounts/credit/:accountId" element={<CreditAccountDetails />} />
-            <Route path="accounts/debit/:accountId/new-transaction" element={<NewTransaction />} />
-            <Route path="accounts/credit/:accountId/new-transaction" element={<NewTransaction />} />
+            
+            <Route element={<NewTransactionProvider />}>
+              <Route path="accounts/:accountType(debit|credit)/:accountId/new-transaction" element={<NewTransactionLayout />}>
+                <Route path="step-1" element={<Step1Details />} />
+                <Route path="step-2" element={<Step2Security />} />
+                <Route path="step-3" element={<Step3Review />} />
+              </Route>
+            </Route>
           </Route>
 
           <Route element={<NewUserProvider />}>
