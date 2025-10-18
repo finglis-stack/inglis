@@ -6,7 +6,7 @@ const personalSteps = (t) => [
   { id: 1, name: t('personalSteps.step1_title'), description: t('personalSteps.step1_desc_short') },
   { id: 2, name: t('personalSteps.step2_title'), description: t('personalSteps.step2_desc_short') },
   { id: 3, name: t('personalSteps.step3_title'), description: t('personalSteps.step3_desc_short') },
-  { id: 4, name: t('sharedSteps.pin_title_short'), description: t('sharedSteps.pin_desc_short') },
+  { id: 4, name: t('pin_title_short', { ns: 'common' }), description: t('pin_desc_short', { ns: 'common' }) },
   { id: 5, name: t('personalSteps.step5_title'), description: t('personalSteps.step5_desc_short') },
 ];
 
@@ -14,12 +14,12 @@ const corporateSteps = (t) => [
   { id: 1, name: t('corporateSteps.step1_title'), description: t('corporateSteps.step1_desc_short') },
   { id: 2, name: t('corporateSteps.step2_title'), description: t('corporateSteps.step2_desc_short') },
   { id: 3, name: t('corporateSteps.step3_title'), description: t('corporateSteps.step3_desc_short') },
-  { id: 4, name: t('sharedSteps.pin_title_short'), description: t('sharedSteps.pin_desc_short') },
+  { id: 4, name: t('pin_title_short', { ns: 'common' }), description: t('pin_desc_short', { ns: 'common' }) },
   { id: 5, name: t('corporateSteps.step5_title'), description: t('corporateSteps.step5_desc_short') },
 ];
 
 const NewUserLayout = () => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation(['dashboard', 'common']);
   const location = useLocation();
 
   const path = location.pathname;
