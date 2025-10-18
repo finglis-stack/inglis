@@ -19,7 +19,7 @@ const corporateSteps = (t) => [
 ];
 
 const NewUserLayout = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const location = useLocation();
 
   const path = location.pathname;

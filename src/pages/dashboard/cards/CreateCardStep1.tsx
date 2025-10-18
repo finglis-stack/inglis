@@ -10,7 +10,7 @@ import { showError } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
 const CreateCardStep1 = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const navigate = useNavigate();
   const { updateCard } = useNewCard();
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,7 +21,7 @@ const CreateCardStep1 = () => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) {
-      showError(t('dashboard.users.searchError'));
+      showError(t('users.searchError'));
       return;
     }
 
@@ -55,13 +55,13 @@ const CreateCardStep1 = () => {
     <div>
       <form onSubmit={handleSearch} className="flex gap-2 mb-6">
         <Input
-          placeholder={t('dashboard.users.searchPlaceholder')}
+          placeholder={t('users.searchPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <Button type="submit" disabled={loading}>
           <Search className="mr-2 h-4 w-4" />
-          {loading ? t('dashboard.users.searchingButton') : t('dashboard.users.searchButton')}
+          {loading ? t('users.searchingButton') : t('users.searchButton')}
         </Button>
       </form>
 
@@ -69,35 +69,35 @@ const CreateCardStep1 = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('dashboard.users.colName')}</TableHead>
-              <TableHead>{t('dashboard.users.colType')}</TableHead>
-              <TableHead className="text-right">{t('dashboard.users.colActions')}</TableHead>
+              <TableHead>{t('users.colName')}</TableHead>
+              <TableHead>{t('users.colType')}</TableHead>
+              <TableHead className="text-right">{t('users.colActions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={3} className="text-center">{t('dashboard.users.loading')}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={3} className="text-center">{t('users.loading')}</TableCell></TableRow>
             ) : results.length > 0 ? (
               results.map((profile) => (
                 <TableRow key={profile.id} className={selectedUserId === profile.id ? 'bg-muted' : ''}>
                   <TableCell>{profile.type === 'personal' ? profile.full_name : profile.legal_name}</TableCell>
-                  <TableCell>{profile.type === 'personal' ? t('dashboard.users.typePersonal') : t('dashboard.users.typeCorporate')}</TableCell>
+                  <TableCell>{profile.type === 'personal' ? t('users.typePersonal') : t('users.typeCorporate')}</TableCell>
                   <TableCell className="text-right">
                     <Button variant={selectedUserId === profile.id ? 'default' : 'outline'} size="sm" onClick={() => handleSelect(profile.id)}>
-                      {selectedUserId === profile.id ? t('dashboard.newCard.selected') : t('dashboard.newCard.select')}
+                      {selectedUserId === profile.id ? t('newCard.selected') : t('newCard.select')}
                     </Button>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
-              <TableRow><TableCell colSpan={3} className="text-center">{t('dashboard.users.noResults')}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={3} className="text-center">{t('users.noResults')}</TableCell></TableRow>
             )}
           </TableBody>
         </Table>
       </div>
 
       <div className="flex justify-end mt-8">
-        <Button onClick={handleNext} disabled={!selectedUserId}>{t('dashboard.sharedSteps.next')}</Button>
+        <Button onClick={handleNext} disabled={!selectedUserId}>{t('sharedSteps.next')}</Button>
       </div>
     </div>
   );

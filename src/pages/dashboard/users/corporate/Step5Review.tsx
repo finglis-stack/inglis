@@ -13,7 +13,7 @@ const Step5Review = () => {
   const { userData, resetUser } = useNewUser();
   const [loading, setLoading] = useState(false);
   const [consent, setConsent] = useState(false);
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -41,39 +41,39 @@ const Step5Review = () => {
     <div>
       <div className="space-y-4">
         <div>
-          <h4 className="font-semibold">{t('dashboard.corporateSteps.companyName')}</h4>
-          <p className="text-muted-foreground">{t('dashboard.corporateSteps.legal')}: {userData.legalName}</p>
-          <p className="text-muted-foreground">{t('dashboard.corporateSteps.commercial')}: {userData.operatingName || 'N/A'}</p>
+          <h4 className="font-semibold">{t('corporateSteps.companyName')}</h4>
+          <p className="text-muted-foreground">{t('corporateSteps.legal')}: {userData.legalName}</p>
+          <p className="text-muted-foreground">{t('corporateSteps.commercial')}: {userData.operatingName || 'N/A'}</p>
         </div>
         <div>
-          <h4 className="font-semibold">{t('dashboard.corporateSteps.registration')}</h4>
-          <p className="text-muted-foreground">{t('dashboard.corporateSteps.businessNumber')}: {userData.businessNumber}</p>
-          <p className="text-muted-foreground">{t('dashboard.corporateSteps.jurisdiction')}: {userData.jurisdiction}</p>
+          <h4 className="font-semibold">{t('corporateSteps.registration')}</h4>
+          <p className="text-muted-foreground">{t('corporateSteps.businessNumber')}: {userData.businessNumber}</p>
+          <p className="text-muted-foreground">{t('corporateSteps.jurisdiction')}: {userData.jurisdiction}</p>
         </div>
         <div>
-          <h4 className="font-semibold">{t('dashboard.corporateSteps.address')}</h4>
+          <h4 className="font-semibold">{t('corporateSteps.address')}</h4>
           <p className="text-muted-foreground">{userData.businessAddress?.street}, {userData.businessAddress?.city}, {userData.businessAddress?.province}, {userData.businessAddress?.postalCode}, {userData.businessAddress?.country}</p>
         </div>
         <div>
-          <h4 className="font-semibold">{t('dashboard.corporateSteps.pin')}</h4>
+          <h4 className="font-semibold">{t('corporateSteps.pin')}</h4>
           <p className="text-muted-foreground">****</p>
         </div>
         <div className="items-top flex space-x-2 pt-4">
           <Checkbox id="terms1" checked={consent} onCheckedChange={(checked) => setConsent(checked === true)} />
           <div className="grid gap-1.5 leading-none">
             <Label htmlFor="terms1" className="font-bold">
-              {t('dashboard.personalSteps.consentTitle')}
+              {t('personalSteps.consentTitle')}
             </Label>
             <p className="text-sm text-muted-foreground">
-              {t('dashboard.personalSteps.consentDesc')}
+              {t('personalSteps.consentDesc')}
             </p>
           </div>
         </div>
       </div>
       <div className="flex justify-between mt-8">
-        <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/corporate/step-4')} disabled={loading}>{t('dashboard.sharedSteps.previous')}</Button>
+        <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/corporate/step-4')} disabled={loading}>{t('sharedSteps.previous')}</Button>
         <Button onClick={handleSubmit} disabled={loading}>
-          {loading ? t('dashboard.corporateSteps.submitting') : t('dashboard.corporateSteps.submit')}
+          {loading ? t('corporateSteps.submitting') : t('corporateSteps.submit')}
         </Button>
       </div>
     </div>

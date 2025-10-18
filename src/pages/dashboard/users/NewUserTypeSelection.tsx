@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 export const NewUserTypeSelection = () => {
   const navigate = useNavigate();
   const { resetUser, updateUser } = useNewUser();
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
 
   useEffect(() => {
     resetUser();
@@ -32,10 +32,10 @@ export const NewUserTypeSelection = () => {
             <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="h-10" />
           </Link>
           <h1 className="text-xl font-bold text-gray-800 hidden sm:block">
-            {t('dashboard.newUser.title')}
+            {t('newUser.title')}
           </h1>
           <Link to="/dashboard/users" className="text-sm font-medium text-gray-600 hover:text-primary">
-            {t('dashboard.newUser.cancel')}
+            {t('newUser.cancel')}
           </Link>
         </div>
       </header>
@@ -43,8 +43,8 @@ export const NewUserTypeSelection = () => {
       <main className="container mx-auto p-4 sm:p-8 flex-grow flex items-center justify-center">
         <div className="max-w-4xl w-full">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight">{t('dashboard.newUser.subtitle')}</h2>
-            <p className="text-muted-foreground mt-2">{t('dashboard.newUser.selection_prompt')}</p>
+            <h2 className="text-3xl font-bold tracking-tight">{t('newUser.subtitle')}</h2>
+            <p className="text-muted-foreground mt-2">{t('newUser.selection_prompt')}</p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
             <Card 
@@ -55,11 +55,11 @@ export const NewUserTypeSelection = () => {
                 <div className="bg-primary/10 rounded-full p-4 mb-6 inline-flex">
                   <User className="h-10 w-10 text-primary" />
                 </div>
-                <CardTitle className="text-2xl">{t('dashboard.newUser.personalTitle')}</CardTitle>
-                <CardDescription className="mt-2">{t('dashboard.newUser.personalDesc')}</CardDescription>
+                <CardTitle className="text-2xl">{t('newUser.personalTitle')}</CardTitle>
+                <CardDescription className="mt-2">{t('newUser.personalDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="p-0 mt-auto pt-8 w-full">
-                <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground" variant="outline">{t('dashboard.newUser.select')}</Button>
+                <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground" variant="outline">{t('newUser.select')}</Button>
               </CardContent>
             </Card>
 
@@ -71,11 +71,11 @@ export const NewUserTypeSelection = () => {
                 <div className="bg-primary/10 rounded-full p-4 mb-6 inline-flex">
                   <Building className="h-10 w-10 text-primary" />
                 </div>
-                <CardTitle className="text-2xl">{t('dashboard.newUser.corporateTitle')}</CardTitle>
-                <CardDescription className="mt-2">{t('dashboard.newUser.corporateDesc')}</CardDescription>
+                <CardTitle className="text-2xl">{t('newUser.corporateTitle')}</CardTitle>
+                <CardDescription className="mt-2">{t('newUser.corporateDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="p-0 mt-auto pt-8 w-full">
-                <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground" variant="outline">{t('dashboard.newUser.select')}</Button>
+                <Button className="w-full group-hover:bg-primary group-hover:text-primary-foreground" variant="outline">{t('newUser.select')}</Button>
               </CardContent>
             </Card>
           </div>

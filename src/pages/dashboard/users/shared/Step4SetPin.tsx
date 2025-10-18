@@ -10,7 +10,7 @@ const Step4SetPin = () => {
   const { userData, updateUser } = useNewUser();
   const [pin, setPin] = useState(userData.pin || '');
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const isPersonal = location.pathname.includes('/personal/');
 
   const prevStepUrl = isPersonal ? '/dashboard/users/new/personal/step-3' : '/dashboard/users/new/corporate/step-3';
@@ -37,8 +37,8 @@ const Step4SetPin = () => {
         </InputOTP>
       </div>
       <div className="flex justify-between mt-8">
-        <Button variant="outline" type="button" onClick={() => navigate(prevStepUrl)}>{t('dashboard.sharedSteps.previous')}</Button>
-        <Button type="submit" disabled={pin.length !== 4}>{t('dashboard.sharedSteps.next')}</Button>
+        <Button variant="outline" type="button" onClick={() => navigate(prevStepUrl)}>{t('sharedSteps.previous')}</Button>
+        <Button type="submit" disabled={pin.length !== 4}>{t('sharedSteps.next')}</Button>
       </div>
     </form>
   );

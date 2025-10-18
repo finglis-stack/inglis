@@ -3,14 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { StepIndicator } from '@/components/dashboard/users/StepIndicator';
 
 const cardSteps = (t) => [
-  { id: 1, name: t('dashboard.newCard.step1_title'), description: t('dashboard.newCard.step1_desc') },
-  { id: 2, name: t('dashboard.newCard.step2_title'), description: t('dashboard.newCard.step2_desc') },
-  { id: 3, name: t('dashboard.newCard.step3_limits_title'), description: t('dashboard.newCard.step3_limits_desc') },
-  { id: 4, name: t('dashboard.newCard.step4_review_title'), description: t('dashboard.newCard.step4_review_desc') },
+  { id: 1, name: t('newCard.step1_title'), description: t('newCard.step1_desc') },
+  { id: 2, name: t('newCard.step2_title'), description: t('newCard.step2_desc') },
+  { id: 3, name: t('newCard.step3_limits_title'), description: t('newCard.step3_limits_desc') },
+  { id: 4, name: t('newCard.step4_review_title'), description: t('newCard.step4_review_desc') },
 ];
 
 const CreateCardLayout = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const location = useLocation();
 
   const path = location.pathname;
@@ -34,10 +34,10 @@ const CreateCardLayout = () => {
             <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="h-10" />
           </Link>
           <h1 className="text-xl font-bold text-gray-800 hidden sm:block">
-            {t('dashboard.newCard.title')}
+            {t('newCard.title')}
           </h1>
           <Link to="/dashboard/cards" className="text-sm font-medium text-gray-600 hover:text-primary">
-            {t('dashboard.newCard.cancel')}
+            {t('newCard.cancel')}
           </Link>
         </div>
       </header>
