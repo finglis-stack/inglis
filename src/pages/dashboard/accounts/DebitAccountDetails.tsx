@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import DebitAccountAccessLog from '@/components/DebitAccountAccessLog';
 
 const DebitAccountDetails = () => {
   const { accountId } = useParams();
+  const navigate = useNavigate();
   const [account, setAccount] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [accessLogs, setAccessLogs] = useState<any[]>([]);
@@ -159,7 +160,7 @@ const DebitAccountDetails = () => {
             <TableBody>
               {transactions.length > 0 ? (
                 transactions.map((tx) => (
-                  <TableRow key={tx.id}>
+                  <TableRow key={tx.id} onClick={() => navigate(`/dashboard/transactions/${tx.id}`)} className="cursor-pointer hover:bg-muted/50">
                     <TableCell>{new Date(tx.created_at).toLocaleString('fr-CA')}</TableCell>
                     <TableCell>{tx.description || 'N/A'}</TableCell>
                     <TableCell><Badge variant="outline" className="capitalize">{tx.type}</Badge></TableCell>
