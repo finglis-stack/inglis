@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useNewTransaction } from '@/context/NewTransactionContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,11 +9,14 @@ import { Loader2 } from 'lucide-react';
 
 const Step3Review = () => {
   const navigate = useNavigate();
-  const { accountType, accountId } = useParams();
+  const location = useLocation();
+  const { accountId } = useParams();
   const { transactionData, resetTransaction } = useNewTransaction();
   const [loading, setLoading] = useState(false);
   const [cardId, setCardId] = useState<string | null>(null);
 
+  // Déterminer le type de compte à partir de l'URL
+  const accountType = location.pathname.includes('/debit/') ? 'debit' : 'credit';
   const finalBackUrl = `/dashboard/accounts/${accountType}/${accountId}`;
 
   useEffect(() => {

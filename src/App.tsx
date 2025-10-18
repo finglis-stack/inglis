@@ -92,9 +92,18 @@ const App = () => (
             <Route path="accounts/credit/:accountId" element={<CreditAccountDetails />} />
           </Route>
 
-          {/* Routes de transaction HORS du DashboardLayout */}
+          {/* Routes de transaction pour DEBIT - HORS du DashboardLayout */}
           <Route element={<NewTransactionProvider />}>
-            <Route path="/dashboard/accounts/:accountType(debit|credit)/:accountId/new-transaction" element={<NewTransactionLayout />}>
+            <Route path="/dashboard/accounts/debit/:accountId/new-transaction" element={<NewTransactionLayout />}>
+              <Route index element={<Step1Details />} />
+              <Route path="step-2" element={<Step2Security />} />
+              <Route path="step-3" element={<Step3Review />} />
+            </Route>
+          </Route>
+
+          {/* Routes de transaction pour CREDIT - HORS du DashboardLayout */}
+          <Route element={<NewTransactionProvider />}>
+            <Route path="/dashboard/accounts/credit/:accountId/new-transaction" element={<NewTransactionLayout />}>
               <Route index element={<Step1Details />} />
               <Route path="step-2" element={<Step2Security />} />
               <Route path="step-3" element={<Step3Review />} />
