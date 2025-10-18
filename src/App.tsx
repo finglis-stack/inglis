@@ -48,6 +48,7 @@ import SetCardPin from "@/pages/SetCardPin";
 import SetProfilePin from "@/pages/SetProfilePin";
 import ConfirmCreditConsent from "@/pages/ConfirmCreditConsent";
 import ConfirmCreditPull from "@/pages/ConfirmCreditPull";
+import NewTransaction from "@/pages/dashboard/accounts/NewTransaction";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,8 @@ const App = () => (
             <Route path="users/profile/:id" element={<UserProfile />} />
             <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
             <Route path="accounts/credit/:accountId" element={<CreditAccountDetails />} />
+            <Route path="accounts/debit/:accountId/new-transaction" element={<NewTransaction />} />
+            <Route path="accounts/credit/:accountId/new-transaction" element={<NewTransaction />} />
           </Route>
 
           <Route element={<NewUserProvider />}>

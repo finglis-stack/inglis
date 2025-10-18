@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, DollarSign, CreditCard, User, Clock } from 'lucide-react';
+import { ArrowLeft, DollarSign, CreditCard, User, Clock, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError, showSuccess } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -184,8 +184,14 @@ const CreditAccountDetails = () => {
             </div>
             <Separator />
             <div>
-              <h4 className="font-semibold">Actions de sécurité</h4>
+              <h4 className="font-semibold">Autres actions</h4>
               <div className="flex flex-wrap gap-4 mt-2">
+                <Button asChild>
+                  <Link to={`/dashboard/accounts/credit/${accountId}/new-transaction`}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Ajouter un débit
+                  </Link>
+                </Button>
                 <Button variant="destructive">Bloquer le compte</Button>
               </div>
             </div>
