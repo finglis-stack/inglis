@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 const InstitutionInfo = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t } = useTranslation(['onboarding', 'common']);
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
@@ -30,7 +30,7 @@ const InstitutionInfo = () => {
     e.preventDefault();
     
     if (!name) {
-        showError(t('onboarding.institutionInfo.nameRequiredError'));
+        showError(t('institutionInfo.nameRequiredError'));
         return;
     }
 
@@ -45,33 +45,33 @@ const InstitutionInfo = () => {
 
   return (
     <OnboardingLayout>
-      <h1 className="text-3xl font-bold mb-2">{t('onboarding.institutionInfo.title')}</h1>
-      <p className="text-muted-foreground mb-6">{t('onboarding.institutionInfo.subtitle')}</p>
+      <h1 className="text-3xl font-bold mb-2">{t('institutionInfo.title')}</h1>
+      <p className="text-muted-foreground mb-6">{t('institutionInfo.subtitle')}</p>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="name">{t('onboarding.institutionInfo.nameLabel')}</Label>
+            <Label htmlFor="name">{t('institutionInfo.nameLabel')}</Label>
             <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="address">{t('onboarding.institutionInfo.addressLabel')}</Label>
+            <Label htmlFor="address">{t('institutionInfo.addressLabel')}</Label>
             <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="city">{t('onboarding.institutionInfo.cityLabel')}</Label>
+            <Label htmlFor="city">{t('institutionInfo.cityLabel')}</Label>
             <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="country">{t('onboarding.institutionInfo.countryLabel')}</Label>
+            <Label htmlFor="country">{t('institutionInfo.countryLabel')}</Label>
             <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} />
           </div>
         </div>
         <div className="flex justify-between mt-6">
             <Button type="button" variant="outline" onClick={() => navigate('/onboarding/welcome')}>
-                {t('onboarding.common.previous')}
+                {t('previous', { ns: 'common' })}
             </Button>
             <Button type="submit">
-                {t('onboarding.common.next')}
+                {t('next', { ns: 'common' })}
             </Button>
         </div>
       </form>

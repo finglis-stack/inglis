@@ -23,7 +23,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
 
 const CardPrograms = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const [programs, setPrograms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -78,15 +78,15 @@ const CardPrograms = () => {
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{t('dashboard.cardPrograms.deleteTitle')}</AlertDialogTitle>
+          <AlertDialogTitle>{t('cardPrograms.deleteTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t('dashboard.cardPrograms.deleteDesc')}
+            {t('cardPrograms.deleteDesc')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{t('dashboard.cardPrograms.deleteCancel')}</AlertDialogCancel>
+          <AlertDialogCancel>{t('cardPrograms.deleteCancel')}</AlertDialogCancel>
           <AlertDialogAction onClick={() => handleDeleteProgram(program.id)}>
-            {deletingId === program.id ? t('dashboard.cardPrograms.deleteProgress') : t('dashboard.cardPrograms.deleteConfirm')}
+            {deletingId === program.id ? t('cardPrograms.deleteProgress') : t('cardPrograms.deleteConfirm')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -97,11 +97,11 @@ const CardPrograms = () => {
     return (
       <div>
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">{t('dashboard.cardPrograms.title')}</h1>
+          <h1 className="text-2xl font-bold">{t('cardPrograms.title')}</h1>
           <Button asChild size="sm">
             <Link to="/dashboard/settings/card-programs/new">
               <PlusCircle className="mr-2 h-4 w-4" />
-              {t('dashboard.cardPrograms.createProgram')}
+              {t('cardPrograms.createProgram')}
             </Link>
           </Button>
         </div>
@@ -128,7 +128,7 @@ const CardPrograms = () => {
             ))}
           </div>
         ) : (
-          <p className="text-center text-muted-foreground py-8">{t('dashboard.cardPrograms.noPrograms')}</p>
+          <p className="text-center text-muted-foreground py-8">{t('cardPrograms.noPrograms')}</p>
         )}
       </div>
     );
@@ -137,29 +137,29 @@ const CardPrograms = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">{t('dashboard.cardPrograms.title')}</h1>
+        <h1 className="text-3xl font-bold">{t('cardPrograms.title')}</h1>
         <Button asChild>
           <Link to="/dashboard/settings/card-programs/new">
             <PlusCircle className="mr-2 h-4 w-4" />
-            {t('dashboard.cardPrograms.createProgram')}
+            {t('cardPrograms.createProgram')}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('dashboard.cardPrograms.listTitle')}</CardTitle>
-          <CardDescription>{t('dashboard.cardPrograms.listDesc')}</CardDescription>
+          <CardTitle>{t('cardPrograms.listTitle')}</CardTitle>
+          <CardDescription>{t('cardPrograms.listDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('dashboard.cardPrograms.colName')}</TableHead>
-                <TableHead>{t('dashboard.cardPrograms.colId')}</TableHead>
-                <TableHead>{t('dashboard.cardPrograms.colType')}</TableHead>
-                <TableHead>{t('dashboard.cardPrograms.colStatus')}</TableHead>
-                <TableHead className="text-right">{t('dashboard.cardPrograms.colActions')}</TableHead>
+                <TableHead>{t('cardPrograms.colName')}</TableHead>
+                <TableHead>{t('cardPrograms.colId')}</TableHead>
+                <TableHead>{t('cardPrograms.colType')}</TableHead>
+                <TableHead>{t('cardPrograms.colStatus')}</TableHead>
+                <TableHead className="text-right">{t('cardPrograms.colActions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -188,7 +188,7 @@ const CardPrograms = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center h-24">
-                    {t('dashboard.cardPrograms.noPrograms')}
+                    {t('cardPrograms.noPrograms')}
                   </TableCell>
                 </TableRow>
               )}

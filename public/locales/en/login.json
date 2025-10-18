@@ -1,0 +1,10 @@
+{
+  "title": "Login",
+  "subtitle": "Access your partner dashboard.",
+  "emailLabel": "Email Address",
+  "passwordLabel": "Password",
+  "button": "Sign In",
+  "forgotPassword": "Forgot password?",
+  "noAccount": "Not a partner yet?",
+  "signUp": "Sign up"
+}

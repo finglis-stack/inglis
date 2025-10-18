@@ -7,8 +7,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import { Loader2, Clock, CheckCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 
 const Step3Review = () => {
+  const { t } = useTranslation(['dashboard', 'common']);
   const navigate = useNavigate();
   const location = useLocation();
   const { accountId } = useParams();
@@ -30,14 +32,14 @@ const Step3Review = () => {
         .single();
 
       if (error || !data) {
-        showError("Impossible de trouver le compte associé.");
+        showError(t('accountNotFound', { ns: 'common' }));
         navigate(finalBackUrl);
       } else {
         setCardId(data.card_id);
       }
     };
     fetchCardId();
-  }, [accountId, accountType, navigate, finalBackUrl]);
+  }, [accountId, accountType, navigate, finalBackUrl, t]);
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -54,13 +56,13 @@ const Step3Review = () => {
       const isImmediate = transactionData.captureHours === 0;
       showSuccess(
         isImmediate 
-          ? "Transaction capturée avec succès !" 
-          : `Autorisation créée avec succès ! Code: ${data.authorization_code}`
+          ? t('newTransaction.successCapture')
+          : t('newTransaction.successHold', { code: data.authorization_code })
       );
       resetTransaction();
       navigate(finalBackUrl);
     } catch (err) {
-      showError(`Erreur lors de la transaction : ${err.message}`);
+      showError(`${t('error', { ns: 'common' })}: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -75,51 +77,51 @@ const Step3Review = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Résumé de la Transaction</CardTitle>
+          <CardTitle>{t('newTransaction.transactionSummary')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <p className="text-sm font-semibold text-muted-foreground">Montant</p>
+            <p className="text-sm font-semibold text-muted-foreground">{t('newTransaction.amount')}</p>
             <p className="text-xl font-bold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(transactionData.amount || 0)}</p>
           </div>
           <div>
-            <p className="text-sm font-semibold text-muted-foreground">Marchand</p>
+            <p className="text-sm font-semibold text-muted-foreground">{t('description', { ns: 'common' })}</p>
             <p>{transactionData.description}</p>
           </div>
           <div>
-            <p className="text-sm font-semibold text-muted-foreground">Type de capture</p>
+            <p className="text-sm font-semibold text-muted-foreground">{t('newTransaction.captureType')}</p>
             <div className="flex items-center gap-2 mt-1">
               {isImmediate ? (
                 <>
                   <CheckCircle className="h-4 w-4 text-green-600" />
-                  <Badge variant="default">Capture Immédiate</Badge>
+                  <Badge variant="default">{t('newTransaction.immediateCapture')}</Badge>
                 </>
               ) : (
                 <>
                   <Clock className="h-4 w-4 text-orange-600" />
-                  <Badge variant="secondary">Autorisation (Hold)</Badge>
+                  <Badge variant="secondary">{t('newTransaction.authorizationHold')}</Badge>
                 </>
               )}
             </div>
             {!isImmediate && (
               <p className="text-sm text-muted-foreground mt-2">
-                Capture prévue dans <strong>{transactionData.captureHours} heure{transactionData.captureHours > 1 ? 's' : ''}</strong>
+                <span dangerouslySetInnerHTML={{ __html: t('newTransaction.captureScheduled', { hours: transactionData.captureHours }) }} />
                 <br />
-                <span className="text-xs">Expire le: {expiresAt?.toLocaleString('fr-CA')}</span>
+                <span className="text-xs">{t('newTransaction.expiresOn', { date: expiresAt?.toLocaleString('fr-CA') })}</span>
               </p>
             )}
           </div>
           <div>
-            <p className="text-sm font-semibold text-muted-foreground">Justification</p>
+            <p className="text-sm font-semibold text-muted-foreground">{t('newTransaction.justification')}</p>
             <p className="text-sm italic bg-gray-50 p-2 rounded-md border">{transactionData.reason}</p>
           </div>
         </CardContent>
       </Card>
       <div className="flex justify-between mt-8">
-        <Button type="button" variant="outline" onClick={() => navigate('../step-2')} disabled={loading}>Précédent</Button>
+        <Button type="button" variant="outline" onClick={() => navigate('../step-2')} disabled={loading}>{t('previous', { ns: 'common' })}</Button>
         <Button onClick={handleSubmit} disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {loading ? 'Soumission...' : (isImmediate ? 'Confirmer et Capturer' : 'Créer l\'Autorisation')}
+          {loading ? t('newTransaction.submitting') : (isImmediate ? t('newTransaction.confirmAndCapture') : t('newTransaction.createAuthorization'))}
         </Button>
       </div>
     </div>

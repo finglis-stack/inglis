@@ -1,0 +1,53 @@
+{
+  "welcome": {
+    "title": "Welcome to Inglis Dominium",
+    "p1": "Inglis Dominium is an independent payment network that allows financial institutions, businesses, and companies to issue their own virtual and physical payment cards.",
+    "p2": "By continuing, you acknowledge that you have read and accepted our <0>Terms of Use</0> and our <1>Privacy Policy</1>, which governs the use of your personal and corporate information.",
+    "acceptButton": "I accept and continue"
+  },
+  "institutionInfo": {
+    "title": "Institution Details (2/5)",
+    "subtitle": "Let's start with the basic information.",
+    "nameLabel": "Institution Name",
+    "addressLabel": "Address",
+    "cityLabel": "City",
+    "countryLabel": "Country",
+    "nameRequiredError": "The institution name is required."
+  },
+  "contactInfo": {
+    "title": "Institution Details (4/5)",
+    "subtitle": "Almost done!",
+    "phoneLabel": "Phone Number"
+  },
+  "createAccount": {
+    "title": "Create Your Account (5/5)",
+    "subtitle": "Finalize your registration.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "name@example.com",
+    "passwordLabel": "Password",
+    "submitButton": "Finish and Create Account",
+    "loadingButton": "Creating...",
+    "fillInfoFirstError": "Please fill in the institution information first.",
+    "missingDataError": "Onboarding data is missing. Please start over.",
+    "creationFailedError": "Account creation failed. Please try again.",
+    "saveInfoError": "Error saving information: {{message}}",
+    "successMessage": "Account created and profile successfully completed!"
+  },
+  "institutionType": {
+    "title": "Institution Details (3/5)",
+    "subtitle": "What type of institution do you represent?",
+    "institutionTypeLabel": "Institution Type",
+    "institutionTypePlaceholder": "Select a type",
+    "typeBank": "Bank",
+    "typeCreditUnion": "Credit Union",
+    "typeFintech": "Fintech",
+    "typeOther": "Other",
+    "jurisdictionLabel": "Jurisdiction",
+    "jurisdictionFederal": "Federal",
+    "jurisdictionProvincial": "Provincial",
+    "jurisdictionState": "State",
+    "jurisdictionNational": "National",
+    "jurisdictionEU": "European Union",
+    "fillAllFieldsError": "Please fill in all fields."
+  }
+}

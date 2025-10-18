@@ -21,7 +21,7 @@ type CardSegment =
   | 'cvv';
 
 const CardStructure = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('landing');
   const [activeSegment, setActiveSegment] = useState<CardSegment | null>('initials');
 
   const segments: { id: CardSegment; example: string }[] = [

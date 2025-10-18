@@ -19,7 +19,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const UserProfile = () => {
   const { id } = useParams();
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -94,7 +94,7 @@ const UserProfile = () => {
       
       const { data: profileData, error: profileError } = await supabase.from('profiles').select('*').eq('id', id).single();
       if (profileError) {
-        setError(t('dashboard.userProfile.loadingError'));
+        setError(t('userProfile.loadingError'));
         setLoading(false);
         return;
       }
@@ -225,7 +225,7 @@ const UserProfile = () => {
   }
 
   if (error) return <div className="text-center text-red-500 p-4">{error}</div>;
-  if (!profile) return <div className="text-center p-4">{t('dashboard.userProfile.notFound')}</div>;
+  if (!profile) return <div className="text-center p-4">{t('userProfile.notFound')}</div>;
 
   return (
     <TooltipProvider>
@@ -237,11 +237,11 @@ const UserProfile = () => {
             <div className="flex justify-end gap-2 mb-4">
               <Button variant="outline" onClick={handleRequestReport} disabled={isRequesting || !profile.sin}>
                 {isRequesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DownloadCloud className="mr-2 h-4 w-4" />}
-                Demander le dossier de crédit
+                {t('userProfile.requestCreditReport')}
               </Button>
               <Button onClick={handlePushToCreditBureau} disabled={isPushing || !profile.sin}>
                 {isPushing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                Pousser au bureau de crédit
+                {t('userProfile.pushToCreditBureau')}
               </Button>
             </div>
           )}
@@ -253,9 +253,9 @@ const UserProfile = () => {
           <>
             <Alert className="mt-6">
               <Info className="h-4 w-4" />
-              <AlertTitle>Dossier de crédit disponible</AlertTitle>
+              <AlertTitle>{t('userProfile.creditReportAvailable')}</AlertTitle>
               <AlertDescription>
-                Ce dossier est disponible pour consultation jusqu'au {new Date(pulledReport.expires_at).toLocaleString('fr-CA')}.
+                {t('userProfile.creditReportAvailableDesc', { date: new Date(pulledReport.expires_at).toLocaleString('fr-CA') })}
               </AlertDescription>
             </Alert>
             <CreditReportDisplay report={pulledReport.report_data} />
@@ -264,9 +264,9 @@ const UserProfile = () => {
         {isUnlocked && isReportExpired && (
           <Alert variant="destructive" className="mt-6">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Consultation expirée</AlertTitle>
+            <AlertTitle>{t('userProfile.consultationExpired')}</AlertTitle>
             <AlertDescription>
-              La période de consultation pour le dernier dossier de crédit a expiré. Vous pouvez faire une nouvelle demande.
+              {t('userProfile.consultationExpiredDesc')}
             </AlertDescription>
           </Alert>
         )}
@@ -277,7 +277,7 @@ const UserProfile = () => {
             <div className="flex items-center justify-center gap-4">
               <ChangePinDialog profileId={profile.id} onPinChanged={handlePinChanged} />
               <ResetPinDialog profileId={profile.id}>
-                <Button variant="secondary">Réinitialiser NIP profil</Button>
+                <Button variant="secondary">{t('userProfile.resetProfilePin')}</Button>
               </ResetPinDialog>
             </div>
           </div>

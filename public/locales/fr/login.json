@@ -1,0 +1,10 @@
+{
+  "title": "Connexion",
+  "subtitle": "Accédez à votre tableau de bord partenaire.",
+  "emailLabel": "Adresse e-mail",
+  "passwordLabel": "Mot de passe",
+  "button": "Se connecter",
+  "forgotPassword": "Mot de passe oublié ?",
+  "noAccount": "Pas encore partenaire ?",
+  "signUp": "Inscrivez-vous"
+}
