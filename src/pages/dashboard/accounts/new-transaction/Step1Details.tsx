@@ -10,7 +10,7 @@ import { showError } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
 const Step1Details = () => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation(['dashboard', 'common']);
   const navigate = useNavigate();
   const { transactionData, updateTransaction } = useNewTransaction();
   
@@ -66,7 +66,7 @@ const Step1Details = () => {
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="later" id="later" />
             <Label htmlFor="later" className="font-normal cursor-pointer">
-              {t('newTransaction.later')} (Hold)
+              {t('newTransaction.later')} ({t('newTransaction.hold')})
               <span className="block text-xs text-muted-foreground">{t('accounts.captureLaterDesc')}</span>
             </Label>
           </div>
@@ -94,7 +94,7 @@ const Step1Details = () => {
       </div>
 
       <div className="flex justify-end mt-8">
-        <Button type="submit">{t('sharedSteps.next')}</Button>
+        <Button type="submit">{t('next', { ns: 'common' })}</Button>
       </div>
     </form>
   );

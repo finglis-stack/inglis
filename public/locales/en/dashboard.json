@@ -403,6 +403,7 @@
     "captureDelay": "Capture Delay",
     "immediately": "Immediately",
     "later": "Later",
+    "hold": "Hold",
     "captureIn": "Capture in {{hours}} hour(s)",
     "captureDelayDesc": "Maximum: 96 hours (4 days). The authorization will automatically expire if not captured.",
     "addDebit": "Add Debit",

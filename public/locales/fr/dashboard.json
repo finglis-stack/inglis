@@ -403,6 +403,7 @@
     "captureDelay": "Délai de capture",
     "immediately": "Immédiatement",
     "later": "Plus tard",
+    "hold": "Retenue",
     "captureIn": "Capturer dans {{hours}} heure(s)",
     "captureDelayDesc": "Maximum: 96 heures (4 jours). L'autorisation expirera automatiquement si elle n'est pas capturée.",
     "addDebit": "Ajouter le débit",
