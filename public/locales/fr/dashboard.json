@@ -134,7 +134,29 @@
     "backendIntegrationDesc": "Votre serveur reçoit le jeton de votre frontend. Utilisez ce jeton avec votre clé API secrète pour effectuer la transaction.",
     "newKeyGenerated": "Nouvelle clé secrète générée",
     "newKeyDesc": "Copiez cette clé secrète. C'est la seule fois que vous la verrez.",
-    "close": "Fermer"
+    "close": "Fermer",
+    "merchants": "Marchands",
+    "merchantsDesc": "Gérez les marchands autorisés à utiliser vos solutions de paiement."
+  },
+  "merchants": {
+    "title": "Marchands",
+    "subtitle": "Gérez les comptes marchands de votre institution.",
+    "addMerchant": "Ajouter un marchand",
+    "listTitle": "Comptes Marchands",
+    "listDesc": "Liste de tous les marchands enregistrés.",
+    "colName": "Nom du marchand",
+    "colAccountNumber": "Numéro de compte",
+    "colStatus": "Statut",
+    "colCreatedAt": "Date de création",
+    "noMerchants": "Aucun marchand trouvé.",
+    "new": {
+      "title": "Nouveau Compte Marchand",
+      "desc": "Entrez les informations pour enregistrer un nouveau marchand.",
+      "nameLabel": "Nom du marchand",
+      "accountNumberLabel": "Numéro de compte de règlement",
+      "creating": "Création...",
+      "success": "Marchand ajouté avec succès !"
+    }
   },
   "cardPrograms": {
     "title": "Programmes de carte",

@@ -134,7 +134,29 @@
     "backendIntegrationDesc": "Your server receives the token from your frontend. Use this token with your secret API key to perform the transaction.",
     "newKeyGenerated": "New secret key generated",
     "newKeyDesc": "Copy this secret key. This is the only time you will see it.",
-    "close": "Close"
+    "close": "Close",
+    "merchants": "Merchants",
+    "merchantsDesc": "Manage merchants authorized to use your payment solutions."
+  },
+  "merchants": {
+    "title": "Merchants",
+    "subtitle": "Manage your institution's merchant accounts.",
+    "addMerchant": "Add Merchant",
+    "listTitle": "Merchant Accounts",
+    "listDesc": "List of all registered merchants.",
+    "colName": "Merchant Name",
+    "colAccountNumber": "Account Number",
+    "colStatus": "Status",
+    "colCreatedAt": "Creation Date",
+    "noMerchants": "No merchants found.",
+    "new": {
+      "title": "New Merchant Account",
+      "desc": "Enter the information to register a new merchant.",
+      "nameLabel": "Merchant Name",
+      "accountNumberLabel": "Settlement Account Number",
+      "creating": "Creating...",
+      "success": "Merchant added successfully!"
+    }
   },
   "cardPrograms": {
     "title": "Card Programs",

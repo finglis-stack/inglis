@@ -58,6 +58,7 @@ import PendingAuthorizations from "@/pages/dashboard/accounts/PendingAuthorizati
 import ApiSettings from "@/pages/dashboard/settings/ApiSettings";
 import HostedPaymentForm from "@/pages/HostedPaymentForm";
 import HostedFormLayout from '@/pages/HostedFormLayout';
+import Merchants from '@/pages/dashboard/settings/Merchants';
 
 const queryClient = new QueryClient();
 
@@ -96,6 +97,7 @@ const App = () => (
             <Route path="settings" element={<Settings />} />
             <Route path="settings/card-programs" element={<CardPrograms />} />
             <Route path="settings/api" element={<ApiSettings />} />
+            <Route path="settings/merchants" element={<Merchants />} />
             <Route path="users" element={<Users />} />
             <Route path="users/profile/:id" element={<UserProfile />} />
             <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
