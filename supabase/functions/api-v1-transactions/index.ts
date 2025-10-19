@@ -27,7 +27,7 @@ const authenticateApiKey = async (authHeader: string | null) => {
   const keySecret = apiKey;
   const encoder = new TextEncoder();
   const data = encoder.encode(keySecret);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest('SHA-265', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashedKey = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   const { data: apiKeyData, error } = await supabaseAdmin
@@ -73,9 +73,9 @@ async function sendWebhook(institutionId, event, payload) {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Gérer les requêtes CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders, status: 204 })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {

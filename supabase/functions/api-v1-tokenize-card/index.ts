@@ -14,9 +14,9 @@ const supabaseAdmin = createClient(
 )
 
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // Gérer les requêtes CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders, status: 204 })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
