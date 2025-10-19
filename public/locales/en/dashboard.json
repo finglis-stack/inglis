@@ -156,6 +156,16 @@
       "accountNumberLabel": "Settlement Account Number",
       "creating": "Creating...",
       "success": "Merchant added successfully!"
+    },
+    "steps": {
+      "step1_title": "Merchant Information",
+      "step1_desc": "Merchant's business name.",
+      "step2_title": "Registration",
+      "step2_desc": "Company registration details.",
+      "step3_title": "Address",
+      "step3_desc": "Merchant's physical address.",
+      "step4_title": "Review",
+      "step4_desc": "Review and submit."
     }
   },
   "cardPrograms": {

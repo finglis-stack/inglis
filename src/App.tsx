@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import Welcome from "@/pages/onboarding/Welcome";
@@ -59,6 +59,12 @@ import ApiSettings from "@/pages/dashboard/settings/ApiSettings";
 import HostedPaymentForm from "@/pages/HostedPaymentForm";
 import HostedFormLayout from '@/pages/HostedFormLayout';
 import Merchants from '@/pages/dashboard/settings/Merchants';
+import { NewMerchantProvider } from '@/context/NewMerchantContext';
+import NewMerchantLayout from '@/pages/dashboard/settings/NewMerchantLayout';
+import NewMerchantStep1 from '@/pages/dashboard/settings/merchants/NewMerchantStep1';
+import NewMerchantStep2 from '@/pages/dashboard/settings/merchants/NewMerchantStep2';
+import NewMerchantStep3 from '@/pages/dashboard/settings/merchants/NewMerchantStep3';
+import NewMerchantStep4 from '@/pages/dashboard/settings/merchants/NewMerchantStep4';
 
 const queryClient = new QueryClient();
 
@@ -151,6 +157,15 @@ const App = () => (
 
           <Route element={<CardProgramLayout />}>
             <Route path="/dashboard/settings/card-programs/new" element={<NewCardProgram />} />
+          </Route>
+
+          <Route element={<NewMerchantProvider />}>
+            <Route element={<NewMerchantLayout />}>
+              <Route path="/dashboard/settings/merchants/new/step-1" element={<NewMerchantStep1 />} />
+              <Route path="/dashboard/settings/merchants/new/step-2" element={<NewMerchantStep2 />} />
+              <Route path="/dashboard/settings/merchants/new/step-3" element={<NewMerchantStep3 />} />
+              <Route path="/dashboard/settings/merchants/new/step-4" element={<NewMerchantStep4 />} />
+            </Route>
           </Route>
 
           <Route path="*" element={<NotFound />} />

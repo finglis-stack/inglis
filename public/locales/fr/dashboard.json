@@ -156,6 +156,16 @@
       "accountNumberLabel": "Numéro de compte de règlement",
       "creating": "Création...",
       "success": "Marchand ajouté avec succès !"
+    },
+    "steps": {
+      "step1_title": "Informations sur le marchand",
+      "step1_desc": "Nom commercial du marchand.",
+      "step2_title": "Enregistrement",
+      "step2_desc": "Détails d'enregistrement de l'entreprise.",
+      "step3_title": "Adresse",
+      "step3_desc": "Adresse physique du marchand.",
+      "step4_title": "Vérification",
+      "step4_desc": "Vérifiez et soumettez."
     }
   },
   "cardPrograms": {
