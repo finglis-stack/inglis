@@ -16,9 +16,6 @@ const supabaseAdmin = createClient(
 )
 
 serve(async (req) => {
-  console.log(`[api-v1-tokenize-card] Request received: ${req.method} ${req.url}`);
-  console.log("[api-v1-tokenize-card] Request headers:", Object.fromEntries(req.headers));
-
   // Gérer les requêtes CORS preflight
   if (req.method === 'OPTIONS') {
     console.log("[api-v1-tokenize-card] Handling OPTIONS request. Sending CORS headers.");
@@ -27,7 +24,6 @@ serve(async (req) => {
 
   try {
     const { card_number } = await req.json();
-    console.log("[api-v1-tokenize-card] Processing POST request for card number:", card_number);
     if (!card_number) {
       throw new Error('card_number is required.');
     }
@@ -68,7 +64,6 @@ serve(async (req) => {
       throw tokenError;
     }
 
-    console.log("[api-v1-tokenize-card] Token generated successfully:", token);
     // Return only the token
     return new Response(JSON.stringify({ token: token }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
