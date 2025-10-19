@@ -4,10 +4,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle, Copy, Check, Trash2, Loader2 } from 'lucide-react';
-import { showError } from '@/utils/toast';
+import { showError, showSuccess } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
 const ApiSettings = () => {
@@ -15,6 +26,7 @@ const ApiSettings = () => {
   const [keys, setKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -47,6 +59,25 @@ const ApiSettings = () => {
       showError(err.message);
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleDeleteKey = async (keyId: string) => {
+    setDeletingId(keyId);
+    try {
+      const { error } = await supabase.functions.invoke('delete-api-key', {
+        body: { key_id: keyId },
+      });
+      if (error) {
+        const functionError = await error.context.json();
+        throw new Error(functionError.error || error.message);
+      }
+      showSuccess("Clé API supprimée avec succès.");
+      setKeys(keys.filter(k => k.id !== keyId));
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -168,7 +199,27 @@ fetch(apiUrl, {
                     <TableCell>{new Date(key.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>{key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Jamais'}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4" /></Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" disabled={deletingId === key.id}>
+                            {deletingId === key.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Révoquer cette clé API ?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Cette action est irréversible. Toute application utilisant cette clé cessera immédiatement de fonctionner.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteKey(key.id)}>
+                              Confirmer la révocation
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </TableCell>
                   </TableRow>
                 ))
