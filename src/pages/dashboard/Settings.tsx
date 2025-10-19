@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CreditCard } from 'lucide-react';
+import { CreditCard, KeyRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const Settings = () => {
@@ -19,6 +19,17 @@ const Settings = () => {
                 <CardDescription>{t('settings.cardProgramsDesc')}</CardDescription>
               </div>
               <CreditCard className="h-8 w-8 text-muted-foreground" />
+            </CardHeader>
+          </Card>
+        </Link>
+        <Link to="/dashboard/settings/api">
+          <Card className="hover:bg-gray-50 transition-colors h-full">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div className="space-y-1">
+                <CardTitle>{t('settings.apiKeys')}</CardTitle>
+                <CardDescription>{t('settings.apiKeysDesc')}</CardDescription>
+              </div>
+              <KeyRound className="h-8 w-8 text-muted-foreground" />
             </CardHeader>
           </Card>
         </Link>

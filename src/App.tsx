@@ -55,6 +55,7 @@ import Step2Security from "@/pages/dashboard/accounts/new-transaction/Step2Secur
 import Step3Review from "@/pages/dashboard/accounts/new-transaction/Step3Review";
 import TransactionDetails from "@/pages/dashboard/accounts/TransactionDetails";
 import PendingAuthorizations from "@/pages/dashboard/accounts/PendingAuthorizations";
+import ApiSettings from "@/pages/dashboard/settings/ApiSettings";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,7 @@ const App = () => (
             <Route path="credit-files" element={<CreditFiles />} />
             <Route path="settings" element={<Settings />} />
             <Route path="settings/card-programs" element={<CardPrograms />} />
+            <Route path="settings/api" element={<ApiSettings />} />
             <Route path="users" element={<Users />} />
             <Route path="users/profile/:id" element={<UserProfile />} />
             <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />

@@ -113,7 +113,22 @@
     "title": "Paramètres",
     "subtitle": "Gérez les paramètres de votre compte et de votre institution ici.",
     "cardPrograms": "Programmes de carte",
-    "cardProgramsDesc": "Gérez vos programmes de carte existants ou créez-en de nouveaux."
+    "cardProgramsDesc": "Gérez vos programmes de carte existants ou créez-en de nouveaux.",
+    "apiKeys": "Clés API",
+    "apiKeysDesc": "Gérez vos clés API pour les intégrations serveur.",
+    "apiKeysList": "Clés API secrètes",
+    "apiKeysListDesc": "Les clés secrètes sont utilisées pour authentifier les requêtes API côté serveur.",
+    "generateKey": "Générer une clé secrète",
+    "keyPrefix": "Préfixe",
+    "createdAt": "Créée le",
+    "lastUsed": "Dernière utilisation",
+    "actions": "Actions",
+    "noKeys": "Aucune clé API n'a été générée.",
+    "apiUsageTitle": "Utilisation de l'API",
+    "apiUsageDesc": "Voici comment effectuer une transaction de base avec votre clé secrète.",
+    "newKeyGenerated": "Nouvelle clé secrète générée",
+    "newKeyDesc": "Copiez cette clé secrète. C'est la seule fois que vous la verrez.",
+    "close": "Fermer"
   },
   "cardPrograms": {
     "title": "Programmes de carte",

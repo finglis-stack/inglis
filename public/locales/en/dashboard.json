@@ -113,7 +113,22 @@
     "title": "Settings",
     "subtitle": "Manage your account and institution settings here.",
     "cardPrograms": "Card Programs",
-    "cardProgramsDesc": "Manage your existing card programs or create new ones."
+    "cardProgramsDesc": "Manage your existing card programs or create new ones.",
+    "apiKeys": "API Keys",
+    "apiKeysDesc": "Manage your API keys for server-side integrations.",
+    "apiKeysList": "Secret API Keys",
+    "apiKeysListDesc": "Secret keys are used to authenticate server-side API requests.",
+    "generateKey": "Generate secret key",
+    "keyPrefix": "Prefix",
+    "createdAt": "Created",
+    "lastUsed": "Last used",
+    "actions": "Actions",
+    "noKeys": "No API keys have been generated.",
+    "apiUsageTitle": "API Usage",
+    "apiUsageDesc": "Here's how to perform a basic transaction with your secret key.",
+    "newKeyGenerated": "New secret key generated",
+    "newKeyDesc": "Copy this secret key. This is the only time you will see it.",
+    "close": "Close"
   },
   "cardPrograms": {
     "title": "Card Programs",
