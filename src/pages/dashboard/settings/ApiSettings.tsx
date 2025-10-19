@@ -16,8 +16,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, Copy, Check, Trash2, Loader2 } from 'lucide-react';
+import { PlusCircle, Copy, Check, Trash2, Loader2, FlaskConical } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
@@ -29,6 +30,12 @@ const ApiSettings = () => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+
+  // State for test form
+  const [testToken, setTestToken] = useState('');
+  const [testAmount, setTestAmount] = useState('');
+  const [testDescription, setTestDescription] = useState('');
+  const [isTesting, setIsTesting] = useState(false);
 
   const fetchKeys = async () => {
     setLoading(true);
@@ -78,6 +85,32 @@ const ApiSettings = () => {
       showError(err.message);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleTestTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsTesting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('api-v1-test-transaction', {
+        body: {
+          card_token: testToken,
+          amount: parseFloat(testAmount),
+          description: testDescription,
+        }
+      });
+      if (error) {
+        const functionError = await error.context.json();
+        throw new Error(functionError.error || "La transaction de test a échoué.");
+      }
+      showSuccess(`Transaction de test réussie ! ID: ${data.transaction_id}`);
+      setTestToken('');
+      setTestAmount('');
+      setTestDescription('');
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setIsTesting(false);
     }
   };
 
@@ -138,7 +171,7 @@ window.addEventListener('message', (event) => {
   const tsExample = `
 // Sur votre serveur backend
 const apiKey = 'sk_live_...';
-const apiUrl = 'https://api.inglisdominion.ca/api-v1-transactions';
+const apiUrl = 'https://bsmclnbeywqosuhijhae.supabase.co/functions/v1/api-v1-transactions';
 
 // Le jeton reçu de votre frontend
 const cardTokenFromClient = 'tok_...';
@@ -227,6 +260,35 @@ fetch(apiUrl, {
               )}
             </TableBody>
           </Table>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><FlaskConical className="h-5 w-5" /> Laboratoire de Test</CardTitle>
+          <CardDescription>Simulez un appel backend pour finaliser une transaction à l'aide d'un jeton.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleTestTransaction} className="space-y-4">
+            <div className="grid gap-2">
+              <Label htmlFor="test-token">Jeton de carte (tok_...)</Label>
+              <Input id="test-token" value={testToken} onChange={(e) => setTestToken(e.target.value)} placeholder="Collez le jeton obtenu depuis le formulaire de paiement" required />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="test-amount">Montant</Label>
+                <Input id="test-amount" type="number" step="0.01" value={testAmount} onChange={(e) => setTestAmount(e.target.value)} placeholder="42.50" required />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="test-description">Description</Label>
+                <Input id="test-description" value={testDescription} onChange={(e) => setTestDescription(e.target.value)} placeholder="Achat de test" required />
+              </div>
+            </div>
+            <Button type="submit" disabled={isTesting}>
+              {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Exécuter la transaction de test
+            </Button>
+          </form>
         </CardContent>
       </Card>
 
