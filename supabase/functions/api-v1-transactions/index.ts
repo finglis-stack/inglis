@@ -74,46 +74,54 @@ async function sendWebhook(institutionId, event, payload) {
 
 serve(async (req) => {
   console.log(`[api-v1-transactions] Request received: ${req.method} ${req.url}`);
-  console.log("[api-v1-transactions] Request headers:", Object.fromEntries(req.headers));
-
-  // Gérer les requêtes CORS preflight
+  
   if (req.method === 'OPTIONS') {
-    console.log("[api-v1-transactions] Handling OPTIONS request. Sending CORS headers.");
+    console.log("[api-v1-transactions] Handling OPTIONS request.");
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    console.log("[api-v1-transactions] Step 1: Authenticating API Key.");
     const institutionId = await authenticateApiKey(req.headers.get('Authorization'));
-    console.log(`[api-v1-transactions] Authenticated institution ID: ${institutionId}`);
+    console.log(`[api-v1-transactions] Step 1 SUCCESS: Authenticated institution ID: ${institutionId}`);
 
     const { card_token, amount, description, capture_delay_hours } = await req.json();
+    console.log("[api-v1-transactions] Step 2: Parsed request body.", { card_token, amount, description, capture_delay_hours });
     if (!card_token || !amount || !description) {
       throw new Error('card_token, amount, and description are required.');
     }
 
+    console.log(`[api-v1-transactions] Step 3: Validating card token: ${card_token}`);
     const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('card_tokens')
       .select('card_id, expires_at, used_at')
       .eq('token', card_token)
       .single();
 
-    if (tokenError || !tokenData) throw new Error('Invalid or expired token.');
-    if (tokenData.used_at) throw new Error('This token has already been used.');
-    if (new Date(tokenData.expires_at) < new Date()) throw new Error('This token has expired.');
+    if (tokenError) throw new Error(`Token validation failed: ${tokenError.message}`);
+    if (!tokenData) throw new Error('Token not found.');
+    if (tokenData.used_at) throw new Error('Token has already been used.');
+    if (new Date(tokenData.expires_at) < new Date()) throw new Error('Token has expired.');
+    console.log("[api-v1-transactions] Step 3 SUCCESS: Token is valid.");
 
     const cardId = tokenData.card_id;
+    console.log(`[api-v1-transactions] Step 4: Marking token as used and checking card ownership for card ID: ${cardId}`);
     await supabaseAdmin.from('card_tokens').update({ used_at: new Date().toISOString() }).eq('token', card_token);
 
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { data: cardOwner, error: profileError } = await supabaseAdmin
       .from('cards')
       .select('profiles(institution_id)')
       .eq('id', cardId)
       .single();
 
-    if (profileError || !profile || profile.profiles.institution_id !== institutionId) {
-      throw new Error('Forbidden: You do not have permission to use this card.');
+    if (profileError) throw new Error(`Could not retrieve card owner: ${profileError.message}`);
+    if (!cardOwner) throw new Error('Card ID not found in cards table.');
+    if (cardOwner.profiles.institution_id !== institutionId) {
+      throw new Error('Forbidden: The API key used does not have permission for this card.');
     }
+    console.log("[api-v1-transactions] Step 4 SUCCESS: Card ownership verified.");
 
+    console.log("[api-v1-transactions] Step 5: Calling RPC 'create_authorization'.");
     const { data: transactionResult, error: rpcError } = await supabaseAdmin.rpc('create_authorization', {
       p_card_id: cardId,
       p_amount: amount,
@@ -121,9 +129,14 @@ serve(async (req) => {
       p_capture_delay_hours: capture_delay_hours || 0,
     });
 
-    if (rpcError) throw rpcError;
+    if (rpcError) {
+        throw new Error(`Transaction failed in database: ${rpcError.message}`);
+    }
+    console.log("[api-v1-transactions] Step 5 SUCCESS: RPC call successful.", transactionResult);
 
+    console.log("[api-v1-transactions] Step 6: Sending webhook if configured.");
     await sendWebhook(institutionId, 'transaction.created', transactionResult);
+    console.log("[api-v1-transactions] Step 6 SUCCESS: Webhook logic completed.");
 
     return new Response(JSON.stringify(transactionResult), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -131,8 +144,8 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("[api-v1-transactions] An error occurred:", error.message);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("[api-v1-transactions] An error occurred in the main try-catch block:", error.message);
+    return new Response(JSON.stringify({ error: "An internal error occurred.", details: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: error.message.startsWith('Forbidden') ? 403 : error.message.startsWith('Authentication failed') ? 401 : 400,
     });
