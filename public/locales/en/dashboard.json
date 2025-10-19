@@ -413,7 +413,15 @@
     "paymentError": "Error during payment",
     "accountNotFound": "Account not found.",
     "transactionError": "Error fetching transactions",
-    "accessLogError": "Error fetching access history"
+    "accessLogError": "Error fetching access history",
+    "addFunds": "Add Funds",
+    "addFundsTitle": "Add Funds to Debit Account",
+    "addFundsDesc": "This will simulate a direct deposit to the account.",
+    "invalidDepositAmount": "Please enter a valid deposit amount.",
+    "manualDeposit": "Manual deposit",
+    "depositSuccess": "Funds added successfully!",
+    "depositError": "Error during deposit",
+    "confirmDeposit": "Confirm Deposit"
   },
   "newTransaction": {
     "title": "Add Manual Transaction",

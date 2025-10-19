@@ -413,7 +413,15 @@
     "paymentError": "Erreur lors du paiement",
     "accountNotFound": "Compte non trouvé.",
     "transactionError": "Erreur lors de la récupération des transactions",
-    "accessLogError": "Erreur lors de la récupération de l'historique d'accès"
+    "accessLogError": "Erreur lors de la récupération de l'historique d'accès",
+    "addFunds": "Ajouter des fonds",
+    "addFundsTitle": "Ajouter des fonds au compte de débit",
+    "addFundsDesc": "Ceci simulera un dépôt direct sur le compte.",
+    "invalidDepositAmount": "Veuillez entrer un montant de dépôt valide.",
+    "manualDeposit": "Dépôt manuel",
+    "depositSuccess": "Fonds ajoutés avec succès !",
+    "depositError": "Erreur lors du dépôt",
+    "confirmDeposit": "Confirmer le dépôt"
   },
   "newTransaction": {
     "title": "Ajouter une Transaction Manuelle",

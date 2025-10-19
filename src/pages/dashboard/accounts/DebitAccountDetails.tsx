@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import DebitAccountAccessLog from '@/components/dashboard/accounts/DebitAccountAccessLog';
 import { useDebitAccountBalance } from '@/hooks/useDebitAccountBalance';
 import { useTranslation } from 'react-i18next';
+import AddFundsDialog from '@/components/dashboard/accounts/AddFundsDialog';
 
 const DebitAccountDetails = () => {
   const { t } = useTranslation('dashboard');
@@ -162,6 +163,7 @@ const DebitAccountDetails = () => {
             <CardDescription>{t('accounts.accountActionsDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-4">
+            <AddFundsDialog cardId={account.card_id} onFundsAdded={refetchBalance} />
             <Button asChild>
               <Link to={`/dashboard/accounts/debit/${accountId}/new-transaction`}>
                 <PlusCircle className="mr-2 h-4 w-4" />
