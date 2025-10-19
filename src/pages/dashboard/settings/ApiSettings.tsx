@@ -99,10 +99,10 @@ const ApiSettings = () => {
 <!-- 2. Créez un champ caché pour stocker le jeton -->
 <input type="hidden" id="card-token" name="card_token" />
 
-<!-- 3. Intégrez l'iframe -->
+<!-- 3. Intégrez l'iframe avec un chemin relatif -->
 <script>
   const iframe = document.createElement('iframe');
-  iframe.src = 'https://www.inglisdominion.ca/hosted-form';
+  iframe.src = '/checkout/v1/form'; // Chemin relatif
   iframe.style.width = '100%';
   iframe.style.height = '250px';
   iframe.style.border = 'none';
@@ -113,10 +113,9 @@ const ApiSettings = () => {
   const jsExample = `
 // 4. Écoutez les messages de l'iframe pour recevoir le jeton
 window.addEventListener('message', (event) => {
-  // Sécurité : Vérifiez toujours l'origine
-  if (event.origin !== 'https://www.inglisdominion.ca') {
-    return;
-  }
+  // IMPORTANT : Pour la production, vous devriez valider l'origine de l'événement
+  // pour vous assurer qu'il provient bien du domaine de votre formulaire de paiement.
+  // Exemple : if (event.origin !== 'https://votre-app.com') return;
 
   const data = event.data;
 

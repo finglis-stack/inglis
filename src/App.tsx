@@ -78,7 +78,7 @@ const App = () => (
           <Route path="/confirm-credit-pull/:token" element={<ConfirmCreditPull />} />
           
           <Route element={<HostedFormLayout />}>
-            <Route path="/hosted-form" element={<HostedPaymentForm />} />
+            <Route path="/checkout/v1/form" element={<HostedPaymentForm />} />
           </Route>
 
           <Route path="/onboarding/welcome" element={<Welcome />} />
