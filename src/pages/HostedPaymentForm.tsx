@@ -28,7 +28,7 @@ const HostedPaymentForm = () => {
 
     try {
       const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzbWNsbmJleXdxb3N1aGlqaGFlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwNzEzNTEsImV4cCI6MjA3NDY0NzM1MX0.zISz01Dxi46WtrdOKwFcxxHy7ypLJeD95HH4gDW4Ob8';
-      const tokenizeUrl = 'https://bsmclnbeywqosuhijhae.supabase.co/functions/v1/api-v1-tokenize-card';
+      const tokenizeUrl = 'https://api.inglisdominion.ca/api-v1-tokenize-card';
 
       const response = await fetch(tokenizeUrl, {
         method: 'POST',

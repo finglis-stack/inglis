@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle, Copy, Check, Trash2, Loader2 } from 'lucide-react';
-import { showError, showSuccess } from '@/utils/toast';
+import { showError } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
 const ApiSettings = () => {
@@ -50,12 +50,10 @@ const ApiSettings = () => {
     }
   };
 
-  const copyToClipboard = () => {
-    if (newKey) {
-      navigator.clipboard.writeText(newKey);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    }
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   const closeDialog = () => {
@@ -63,18 +61,60 @@ const ApiSettings = () => {
     setIsCopied(false);
   };
 
+  const htmlExample = `
+<!-- 1. Créez un conteneur pour le formulaire -->
+<div id="inglis-dominium-form"></div>
+
+<!-- 2. Créez un champ caché pour stocker le jeton -->
+<input type="hidden" id="card-token" name="card_token" />
+
+<!-- 3. Intégrez l'iframe -->
+<script>
+  const iframe = document.createElement('iframe');
+  iframe.src = 'https://www.inglisdominion.ca/hosted-form';
+  iframe.style.width = '100%';
+  iframe.style.height = '250px';
+  iframe.style.border = 'none';
+  document.getElementById('inglis-dominium-form').appendChild(iframe);
+</script>
+  `;
+
+  const jsExample = `
+// 4. Écoutez les messages de l'iframe pour recevoir le jeton
+window.addEventListener('message', (event) => {
+  // Sécurité : Vérifiez toujours l'origine
+  if (event.origin !== 'https://www.inglisdominion.ca') {
+    return;
+  }
+
+  const data = event.data;
+
+  if (data.type === 'inglis-dominium-token' && data.token) {
+    console.log('Token reçu:', data.token);
+    
+    // Stockez le jeton dans votre champ caché
+    document.getElementById('card-token').value = data.token;
+
+    // Vous pouvez maintenant soumettre votre formulaire à votre propre backend
+    // votreFormulaire.submit();
+
+  } else if (data.type === 'inglis-dominium-error') {
+    console.error('Erreur du formulaire:', data.error);
+    // Affichez une erreur à l'utilisateur
+  }
+});
+  `;
+
   const tsExample = `
+// Sur votre serveur backend
 const apiKey = 'sk_live_...';
-const apiUrl = 'https://bsmclnbeywqosuhijhae.supabase.co/functions/v1/api-v1-transactions';
+const apiUrl = 'https://api.inglisdominion.ca/api-v1-transactions';
+
+// Le jeton reçu de votre frontend
+const cardTokenFromClient = 'tok_...';
 
 const transactionData = {
-  card_number: {
-    initials: 'LT',
-    issuer_id: '000000',
-    random_letters: 'QZ',
-    unique_identifier: '0000000',
-    check_digit: 7
-  },
+  card_token: cardTokenFromClient,
   amount: 42.50,
   description: 'Achat chez Le Commerçant Inc.',
   capture_delay_hours: 0
@@ -91,40 +131,6 @@ fetch(apiUrl, {
 .then(res => res.json())
 .then(console.log)
 .catch(console.error);
-  `;
-
-  const phpExample = `
-<?php
-$apiKey = 'sk_live_...';
-$apiUrl = 'https://bsmclnbeywqosuhijhae.supabase.co/functions/v1/api-v1-transactions';
-
-$transactionData = [
-    'card_number' => [
-        'initials' => 'LT',
-        'issuer_id' => '000000',
-        'random_letters' => 'QZ',
-        'unique_identifier' => '0000000',
-        'check_digit' => 7
-    ],
-    'amount' => 42.50,
-    'description' => 'Achat chez Le Commerçant Inc.',
-    'capture_delay_hours' => 0
-];
-
-$ch = curl_init($apiUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($transactionData));
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json',
-    'Authorization: Bearer ' . $apiKey
-]);
-
-$response = curl_exec($ch);
-curl_close($ch);
-
-print_r(json_decode($response, true));
-?>
   `;
 
   return (
@@ -177,19 +183,24 @@ print_r(json_decode($response, true));
       <Card>
         <CardHeader>
           <CardTitle>{t('settings.apiUsageTitle')}</CardTitle>
-          <CardDescription>{t('settings.apiUsageDesc')}</CardDescription>
+          <CardDescription>{t('settings.apiUsageDescSecure')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="ts">
+          <Tabs defaultValue="frontend">
             <TabsList>
-              <TabsTrigger value="ts">TypeScript</TabsTrigger>
-              <TabsTrigger value="php">PHP</TabsTrigger>
+              <TabsTrigger value="frontend">{t('settings.frontendIntegrationTitle')}</TabsTrigger>
+              <TabsTrigger value="backend">{t('settings.backendIntegrationTitle')}</TabsTrigger>
             </TabsList>
-            <TabsContent value="ts">
-              <pre className="bg-gray-900 text-white p-4 rounded-md text-sm overflow-x-auto"><code>{tsExample}</code></pre>
+            <TabsContent value="frontend" className="space-y-4">
+              <p className="text-sm text-muted-foreground">{t('settings.frontendIntegrationDesc')}</p>
+              <h4 className="font-semibold">{t('settings.frontendHtmlExample')}</h4>
+              <pre className="bg-gray-900 text-white p-4 rounded-md text-sm overflow-x-auto"><code>{htmlExample}</code></pre>
+              <h4 className="font-semibold">{t('settings.frontendJsExample')}</h4>
+              <pre className="bg-gray-900 text-white p-4 rounded-md text-sm overflow-x-auto"><code>{jsExample}</code></pre>
             </TabsContent>
-            <TabsContent value="php">
-              <pre className="bg-gray-900 text-white p-4 rounded-md text-sm overflow-x-auto"><code>{phpExample}</code></pre>
+            <TabsContent value="backend" className="space-y-4">
+              <p className="text-sm text-muted-foreground">{t('settings.backendIntegrationDesc')}</p>
+              <pre className="bg-gray-900 text-white p-4 rounded-md text-sm overflow-x-auto"><code>{tsExample}</code></pre>
             </TabsContent>
           </Tabs>
         </CardContent>
@@ -203,7 +214,7 @@ print_r(json_decode($response, true));
           </DialogHeader>
           <div className="relative">
             <Input value={newKey || ''} readOnly />
-            <Button size="icon" variant="ghost" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8" onClick={copyToClipboard}>
+            <Button size="icon" variant="ghost" className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8" onClick={() => copyToClipboard(newKey || '')}>
               {isCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             </Button>
           </div>
