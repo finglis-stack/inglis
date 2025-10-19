@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
-import { authenticateApiKey } from '../_shared/security.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,25 +12,64 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
-// Webhook function (simplified for now)
+// Function to authenticate an API key and return the associated institution ID
+const authenticateApiKey = async (authHeader: string | null) => {
+  if (!authHeader || !authHeader.startsWith('Bearer sk_live_')) {
+    throw new Error('Missing or invalid API key.');
+  }
+
+  const apiKey = authHeader.replace('Bearer ', '');
+  const keyParts = apiKey.split('_');
+  if (keyParts.length !== 3 || keyParts[0] !== 'sk' || keyParts[1] !== 'live') {
+      throw new Error('Invalid API key format.');
+  }
+  
+  const keyPrefix = `sk_live_${keyParts[2].substring(0, 8)}`;
+  const keySecret = apiKey;
+
+  // Hash the secret part of the key to compare with the stored hash
+  const encoder = new TextEncoder();
+  const data = encoder.encode(keySecret);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashedKey = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  const { data: apiKeyData, error } = await supabaseAdmin
+    .from('api_keys')
+    .select('institution_id')
+    .eq('key_prefix', keyPrefix)
+    .eq('hashed_key', hashedKey)
+    .single();
+
+  if (error || !apiKeyData) {
+    throw new Error('Authentication failed: API key not found or invalid.');
+  }
+
+  // Update last used timestamp (optional, but good for auditing)
+  await supabaseAdmin
+    .from('api_keys')
+    .update({ last_used_at: new Date().toISOString() })
+    .eq('key_prefix', keyPrefix);
+
+  return apiKeyData.institution_id;
+};
+
+// Webhook function
 async function sendWebhook(institutionId, event, payload) {
   const { data: webhooks } = await supabaseAdmin
     .from('webhooks')
     .select('url, secret')
     .eq('institution_id', institutionId)
     .eq('is_active', true)
-    .in('events', [event, '*']);
+    .in('events', [[event], ['*']]); // Correct syntax for array containment
 
   if (!webhooks) return;
 
   for (const webhook of webhooks) {
     try {
       const body = JSON.stringify(payload);
-      const signature = await crypto.subtle.sign(
-        'HMAC',
-        await crypto.subtle.importKey('raw', new TextEncoder().encode(webhook.secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']),
-        new TextEncoder().encode(body)
-      );
+      const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(webhook.secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+      const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body));
       const signatureHex = Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('');
 
       fetch(webhook.url, {
@@ -41,9 +79,9 @@ async function sendWebhook(institutionId, event, payload) {
           'Inglis-Dominium-Signature': signatureHex,
         },
         body,
-      });
+      }).catch(e => console.error(`Webhook fetch failed for ${webhook.url}:`, e.message));
     } catch (e) {
-      console.error(`Webhook failed for ${webhook.url}:`, e.message);
+      console.error(`Webhook signing failed for ${webhook.url}:`, e.message);
     }
   }
 }
