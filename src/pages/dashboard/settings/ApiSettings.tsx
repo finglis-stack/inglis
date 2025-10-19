@@ -171,7 +171,7 @@ window.addEventListener('message', (event) => {
   const tsExample = `
 // Sur votre serveur backend
 const apiKey = 'sk_live_...';
-const apiUrl = 'https://bsmclnbeywqosuhijhae.supabase.co/functions/v1/api-v1-transactions';
+const apiUrl = 'https://api.inglisdominion.ca/v1/transactions';
 
 // Le jeton reçu de votre frontend
 const cardTokenFromClient = 'tok_...';
