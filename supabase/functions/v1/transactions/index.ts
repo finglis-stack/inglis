@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
-console.log("Function api-v1-transactions cold start");
+console.log("Function v1/transactions cold start");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -75,7 +75,7 @@ async function sendWebhook(institutionId, event, payload) {
 serve(async (req) => {
   // Gérer les requêtes CORS preflight
   if (req.method === 'OPTIONS') {
-    console.log("[api-v1-transactions] Handling OPTIONS request.");
+    console.log("[v1/transactions] Handling OPTIONS request.");
     return new Response('ok', { headers: corsHeaders })
   }
 
@@ -132,7 +132,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("[api-v1-transactions] An error occurred in the main try-catch block:", error.message);
+    console.error("[v1/transactions] An error occurred in the main try-catch block:", error.message);
     return new Response(JSON.stringify({ error: "An internal error occurred.", details: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: error.message.startsWith('Forbidden') ? 403 : error.message.startsWith('Authentication failed') ? 401 : 400,
