@@ -57,6 +57,7 @@ import TransactionDetails from "@/pages/dashboard/accounts/TransactionDetails";
 import PendingAuthorizations from "@/pages/dashboard/accounts/PendingAuthorizations";
 import ApiSettings from "@/pages/dashboard/settings/ApiSettings";
 import HostedPaymentForm from "@/pages/HostedPaymentForm";
+import HostedFormLayout from '@/pages/HostedFormLayout';
 
 const queryClient = new QueryClient();
 
@@ -75,7 +76,11 @@ const App = () => (
           <Route path="/set-profile-pin/:token" element={<SetProfilePin />} />
           <Route path="/confirm-credit-consent/:token" element={<ConfirmCreditConsent />} />
           <Route path="/confirm-credit-pull/:token" element={<ConfirmCreditPull />} />
-          <Route path="/hosted-form" element={<HostedPaymentForm />} />
+          
+          <Route element={<HostedFormLayout />}>
+            <Route path="/hosted-form" element={<HostedPaymentForm />} />
+          </Route>
+
           <Route path="/onboarding/welcome" element={<Welcome />} />
           <Route path="/onboarding/create-account" element={<CreateAccount />} />
           <Route path="/onboarding/institution-info" element={<InstitutionInfo />} />

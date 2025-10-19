@@ -64,7 +64,7 @@ const HostedPaymentForm = () => {
   };
 
   return (
-    <div className="p-4 bg-transparent">
+    <div className="bg-transparent">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-5 gap-2">
           <div className="col-span-1">
