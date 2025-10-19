@@ -2,6 +2,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
+console.log("Function api-v1-tokenize-card cold start");
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -14,13 +16,18 @@ const supabaseAdmin = createClient(
 )
 
 serve(async (req) => {
+  console.log(`[api-v1-tokenize-card] Request received: ${req.method} ${req.url}`);
+  console.log("[api-v1-tokenize-card] Request headers:", Object.fromEntries(req.headers));
+
   // Gérer les requêtes CORS preflight
   if (req.method === 'OPTIONS') {
+    console.log("[api-v1-tokenize-card] Handling OPTIONS request. Sending CORS headers.");
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const { card_number } = await req.json();
+    console.log("[api-v1-tokenize-card] Processing POST request for card number:", card_number);
     if (!card_number) {
       throw new Error('card_number is required.');
     }
@@ -39,6 +46,7 @@ serve(async (req) => {
       .single();
 
     if (cardError || !card) {
+      console.error("[api-v1-tokenize-card] Card not found or invalid.", cardError);
       throw new Error('Card not found or invalid.');
     }
 
@@ -55,8 +63,12 @@ serve(async (req) => {
         expires_at: expires_at.toISOString(),
       });
 
-    if (tokenError) throw tokenError;
+    if (tokenError) {
+      console.error("[api-v1-tokenize-card] Error storing token:", tokenError);
+      throw tokenError;
+    }
 
+    console.log("[api-v1-tokenize-card] Token generated successfully:", token);
     // Return only the token
     return new Response(JSON.stringify({ token: token }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -64,6 +76,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    console.error("[api-v1-tokenize-card] An error occurred:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,

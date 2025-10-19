@@ -2,6 +2,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
+console.log("Function api-v1-transactions cold start");
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -13,7 +15,6 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
-// ... (La fonction authenticateApiKey reste la même)
 const authenticateApiKey = async (authHeader: string | null) => {
   if (!authHeader || !authHeader.startsWith('Bearer sk_live_')) {
     throw new Error('Missing or invalid API key.');
@@ -27,7 +28,7 @@ const authenticateApiKey = async (authHeader: string | null) => {
   const keySecret = apiKey;
   const encoder = new TextEncoder();
   const data = encoder.encode(keySecret);
-  const hashBuffer = await crypto.subtle.digest('SHA-265', data);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   const hashedKey = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   const { data: apiKeyData, error } = await supabaseAdmin
@@ -46,7 +47,6 @@ const authenticateApiKey = async (authHeader: string | null) => {
   return apiKeyData.institution_id;
 };
 
-// ... (La fonction sendWebhook reste la même)
 async function sendWebhook(institutionId, event, payload) {
   const { data: webhooks } = await supabaseAdmin
     .from('webhooks')
@@ -73,21 +73,24 @@ async function sendWebhook(institutionId, event, payload) {
 }
 
 serve(async (req) => {
+  console.log(`[api-v1-transactions] Request received: ${req.method} ${req.url}`);
+  console.log("[api-v1-transactions] Request headers:", Object.fromEntries(req.headers));
+
   // Gérer les requêtes CORS preflight
   if (req.method === 'OPTIONS') {
+    console.log("[api-v1-transactions] Handling OPTIONS request. Sending CORS headers.");
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const institutionId = await authenticateApiKey(req.headers.get('Authorization'));
+    console.log(`[api-v1-transactions] Authenticated institution ID: ${institutionId}`);
 
-    // MODIFICATION : Accepter un jeton au lieu du numéro de carte
     const { card_token, amount, description, capture_delay_hours } = await req.json();
     if (!card_token || !amount || !description) {
       throw new Error('card_token, amount, and description are required.');
     }
 
-    // Récupérer le card_id à partir du jeton
     const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('card_tokens')
       .select('card_id, expires_at, used_at')
@@ -99,11 +102,8 @@ serve(async (req) => {
     if (new Date(tokenData.expires_at) < new Date()) throw new Error('This token has expired.');
 
     const cardId = tokenData.card_id;
-
-    // Marquer le jeton comme utilisé
     await supabaseAdmin.from('card_tokens').update({ used_at: new Date().toISOString() }).eq('token', card_token);
 
-    // Le reste de la logique reste similaire, mais utilise cardId
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('cards')
       .select('profiles(institution_id)')
@@ -131,6 +131,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    console.error("[api-v1-transactions] An error occurred:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: error.message.startsWith('Forbidden') ? 403 : error.message.startsWith('Authentication failed') ? 401 : 400,
