@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Clock } from 'lucide-react';
+import { DollarSign, Clock, Banknote } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { showError } from '@/utils/toast';
 
 const Q12xDashboard = () => {
   const [merchant, setMerchant] = useState<any>(null);
   const [summaryData, setSummaryData] = useState<{ today_revenue: number; in_transit_balance: number } | null>(null);
+  const [balance, setBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,14 +29,22 @@ const Q12xDashboard = () => {
         }
         setMerchant(merchantData);
 
-        const { data: summary, error: summaryError } = await supabase
-          .rpc('get_merchant_balance_summary', { p_merchant_id: merchantData.id })
-          .single();
+        // Fetch both summary and balance in parallel
+        const [summaryRes, balanceRes] = await Promise.all([
+          supabase.rpc('get_merchant_balance_summary', { p_merchant_id: merchantData.id }).single(),
+          supabase.rpc('get_merchant_balance', { p_merchant_id: merchantData.id }).single()
+        ]);
 
-        if (summaryError) {
-          showError(`Erreur lors de la récupération du résumé : ${summaryError.message}`);
+        if (summaryRes.error) {
+          showError(`Erreur lors de la récupération du résumé : ${summaryRes.error.message}`);
         } else {
-          setSummaryData(summary as { today_revenue: number; in_transit_balance: number });
+          setSummaryData(summaryRes.data as { today_revenue: number; in_transit_balance: number });
+        }
+
+        if (balanceRes.error) {
+          showError(`Erreur lors de la récupération du solde : ${balanceRes.error.message}`);
+        } else {
+          setBalance(balanceRes.data as number);
         }
       }
       setLoading(false);
@@ -58,7 +67,7 @@ const Q12xDashboard = () => {
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Recettes d'aujourd'hui</CardTitle>
@@ -74,6 +83,22 @@ const Q12xDashboard = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Solde disponible pour virement</CardTitle>
+            <Banknote className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-8 w-3/4" />
+            ) : (
+              <div className="text-2xl font-bold">{formatCurrency(balance || 0)}</div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Montant total réglé et prêt à être viré.
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Solde en transit</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -84,7 +109,7 @@ const Q12xDashboard = () => {
               <div className="text-2xl font-bold">{formatCurrency(summaryData?.in_transit_balance || 0)}</div>
             )}
             <p className="text-xs text-muted-foreground">
-              Montant total en attente de virement.
+              Montant total des transactions capturées.
             </p>
           </CardContent>
         </Card>
