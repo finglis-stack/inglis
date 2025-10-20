@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import Welcome from "@/pages/onboarding/Welcome";
@@ -68,111 +68,109 @@ import NewMerchantStep4 from '@/pages/dashboard/settings/merchants/NewMerchantSt
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const MainApp = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider delayDuration={200}>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/card-structure" element={<CardStructure />} />
-          <Route path="/credit-report-access" element={<CreditReportAccess />} />
-          <Route path="/set-card-pin/:token" element={<SetCardPin />} />
-          <Route path="/set-profile-pin/:token" element={<SetProfilePin />} />
-          <Route path="/confirm-credit-consent/:token" element={<ConfirmCreditConsent />} />
-          <Route path="/confirm-credit-pull/:token" element={<ConfirmCreditPull />} />
-          
-          <Route element={<HostedFormLayout />}>
-            <Route path="/checkout/v1/form" element={<HostedPaymentForm />} />
-          </Route>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/card-structure" element={<CardStructure />} />
+        <Route path="/credit-report-access" element={<CreditReportAccess />} />
+        <Route path="/set-card-pin/:token" element={<SetCardPin />} />
+        <Route path="/set-profile-pin/:token" element={<SetProfilePin />} />
+        <Route path="/confirm-credit-consent/:token" element={<ConfirmCreditConsent />} />
+        <Route path="/confirm-credit-pull/:token" element={<ConfirmCreditPull />} />
+        
+        <Route element={<HostedFormLayout />}>
+          <Route path="/checkout/v1/form" element={<HostedPaymentForm />} />
+        </Route>
 
-          <Route path="/onboarding/welcome" element={<Welcome />} />
-          <Route path="/onboarding/create-account" element={<CreateAccount />} />
-          <Route path="/onboarding/institution-info" element={<InstitutionInfo />} />
-          <Route path="/onboarding/institution-type" element={<InstitutionType />} />
-          <Route path="/onboarding/contact-info" element={<ContactInfo />} />
-          
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="cards" element={<Cards />} />
-            <Route path="transactions" element={<Transactions />} />
-            <Route path="transactions/:id" element={<TransactionDetails />} />
-            <Route path="credit-files" element={<CreditFiles />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="settings/card-programs" element={<CardPrograms />} />
-            <Route path="settings/api" element={<ApiSettings />} />
-            <Route path="settings/merchants" element={<Merchants />} />
-            <Route path="users" element={<Users />} />
-            <Route path="users/profile/:id" element={<UserProfile />} />
-            <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
-            <Route path="accounts/credit/:accountId" element={<CreditAccountDetails />} />
-            <Route path="accounts/debit/:accountId/pending-authorizations" element={<PendingAuthorizations />} />
-            <Route path="accounts/credit/:accountId/pending-authorizations" element={<PendingAuthorizations />} />
-          </Route>
+        <Route path="/onboarding/welcome" element={<Welcome />} />
+        <Route path="/onboarding/create-account" element={<CreateAccount />} />
+        <Route path="/onboarding/institution-info" element={<InstitutionInfo />} />
+        <Route path="/onboarding/institution-type" element={<InstitutionType />} />
+        <Route path="/onboarding/contact-info" element={<ContactInfo />} />
+        
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="cards" element={<Cards />} />
+          <Route path="transactions" element={<Transactions />} />
+          <Route path="transactions/:id" element={<TransactionDetails />} />
+          <Route path="credit-files" element={<CreditFiles />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="settings/card-programs" element={<CardPrograms />} />
+          <Route path="settings/api" element={<ApiSettings />} />
+          <Route path="settings/merchants" element={<Merchants />} />
+          <Route path="users" element={<Users />} />
+          <Route path="users/profile/:id" element={<UserProfile />} />
+          <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
+          <Route path="accounts/credit/:accountId" element={<CreditAccountDetails />} />
+          <Route path="accounts/debit/:accountId/pending-authorizations" element={<PendingAuthorizations />} />
+          <Route path="accounts/credit/:accountId/pending-authorizations" element={<PendingAuthorizations />} />
+        </Route>
 
-          {/* Routes de transaction pour DEBIT - HORS du DashboardLayout */}
-          <Route element={<NewTransactionProvider />}>
-            <Route path="/dashboard/accounts/debit/:accountId/new-transaction" element={<NewTransactionLayout />}>
-              <Route index element={<Step1Details />} />
-              <Route path="step-2" element={<Step2Security />} />
-              <Route path="step-3" element={<Step3Review />} />
-            </Route>
+        {/* Routes de transaction pour DEBIT - HORS du DashboardLayout */}
+        <Route element={<NewTransactionProvider />}>
+          <Route path="/dashboard/accounts/debit/:accountId/new-transaction" element={<NewTransactionLayout />}>
+            <Route index element={<Step1Details />} />
+            <Route path="step-2" element={<Step2Security />} />
+            <Route path="step-3" element={<Step3Review />} />
           </Route>
+        </Route>
 
-          {/* Routes de transaction pour CREDIT - HORS du DashboardLayout */}
-          <Route element={<NewTransactionProvider />}>
-            <Route path="/dashboard/accounts/credit/:accountId/new-transaction" element={<NewTransactionLayout />}>
-              <Route index element={<Step1Details />} />
-              <Route path="step-2" element={<Step2Security />} />
-              <Route path="step-3" element={<Step3Review />} />
-            </Route>
+        {/* Routes de transaction pour CREDIT - HORS du DashboardLayout */}
+        <Route element={<NewTransactionProvider />}>
+          <Route path="/dashboard/accounts/credit/:accountId/new-transaction" element={<NewTransactionLayout />}>
+            <Route index element={<Step1Details />} />
+            <Route path="step-2" element={<Step2Security />} />
+            <Route path="step-3" element={<Step3Review />} />
           </Route>
+        </Route>
 
-          <Route element={<NewUserProvider />}>
-            <Route path="/dashboard/users/new" element={<NewUserTypeSelection />} />
-            <Route element={<NewUserLayout />}>
-              <Route path="/dashboard/users/new/personal/step-1" element={<Step1Name />} />
-              <Route path="/dashboard/users/new/personal/step-2" element={<Step2Address />} />
-              <Route path="/dashboard/users/new/personal/step-3" element={<Step3ContactIdentity />} />
-              <Route path="/dashboard/users/new/personal/step-4" element={<Step4SetPin />} />
-              <Route path="/dashboard/users/new/personal/step-5" element={<Step5Review />} />
-              <Route path="/dashboard/users/new/corporate/step-1" element={<Step1BusinessInfo />} />
-              <Route path="/dashboard/users/new/corporate/step-2" element={<Step2Registration />} />
-              <Route path="/dashboard/users/new/corporate/step-3" element={<Step3AddressCorp />} />
-              <Route path="/dashboard/users/new/corporate/step-4" element={<Step4SetPin />} />
-              <Route path="/dashboard/users/new/corporate/step-5" element={<Step5ReviewCorp />} />
-            </Route>
+        <Route element={<NewUserProvider />}>
+          <Route path="/dashboard/users/new" element={<NewUserTypeSelection />} />
+          <Route element={<NewUserLayout />}>
+            <Route path="/dashboard/users/new/personal/step-1" element={<Step1Name />} />
+            <Route path="/dashboard/users/new/personal/step-2" element={<Step2Address />} />
+            <Route path="/dashboard/users/new/personal/step-3" element={<Step3ContactIdentity />} />
+            <Route path="/dashboard/users/new/personal/step-4" element={<Step4SetPin />} />
+            <Route path="/dashboard/users/new/personal/step-5" element={<Step5Review />} />
+            <Route path="/dashboard/users/new/corporate/step-1" element={<Step1BusinessInfo />} />
+            <Route path="/dashboard/users/new/corporate/step-2" element={<Step2Registration />} />
+            <Route path="/dashboard/users/new/corporate/step-3" element={<Step3AddressCorp />} />
+            <Route path="/dashboard/users/new/corporate/step-4" element={<Step4SetPin />} />
+            <Route path="/dashboard/users/new/corporate/step-5" element={<Step5ReviewCorp />} />
           </Route>
+        </Route>
 
-          <Route element={<NewCardProvider />}>
-            <Route element={<CreateCardLayout />}>
-              <Route path="/dashboard/cards/new" element={<CreateCardStep1 />} />
-              <Route path="/dashboard/cards/new/step-2" element={<CreateCardStep2 />} />
-              <Route path="/dashboard/cards/new/step-3" element={<CreateCardStep3SetLimits />} />
-              <Route path="/dashboard/cards/new/step-4" element={<CreateCardStep4 />} />
-            </Route>
+        <Route element={<NewCardProvider />}>
+          <Route element={<CreateCardLayout />}>
+            <Route path="/dashboard/cards/new" element={<CreateCardStep1 />} />
+            <Route path="/dashboard/cards/new/step-2" element={<CreateCardStep2 />} />
+            <Route path="/dashboard/cards/new/step-3" element={<CreateCardStep3SetLimits />} />
+            <Route path="/dashboard/cards/new/step-4" element={<CreateCardStep4 />} />
           </Route>
+        </Route>
 
-          <Route element={<CardProgramLayout />}>
-            <Route path="/dashboard/settings/card-programs/new" element={<NewCardProgram />} />
+        <Route element={<CardProgramLayout />}>
+          <Route path="/dashboard/settings/card-programs/new" element={<NewCardProgram />} />
+        </Route>
+
+        <Route element={<NewMerchantProvider />}>
+          <Route element={<NewMerchantLayout />}>
+            <Route path="/dashboard/settings/merchants/new/step-1" element={<NewMerchantStep1 />} />
+            <Route path="/dashboard/settings/merchants/new/step-2" element={<NewMerchantStep2 />} />
+            <Route path="/dashboard/settings/merchants/new/step-3" element={<NewMerchantStep3 />} />
+            <Route path="/dashboard/settings/merchants/new/step-4" element={<NewMerchantStep4 />} />
           </Route>
+        </Route>
 
-          <Route element={<NewMerchantProvider />}>
-            <Route element={<NewMerchantLayout />}>
-              <Route path="/dashboard/settings/merchants/new/step-1" element={<NewMerchantStep1 />} />
-              <Route path="/dashboard/settings/merchants/new/step-2" element={<NewMerchantStep2 />} />
-              <Route path="/dashboard/settings/merchants/new/step-3" element={<NewMerchantStep3 />} />
-              <Route path="/dashboard/settings/merchants/new/step-4" element={<NewMerchantStep4 />} />
-            </Route>
-          </Route>
-
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </TooltipProvider>
   </QueryClientProvider>
 );
 
-export default App;
+export default MainApp;
