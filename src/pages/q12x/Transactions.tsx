@@ -61,19 +61,19 @@ const Q12xTransactions = () => {
   }, [page]);
 
   return (
-    <Card className="bg-gray-800 border-gray-700 text-white">
+    <Card>
       <CardHeader>
         <CardTitle>Historique des Transactions</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="border border-gray-700 rounded-lg">
+        <div className="border rounded-lg">
           <Table>
             <TableHeader>
-              <TableRow className="border-gray-700 hover:bg-gray-700/50">
-                <TableHead className="text-white">Date</TableHead>
-                <TableHead className="text-white">Description</TableHead>
-                <TableHead className="text-white">Statut</TableHead>
-                <TableHead className="text-right text-white">Montant</TableHead>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead className="text-right">Montant</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -84,7 +84,7 @@ const Q12xTransactions = () => {
                   <TableRow
                     key={tx.id}
                     onClick={() => navigate(`/dashboard/transactions/${tx.id}`)}
-                    className="cursor-pointer border-gray-700 hover:bg-gray-700/50"
+                    className="cursor-pointer"
                   >
                     <TableCell>{new Date(tx.created_at).toLocaleString('fr-CA')}</TableCell>
                     <TableCell>{tx.description}</TableCell>

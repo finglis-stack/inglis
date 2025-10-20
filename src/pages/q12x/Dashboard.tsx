@@ -26,7 +26,7 @@ const Q12xDashboard = () => {
       <h1 className="text-3xl font-bold">
         Bienvenue, {merchant ? merchant.name : 'Marchand'} !
       </h1>
-      <p className="text-gray-400 mt-2">
+      <p className="text-muted-foreground mt-2">
         C'est ici que vous pourrez gérer vos checkouts et voir vos transactions.
       </p>
     </div>
