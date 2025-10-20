@@ -29,21 +29,25 @@ const Q12xLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4">
-      <div className="w-full max-w-md bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6">
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center p-4 relative"
+      style={{ backgroundImage: "url('/q12x-background.jpg')" }}
+    >
+      <div className="absolute inset-0 bg-black/50" />
+      <div className="relative w-full max-w-md bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 space-y-6 text-white">
         <div className="text-center">
           <h1 className="text-4xl font-bold font-mono">Q12x</h1>
-          <p className="text-gray-400">Accédez à votre tableau de bord marchand.</p>
+          <p className="text-gray-300">Accédez à votre tableau de bord marchand.</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <Label htmlFor="email">Adresse e-mail</Label>
-            <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 bg-gray-700 border-gray-600 text-white" />
+            <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400" />
           </div>
           <div>
             <Label htmlFor="password">Mot de passe</Label>
-            <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 bg-gray-700 border-gray-600 text-white" />
+            <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 bg-gray-700/50 border-gray-600 text-white" />
           </div>
           <div>
             <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={loading}>
@@ -52,7 +56,7 @@ const Q12xLogin = () => {
           </div>
         </form>
 
-        <p className="text-center text-sm text-gray-400">
+        <p className="text-center text-sm text-gray-300">
           Pas encore de compte ?{' '}
           <Link to="/" className="font-medium text-indigo-400 hover:underline">
             Inscrivez-vous
