@@ -28,6 +28,7 @@ const Step1Details = () => {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setSearchLoading(true);
+    // La recherche se fait maintenant sur tous les marchands, sans filtre d'institution.
     const { data, error } = await supabase
       .from('merchant_accounts')
       .select('id, name')
