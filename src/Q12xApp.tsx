@@ -8,6 +8,8 @@ import Q12xLogin from "@/pages/q12x/Login";
 import Q12xSignup from "@/pages/q12x/Signup";
 import Q12xDashboardLayout from "@/pages/q12x/DashboardLayout";
 import Q12xDashboard from "@/pages/q12x/Dashboard";
+import Q12xTransactions from "@/pages/q12x/Transactions";
+import Q12xTransactionDetails from "@/pages/q12x/TransactionDetails";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +24,8 @@ const Q12xApp = () => (
         
         <Route path="/dashboard" element={<Q12xDashboardLayout />}>
           <Route index element={<Q12xDashboard />} />
+          <Route path="transactions" element={<Q12xTransactions />} />
+          <Route path="transactions/:id" element={<Q12xTransactionDetails />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />
