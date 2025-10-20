@@ -19,10 +19,20 @@ const Q12xTransactionDetails = () => {
         .from('transactions')
         .select(`
           *,
-          cards (
-            user_initials, issuer_id, random_letters, unique_identifier, check_digit,
-            card_programs (
-              institutions ( name )
+          debit_accounts (
+            cards (
+              user_initials, issuer_id, random_letters, unique_identifier, check_digit,
+              card_programs (
+                institutions ( name )
+              )
+            )
+          ),
+          credit_accounts (
+            cards (
+              user_initials, issuer_id, random_letters, unique_identifier, check_digit,
+              card_programs (
+                institutions ( name )
+              )
             )
           )
         `)
@@ -30,6 +40,7 @@ const Q12xTransactionDetails = () => {
         .single();
 
       if (error) {
+        console.error("Erreur de Supabase:", error);
         showError("Transaction non trouvée.");
       } else {
         setTransaction(data);
@@ -54,7 +65,7 @@ const Q12xTransactionDetails = () => {
     );
   }
 
-  const card = transaction.cards;
+  const card = transaction.debit_accounts?.cards || transaction.credit_accounts?.cards;
   const cardNumber = card ? `${card.user_initials} ${card.issuer_id} ${card.random_letters} ****${card.unique_identifier.slice(-3)} ${card.check_digit}` : 'N/A';
   const issuerName = card?.card_programs?.institutions?.name || 'Émetteur inconnu';
 
