@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import AvailabilityCell from '@/components/q12x/AvailabilityCell';
 
 const TRANSACTIONS_PER_PAGE = 15;
 
@@ -43,7 +44,7 @@ const Q12xTransactions = () => {
 
       const { data, error } = await supabase
         .from('transactions')
-        .select('*')
+        .select('*, merchant_balance_ledgers(available_at)')
         .eq('merchant_account_id', merchant.id)
         .order('created_at', { ascending: false })
         .range(from, to);
@@ -73,12 +74,13 @@ const Q12xTransactions = () => {
                 <TableHead>Date</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Statut</TableHead>
+                <TableHead>Disponibilité</TableHead>
                 <TableHead className="text-right">Montant</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={4} className="text-center">Chargement...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center">Chargement...</TableCell></TableRow>
               ) : transactions.length > 0 ? (
                 transactions.map((tx) => (
                   <TableRow
@@ -93,13 +95,16 @@ const Q12xTransactions = () => {
                         {tx.status}
                       </Badge>
                     </TableCell>
+                    <TableCell>
+                      <AvailabilityCell availableAt={tx.merchant_balance_ledgers[0]?.available_at} />
+                    </TableCell>
                     <TableCell className="text-right font-mono">
                       {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(tx.amount)}
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
-                <TableRow><TableCell colSpan={4} className="text-center h-24">Aucune transaction trouvée.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center h-24">Aucune transaction trouvée.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

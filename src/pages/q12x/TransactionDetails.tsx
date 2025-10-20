@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Info } from 'lucide-react';
 import { showError } from '@/utils/toast';
+import AvailabilityCell from '@/components/q12x/AvailabilityCell';
 
 const Q12xTransactionDetails = () => {
   const { id } = useParams();
@@ -19,6 +20,7 @@ const Q12xTransactionDetails = () => {
         .from('transactions')
         .select(`
           *,
+          merchant_balance_ledgers(available_at),
           debit_accounts (
             cards (
               user_initials, issuer_id, random_letters, unique_identifier, check_digit,
@@ -92,6 +94,10 @@ const Q12xTransactionDetails = () => {
             <div>
               <p className="text-sm text-muted-foreground">Date</p>
               <p>{new Date(transaction.created_at).toLocaleString('fr-CA')}</p>
+            </div>
+             <div>
+              <p className="text-sm text-muted-foreground">Disponibilité des fonds</p>
+              <AvailabilityCell availableAt={transaction.merchant_balance_ledgers[0]?.available_at} />
             </div>
           </div>
           <div className="space-y-4">
