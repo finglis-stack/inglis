@@ -73,7 +73,6 @@ async function sendWebhook(institutionId, event, payload) {
 }
 
 serve(async (req) => {
-  // Gérer les requêtes CORS preflight
   if (req.method === 'OPTIONS') {
     console.log("[v1/transactions] Handling OPTIONS request.");
     return new Response('ok', { headers: corsHeaders })
@@ -82,9 +81,9 @@ serve(async (req) => {
   try {
     const institutionId = await authenticateApiKey(req.headers.get('Authorization'));
 
-    const { card_token, amount, description, capture_delay_hours } = await req.json();
-    if (!card_token || !amount || !description) {
-      throw new Error('card_token, amount, and description are required.');
+    const { card_token, amount, description, merchant_account_id, capture_delay_hours } = await req.json();
+    if (!card_token || !amount || !description || !merchant_account_id) {
+      throw new Error('card_token, amount, description, and merchant_account_id are required.');
     }
 
     const { data: tokenData, error: tokenError } = await supabaseAdmin
@@ -101,22 +100,11 @@ serve(async (req) => {
     const cardId = tokenData.card_id;
     await supabaseAdmin.from('card_tokens').update({ used_at: new Date().toISOString() }).eq('token', card_token);
 
-    const { data: cardOwner, error: profileError } = await supabaseAdmin
-      .from('cards')
-      .select('profiles(institution_id)')
-      .eq('id', cardId)
-      .single();
-
-    if (profileError) throw new Error(`Could not retrieve card owner: ${profileError.message}`);
-    if (!cardOwner) throw new Error('Card ID not found in cards table.');
-    if (cardOwner.profiles.institution_id !== institutionId) {
-      throw new Error('Forbidden: The API key used does not have permission for this card.');
-    }
-
     const { data: transactionResult, error: rpcError } = await supabaseAdmin.rpc('create_authorization', {
       p_card_id: cardId,
       p_amount: amount,
       p_description: description,
+      p_merchant_account_id: merchant_account_id,
       p_capture_delay_hours: capture_delay_hours || 0,
     });
 

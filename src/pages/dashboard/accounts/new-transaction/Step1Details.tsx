@@ -8,6 +8,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Slider } from '@/components/ui/slider';
 import { showError } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '@/integrations/supabase/client';
+import { Search, Loader2, CheckCircle } from 'lucide-react';
 
 const Step1Details = () => {
   const { t } = useTranslation(['dashboard', 'common']);
@@ -15,9 +17,30 @@ const Step1Details = () => {
   const { transactionData, updateTransaction } = useNewTransaction();
   
   const [amount, setAmount] = useState(transactionData.amount || '');
-  const [description, setDescription] = useState(transactionData.description || '');
   const [captureOption, setCaptureOption] = useState(transactionData.captureOption || 'now');
   const [captureHours, setCaptureHours] = useState(transactionData.captureHours || [1]);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedMerchant, setSelectedMerchant] = useState(transactionData.selectedMerchant || null);
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setSearchLoading(true);
+    const { data, error } = await supabase
+      .from('merchant_accounts')
+      .select('id, name')
+      .ilike('name', `%${searchQuery}%`)
+      .limit(10);
+    
+    if (error) {
+      showError(error.message);
+    } else {
+      setSearchResults(data);
+    }
+    setSearchLoading(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +49,7 @@ const Step1Details = () => {
       showError(t('newTransaction.invalidAmount'));
       return;
     }
-    if (!description.trim()) {
+    if (!selectedMerchant) {
       showError(t('newTransaction.invalidDescription'));
       return;
     }
@@ -35,7 +58,9 @@ const Step1Details = () => {
     
     updateTransaction({ 
       amount: parsedAmount, 
-      description,
+      description: selectedMerchant.name,
+      merchantId: selectedMerchant.id,
+      selectedMerchant,
       captureOption,
       captureHours: finalCaptureHours
     });
@@ -48,9 +73,44 @@ const Step1Details = () => {
         <Label htmlFor="amount">{t('newTransaction.transactionAmount')}</Label>
         <Input id="amount" type="number" step="0.01" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} required />
       </div>
+      
       <div className="grid gap-2">
-        <Label htmlFor="description">{t('accounts.description')} ({t('newTransaction.merchantName')})</Label>
-        <Input id="description" placeholder={t('newTransaction.merchantPlaceholder')} value={description} onChange={(e) => setDescription(e.target.value)} required />
+        <Label htmlFor="merchant-search">{t('newTransaction.merchantName')}</Label>
+        {selectedMerchant ? (
+          <div className="flex items-center justify-between p-3 border rounded-md bg-muted">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <span className="font-medium">{selectedMerchant.name}</span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedMerchant(null)}>Changer</Button>
+          </div>
+        ) : (
+          <>
+            <div className="flex gap-2">
+              <Input id="merchant-search" placeholder={t('users.searchPlaceholder')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+              <Button type="button" onClick={handleSearch} disabled={searchLoading}>
+                {searchLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              </Button>
+            </div>
+            {searchResults.length > 0 && (
+              <ul className="border rounded-md max-h-40 overflow-y-auto">
+                {searchResults.map((merchant: any) => (
+                  <li 
+                    key={merchant.id} 
+                    onClick={() => {
+                      setSelectedMerchant(merchant);
+                      setSearchResults([]);
+                      setSearchQuery('');
+                    }}
+                    className="p-2 hover:bg-muted cursor-pointer"
+                  >
+                    {merchant.name}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
       </div>
       
       <div className="grid gap-4 p-4 border rounded-md bg-gray-50">

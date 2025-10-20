@@ -18,7 +18,6 @@ const Step3Review = () => {
   const [loading, setLoading] = useState(false);
   const [cardId, setCardId] = useState<string | null>(null);
 
-  // Déterminer le type de compte à partir de l'URL
   const accountType = location.pathname.includes('/debit/') ? 'debit' : 'credit';
   const finalBackUrl = `/dashboard/accounts/${accountType}/${accountId}`;
 
@@ -48,6 +47,7 @@ const Step3Review = () => {
         p_card_id: cardId,
         p_amount: transactionData.amount,
         p_description: transactionData.description,
+        p_merchant_account_id: transactionData.merchantId,
         p_capture_delay_hours: transactionData.captureHours || 0,
       });
 
