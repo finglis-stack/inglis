@@ -9,7 +9,7 @@ const Step3Contact = () => {
   const navigate = useNavigate();
   const { onboardingData, updateData } = useQ12xOnboarding();
   const [address, setAddress] = useState(onboardingData.address || {});
-  const [phone, setPhone] = useState(onboardingData.phone || '');
+  const [phoneNumber, setPhoneNumber] = useState(onboardingData.phoneNumber || '');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAddress({ ...address, [e.target.id]: e.target.value });
@@ -17,15 +17,15 @@ const Step3Contact = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateData({ address, phone });
+    updateData({ address, phoneNumber });
     navigate('/review');
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-2">
-        <Label htmlFor="phone">Numéro de téléphone (Optionnel)</Label>
-        <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        <Label htmlFor="phoneNumber">Numéro de téléphone (Optionnel)</Label>
+        <Input id="phoneNumber" type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />
       </div>
       <div className="grid gap-2">
         <Label htmlFor="street">Adresse (Optionnel)</Label>

@@ -12,7 +12,7 @@ const Step4Review = () => {
 
   const handleSubmit = async () => {
     setLoading(true);
-    const { name, email, password, business_number, jurisdiction, address, phone } = onboardingData;
+    const { name, email, password, business_number, jurisdiction, address, phoneNumber } = onboardingData;
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
 
@@ -34,7 +34,7 @@ const Step4Review = () => {
       business_number,
       jurisdiction,
       address,
-      phone,
+      phone_number: phoneNumber,
     });
 
     if (insertError) {
@@ -65,7 +65,7 @@ const Step4Review = () => {
         </div>
         <div>
           <h4 className="font-semibold">Contact</h4>
-          <p className="text-muted-foreground">Téléphone: {onboardingData.phone || 'N/A'}</p>
+          <p className="text-muted-foreground">Téléphone: {onboardingData.phoneNumber || 'N/A'}</p>
           <p className="text-muted-foreground">Adresse: {onboardingData.address?.street || 'N/A'}</p>
         </div>
       </div>
