@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { LayoutDashboard, ArrowRightLeft, Link as LinkIcon } from 'lucide-react';
 
 const Q12xDashboardLayout = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const Q12xDashboardLayout = () => {
 
   const navLinkClasses = ({ isActive }: { isActive: boolean }) =>
     cn(
-      "px-3 py-2 rounded-md text-sm font-medium transition-colors",
+      "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
       isActive
         ? "bg-indigo-600 text-white"
         : "text-gray-500 hover:bg-gray-200 hover:text-gray-900"
@@ -38,10 +39,16 @@ const Q12xDashboardLayout = () => {
             <h1 className="text-2xl font-bold font-mono text-gray-900">Q12x</h1>
             <nav className="flex items-center gap-4">
               <NavLink to="/dashboard" end className={navLinkClasses}>
+                <LayoutDashboard className="h-4 w-4" />
                 Tableau de bord
               </NavLink>
               <NavLink to="/dashboard/transactions" className={navLinkClasses}>
+                <ArrowRightLeft className="h-4 w-4" />
                 Transactions
+              </NavLink>
+              <NavLink to="/dashboard/checkouts" className={navLinkClasses}>
+                <LinkIcon className="h-4 w-4" />
+                Checkouts
               </NavLink>
             </nav>
           </div>
