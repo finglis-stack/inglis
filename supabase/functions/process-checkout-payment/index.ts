@@ -26,7 +26,7 @@ serve(async (req) => {
     // 1. Valider le checkout
     const { data: checkout, error: checkoutError } = await supabaseAdmin
       .from('checkouts')
-      .select('id, merchant_account_id, amount, is_amount_variable, status')
+      .select('id, name, merchant_account_id, amount, is_amount_variable, status')
       .eq('id', checkoutId)
       .single();
 
@@ -54,13 +54,13 @@ serve(async (req) => {
     const cardId = tokenData.card_id;
     await supabaseAdmin.from('card_tokens').update({ used_at: new Date().toISOString() }).eq('token', card_token);
 
-    // 4. Exécuter la transaction
-    const { data: transactionResult, error: rpcError } = await supabaseAdmin.rpc('create_authorization', {
+    // 4. Exécuter la transaction en utilisant la fonction RPC 'process_transaction'
+    const { data: transactionResult, error: rpcError } = await supabaseAdmin.rpc('process_transaction', {
       p_card_id: cardId,
       p_amount: finalAmount,
-      p_description: `Paiement pour Checkout: ${checkout.id}`,
+      p_type: 'purchase',
+      p_description: `Paiement: ${checkout.name}`,
       p_merchant_account_id: checkout.merchant_account_id,
-      p_capture_delay_hours: 0, // Capture immédiate
     });
 
     if (rpcError) throw rpcError;

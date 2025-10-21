@@ -98,6 +98,8 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPa
     });
   };
 
+  const isFormComplete = showDetails && /^\d{2}\/\d{2}$/.test(expiry) && pin.length === 4;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
@@ -138,17 +140,17 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPa
         </div>
       </div>
 
-      {showDetails && (
-        <div className="space-y-2">
-          <Button type="submit" className="w-full bg-gray-800 hover:bg-gray-900 text-white" disabled={processing}>
-            {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Payer {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(amount)}
-          </Button>
+      <div className="space-y-2">
+        <Button type="submit" className="w-full bg-gray-800 hover:bg-gray-900 text-white" disabled={processing || !isFormComplete}>
+          {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Payer {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(amount)}
+        </Button>
+        {showDetails && (
           <Button variant="link" className="w-full" type="button" onClick={handleModifyCardNumber}>
             Modifier le numéro de carte
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </form>
   );
 };
