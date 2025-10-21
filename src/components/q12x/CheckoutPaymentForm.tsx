@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { showError } from '@/utils/toast';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { cn } from '@/lib/utils';
 
 interface CheckoutPaymentFormProps {
   onSubmit: (cardDetails: any) => void;
@@ -44,10 +45,19 @@ const formatExpiry = (value: string): string => {
 };
 
 export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPaymentFormProps) => {
-  const [step, setStep] = useState<'card' | 'details'>('card');
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [pin, setPin] = useState('');
+  const [showDetails, setShowDetails] = useState(false);
+  const cardNumberInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (cardNumber.length === 18) {
+      setShowDetails(true);
+    } else {
+      setShowDetails(false);
+    }
+  }, [cardNumber]);
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const cleaned = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -61,12 +71,9 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPa
     setExpiry(formatted);
   };
 
-  const handleNextStep = () => {
-    if (cardNumber.length !== 18) {
-      showError("Le numéro de carte est incomplet.");
-      return;
-    }
-    setStep('details');
+  const handleModifyCardNumber = () => {
+    setShowDetails(false);
+    setTimeout(() => cardNumberInputRef.current?.focus(), 100);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -93,33 +100,28 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPa
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {step === 'card' && (
-        <div className="space-y-4">
-          <div className="grid gap-2">
-            <Label htmlFor="card-number">Numéro de carte</Label>
-            <Input 
-              id="card-number" 
-              placeholder="LL NNNNNN LL NNNNNNN C" 
-              value={formatCardNumber(cardNumber)} 
-              onChange={handleCardNumberChange}
-              required
-              className="font-mono tracking-wider"
-            />
-          </div>
-          <Button type="button" className="w-full" onClick={handleNextStep}>Continuer</Button>
+      <div className="space-y-4">
+        <div className="grid gap-2">
+          <Label htmlFor="card-number">Numéro de carte</Label>
+          <Input 
+            ref={cardNumberInputRef}
+            id="card-number" 
+            placeholder="LL NNNNNN LL NNNNNNN C" 
+            value={formatCardNumber(cardNumber)} 
+            onChange={handleCardNumberChange}
+            required
+            className="font-mono tracking-wider"
+          />
         </div>
-      )}
 
-      {step === 'details' && (
-        <div className="space-y-4">
-          <div className="p-3 border rounded-md bg-gray-50">
-            <p className="text-sm text-muted-foreground">Carte</p>
-            <p className="font-mono">{formatCardNumber(cardNumber)}</p>
-          </div>
+        <div className={cn(
+          "space-y-4 overflow-hidden transition-all duration-500 ease-in-out",
+          showDetails ? "max-h-96 opacity-100 pt-4" : "max-h-0 opacity-0"
+        )}>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="expiry">Expiration (MM/AA)</Label>
-              <Input id="expiry" placeholder="MM/AA" value={expiry} onChange={handleExpiryChange} required />
+              <Input id="expiry" placeholder="MM/AA" value={expiry} onChange={handleExpiryChange} required={showDetails} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="pin">NIP</Label>
@@ -133,11 +135,18 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPa
               </InputOTP>
             </div>
           </div>
+        </div>
+      </div>
+
+      {showDetails && (
+        <div className="space-y-2">
           <Button type="submit" className="w-full bg-gray-800 hover:bg-gray-900 text-white" disabled={processing}>
             {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Payer {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(amount)}
           </Button>
-          <Button variant="link" className="w-full" onClick={() => setStep('card')}>Modifier le numéro de carte</Button>
+          <Button variant="link" className="w-full" type="button" onClick={handleModifyCardNumber}>
+            Modifier le numéro de carte
+          </Button>
         </div>
       )}
     </form>
