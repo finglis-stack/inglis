@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { showError } from '@/utils/toast';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { cn } from '@/lib/utils';
+import { cn, validateLuhnAlphanumeric } from '@/lib/utils';
 
 interface CheckoutPaymentFormProps {
   onSubmit: (cardDetails: any) => void;
@@ -49,13 +49,21 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPa
   const [expiry, setExpiry] = useState('');
   const [pin, setPin] = useState('');
   const [showDetails, setShowDetails] = useState(false);
+  const [cardNumberError, setCardNumberError] = useState<string | null>(null);
   const cardNumberInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (cardNumber.length === 18) {
-      setShowDetails(true);
+      if (validateLuhnAlphanumeric(cardNumber)) {
+        setShowDetails(true);
+        setCardNumberError(null);
+      } else {
+        setShowDetails(false);
+        setCardNumberError("Le numéro de carte est invalide.");
+      }
     } else {
       setShowDetails(false);
+      setCardNumberError(null);
     }
   }, [cardNumber]);
 
@@ -79,7 +87,7 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPa
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedCard = parseCardNumber(cardNumber);
-    if (!parsedCard) {
+    if (!parsedCard || !validateLuhnAlphanumeric(cardNumber)) {
       showError("Le numéro de carte est invalide.");
       return;
     }
@@ -98,7 +106,7 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPa
     });
   };
 
-  const isFormComplete = showDetails && /^\d{2}\/\d{2}$/.test(expiry) && pin.length === 4;
+  const isFormComplete = showDetails && /^\d{2}\/\d{2}$/.test(expiry) && pin.length === 4 && !cardNumberError;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -112,8 +120,9 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPa
             value={formatCardNumber(cardNumber)} 
             onChange={handleCardNumberChange}
             required
-            className="font-mono tracking-wider"
+            className={cn("font-mono tracking-wider", cardNumberError && "border-red-500")}
           />
+          {cardNumberError && <p className="text-sm text-red-500">{cardNumberError}</p>}
         </div>
 
         <div className={cn(
