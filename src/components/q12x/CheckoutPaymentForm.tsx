@@ -4,9 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { showError } from '@/utils/toast';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 interface CheckoutPaymentFormProps {
-  onSubmit: (cardObject: any) => void;
+  onSubmit: (cardDetails: any) => void;
   processing: boolean;
   amount: number;
 }
@@ -34,43 +35,111 @@ const parseCardNumber = (value: string): object | null => {
   };
 };
 
-export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPaymentFormProps) => {
-  const [rawValue, setRawValue] = useState('');
+const formatExpiry = (value: string): string => {
+  const cleaned = value.replace(/[^0-9]/g, '');
+  if (cleaned.length > 2) {
+    return `${cleaned.substring(0, 2)}/${cleaned.substring(2, 4)}`;
+  }
+  return cleaned;
+};
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPaymentFormProps) => {
+  const [step, setStep] = useState<'card' | 'details'>('card');
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [pin, setPin] = useState('');
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const cleaned = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     if (cleaned.length <= 18) {
-      setRawValue(cleaned);
+      setCardNumber(cleaned);
     }
+  };
+
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatExpiry(e.target.value);
+    setExpiry(formatted);
+  };
+
+  const handleNextStep = () => {
+    if (cardNumber.length !== 18) {
+      showError("Le numéro de carte est incomplet.");
+      return;
+    }
+    setStep('details');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = parseCardNumber(rawValue);
-    if (parsed) {
-      onSubmit(parsed);
-    } else {
-      showError("Le numéro de carte est invalide ou incomplet.");
+    const parsedCard = parseCardNumber(cardNumber);
+    if (!parsedCard) {
+      showError("Le numéro de carte est invalide.");
+      return;
     }
+    if (!/^\d{2}\/\d{2}$/.test(expiry)) {
+      showError("La date d'expiration doit être au format MM/AA.");
+      return;
+    }
+    if (pin.length !== 4) {
+      showError("Le NIP doit contenir 4 chiffres.");
+      return;
+    }
+    onSubmit({
+      card_number: parsedCard,
+      expiry_date: expiry,
+      pin: pin,
+    });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-2">
-        <Label htmlFor="card-number">Informations de la carte</Label>
-        <Input 
-          id="card-number" 
-          placeholder="LL NNNNNN LL NNNNNNN C" 
-          value={formatCardNumber(rawValue)} 
-          onChange={handleChange}
-          required
-          className="font-mono tracking-wider"
-        />
-      </div>
-      <Button type="submit" className="w-full bg-gray-800 hover:bg-gray-900 text-white" disabled={processing}>
-        {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Payer {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(amount)}
-      </Button>
+      {step === 'card' && (
+        <div className="space-y-4">
+          <div className="grid gap-2">
+            <Label htmlFor="card-number">Numéro de carte</Label>
+            <Input 
+              id="card-number" 
+              placeholder="LL NNNNNN LL NNNNNNN C" 
+              value={formatCardNumber(cardNumber)} 
+              onChange={handleCardNumberChange}
+              required
+              className="font-mono tracking-wider"
+            />
+          </div>
+          <Button type="button" className="w-full" onClick={handleNextStep}>Continuer</Button>
+        </div>
+      )}
+
+      {step === 'details' && (
+        <div className="space-y-4">
+          <div className="p-3 border rounded-md bg-gray-50">
+            <p className="text-sm text-muted-foreground">Carte</p>
+            <p className="font-mono">{formatCardNumber(cardNumber)}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="expiry">Expiration (MM/AA)</Label>
+              <Input id="expiry" placeholder="MM/AA" value={expiry} onChange={handleExpiryChange} required />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="pin">NIP</Label>
+              <InputOTP id="pin" maxLength={4} value={pin} onChange={setPin}>
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+          </div>
+          <Button type="submit" className="w-full bg-gray-800 hover:bg-gray-900 text-white" disabled={processing}>
+            {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Payer {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(amount)}
+          </Button>
+          <Button variant="link" className="w-full" onClick={() => setStep('card')}>Modifier le numéro de carte</Button>
+        </div>
+      )}
     </form>
   );
 };

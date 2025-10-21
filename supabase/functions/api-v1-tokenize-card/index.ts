@@ -16,22 +16,20 @@ const supabaseAdmin = createClient(
 )
 
 serve(async (req) => {
-  // Gérer les requêtes CORS preflight
   if (req.method === 'OPTIONS') {
-    console.log("[api-v1-tokenize-card] Handling OPTIONS request. Sending CORS headers.");
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { card_number } = await req.json();
-    if (!card_number) {
-      throw new Error('card_number is required.');
+    const { card_number, expiry_date, pin } = await req.json();
+    if (!card_number || !expiry_date || !pin) {
+      throw new Error('card_number, expiry_date, and pin are required.');
     }
 
-    // Find the card based on its number components
+    // 1. Find the card based on its number components
     const { data: card, error: cardError } = await supabaseAdmin
       .from('cards')
-      .select('id')
+      .select('id, pin, expires_at')
       .match({
         user_initials: card_number.initials,
         issuer_id: card_number.issuer_id,
@@ -42,15 +40,46 @@ serve(async (req) => {
       .single();
 
     if (cardError || !card) {
-      console.error("[api-v1-tokenize-card] Card not found or invalid.", cardError);
-      throw new Error('Card not found or invalid.');
+      throw new Error('Carte invalide ou non trouvée.');
     }
 
-    // Generate a secure, single-use token
+    // 2. Validate PIN (THIS IS INSECURE FOR PRODUCTION)
+    if (card.pin !== pin) {
+      throw new Error('Le NIP est incorrect.');
+    }
+
+    // 3. Validate Expiry Date
+    const [month, year] = expiry_date.split('/');
+    if (!month || !year || month.length !== 2 || year.length !== 2) {
+      throw new Error("Format de date d'expiration invalide. Utilisez MM/AA.");
+    }
+    const expiryMonth = parseInt(month, 10);
+    const expiryYear = 2000 + parseInt(year, 10);
+    
+    const cardExpiresAt = new Date(card.expires_at);
+    const lastDayOfExpiryMonth = new Date(expiryYear, expiryMonth, 0);
+
+    if (lastDayOfExpiryMonth < cardExpiresAt) {
+       // This logic is a bit tricky. A simpler check is to compare year and month.
+       const cardExpiryYear = cardExpiresAt.getFullYear();
+       const cardExpiryMonth = cardExpiresAt.getMonth() + 1; // getMonth is 0-indexed
+
+       if (expiryYear < cardExpiryYear || (expiryYear === cardExpiryYear && expiryMonth < cardExpiryMonth)) {
+         throw new Error("La date d'expiration ne correspond pas.");
+       }
+    }
+    
+    const now = new Date();
+    if (lastDayOfExpiryMonth < now) {
+        throw new Error("Cette carte est expirée.");
+    }
+
+
+    // 4. Generate a secure, single-use token
     const token = `tok_${crypto.randomUUID().replaceAll('-', '')}`;
     const expires_at = new Date(Date.now() + 10 * 60 * 1000); // Token expires in 10 minutes
 
-    // Store the token
+    // 5. Store the token
     const { error: tokenError } = await supabaseAdmin
       .from('card_tokens')
       .insert({
@@ -60,18 +89,16 @@ serve(async (req) => {
       });
 
     if (tokenError) {
-      console.error("[api-v1-tokenize-card] Error storing token:", tokenError);
       throw tokenError;
     }
 
-    // Return only the token
+    // 6. Return only the token
     return new Response(JSON.stringify({ token: token }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
 
   } catch (error) {
-    console.error("[api-v1-tokenize-card] An error occurred:", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,

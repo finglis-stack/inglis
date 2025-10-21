@@ -36,7 +36,7 @@ const PublicCheckoutPage = () => {
     fetchCheckout();
   }, [checkoutId]);
 
-  const handlePaymentSubmit = async (cardObject: any) => {
+  const handlePaymentSubmit = async (cardDetails: any) => {
     setProcessing(true);
     try {
       const amount = checkout.is_amount_variable ? parseFloat(variableAmount) : checkout.amount;
@@ -45,12 +45,12 @@ const PublicCheckoutPage = () => {
       }
 
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke('api-v1-tokenize-card', {
-        body: { card_number: cardObject }
+        body: cardDetails
       });
 
       if (tokenError) {
         const functionError = await tokenError.context.json();
-        throw new Error(functionError.error || "La carte est invalide.");
+        throw new Error(functionError.error || "La carte est invalide ou les informations sont incorrectes.");
       }
 
       const { error: paymentError } = await supabase.functions.invoke('process-checkout-payment', {
@@ -74,7 +74,7 @@ const PublicCheckoutPage = () => {
     } catch (err) {
       showError(err.message);
       if (checkout.cancel_url) {
-        window.location.href = checkout.cancel_url;
+        // Ne pas rediriger en cas d'erreur pour que l'utilisateur puisse réessayer
       }
     } finally {
       setProcessing(false);
