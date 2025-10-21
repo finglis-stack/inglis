@@ -21,9 +21,16 @@ const AvailabilityCell = ({ availableAt }: AvailabilityCellProps) => {
         setTimeLeft('Disponible');
         clearInterval(interval);
       } else {
+        const hours = Math.floor(diff / (1000 * 60 * 60));
         const minutes = Math.floor((diff / 1000 / 60) % 60);
         const seconds = Math.floor((diff / 1000) % 60);
-        setTimeLeft(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        
+        let timeString = '';
+        if (hours > 0) {
+            timeString += `${hours.toString().padStart(2, '0')}:`;
+        }
+        timeString += `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        setTimeLeft(timeString);
       }
     }, 1000);
 
