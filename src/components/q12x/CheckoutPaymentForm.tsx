@@ -2,15 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { showError } from '@/utils/toast';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { cn, validateLuhnAlphanumeric } from '@/lib/utils';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface CheckoutPaymentFormProps {
   onSubmit: (cardDetails: any) => void;
   processing: boolean;
   amount: number;
+  error: string | null;
 }
 
 const formatCardNumber = (value: string): string => {
@@ -44,7 +46,7 @@ const formatExpiry = (value: string): string => {
   return cleaned;
 };
 
-export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPaymentFormProps) => {
+export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: CheckoutPaymentFormProps) => {
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [pin, setPin] = useState('');
@@ -110,6 +112,15 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount }: CheckoutPa
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Paiement refusé</AlertTitle>
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="space-y-4">
         <div className="grid gap-2">
           <Label htmlFor="card-number">Numéro de carte</Label>

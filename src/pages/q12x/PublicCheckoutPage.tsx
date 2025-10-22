@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { CheckoutPaymentForm } from '@/components/q12x/CheckoutPaymentForm';
+import ProcessingPaymentModal from '@/components/q12x/ProcessingPaymentModal';
 
 const PublicCheckoutPage = () => {
   const { checkoutId } = useParams();
@@ -14,6 +15,8 @@ const PublicCheckoutPage = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [variableAmount, setVariableAmount] = useState('');
+  const [showProcessingModal, setShowProcessingModal] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCheckout = async () => {
@@ -38,10 +41,16 @@ const PublicCheckoutPage = () => {
 
   const handlePaymentSubmit = async (cardDetails: any) => {
     setProcessing(true);
+    setPaymentError(null);
+    setShowProcessingModal(true);
+
     try {
       const amount = checkout.is_amount_variable ? parseFloat(variableAmount) : checkout.amount;
       if (isNaN(amount) || amount <= 0) {
-        throw new Error("Montant invalide.");
+        showError("Montant invalide.");
+        setShowProcessingModal(false);
+        setProcessing(false);
+        return;
       }
 
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke('api-v1-tokenize-card', {
@@ -49,8 +58,8 @@ const PublicCheckoutPage = () => {
       });
 
       if (tokenError) {
-        const functionError = await tokenError.context.json();
-        throw new Error(functionError.error || "La carte est invalide ou les informations sont incorrectes.");
+        // Cet erreur sera attrapée par le bloc catch
+        throw tokenError;
       }
 
       const { error: paymentError } = await supabase.functions.invoke('process-checkout-payment', {
@@ -62,20 +71,18 @@ const PublicCheckoutPage = () => {
       });
 
       if (paymentError) {
-        const functionError = await paymentError.context.json();
-        throw new Error(functionError.error || "Le paiement a échoué.");
+        // Cet erreur sera attrapée par le bloc catch
+        throw paymentError;
       }
 
       showSuccess("Paiement réussi !");
       if (checkout.success_url) {
         window.location.href = checkout.success_url;
       }
-      // Afficher un message de succès si pas de redirection
+      // Sur succès, la redirection ou le message de succès se produit, la modale disparaît avec la page.
     } catch (err) {
-      showError(err.message);
-      if (checkout.cancel_url) {
-        // Ne pas rediriger en cas d'erreur pour que l'utilisateur puisse réessayer
-      }
+      setShowProcessingModal(false);
+      setPaymentError("Le paiement a été refusé par l'institution émettrice de la carte.");
     } finally {
       setProcessing(false);
     }
@@ -105,6 +112,7 @@ const PublicCheckoutPage = () => {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row font-sans">
+      <ProcessingPaymentModal isOpen={showProcessingModal} />
       {/* Colonne de gauche : Résumé */}
       <div className="w-full lg:w-1/2 bg-gray-50 p-8 lg:p-12 flex flex-col justify-center">
         <div className="max-w-md mx-auto w-full">
@@ -141,7 +149,12 @@ const PublicCheckoutPage = () => {
       {/* Colonne de droite : Formulaire de paiement */}
       <div className="w-full lg:w-1/2 bg-white p-8 lg:p-12 flex items-center justify-center">
         <div className="max-w-md w-full">
-          <CheckoutPaymentForm onSubmit={handlePaymentSubmit} processing={processing} amount={finalAmount} />
+          <CheckoutPaymentForm 
+            onSubmit={handlePaymentSubmit} 
+            processing={processing} 
+            amount={finalAmount}
+            error={paymentError}
+          />
         </div>
       </div>
     </div>
