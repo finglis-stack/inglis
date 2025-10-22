@@ -5,7 +5,7 @@ import animationData from "@/assets/processing-animation.json";
 const ProcessingPaymentModal = ({ isOpen }: { isOpen: boolean }) => {
   return (
     <Dialog open={isOpen}>
-      <DialogContent className="sm:max-w-[425px]" hideCloseButton>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-center">Traitement en cours</DialogTitle>
         </DialogHeader>
