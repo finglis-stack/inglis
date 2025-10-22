@@ -61,12 +61,12 @@ const MapWithKey = ({ apiKey, latitude, longitude }: { apiKey: string, latitude:
       mapContainerStyle={containerStyle}
       center={center}
       zoom={18}
-      tilt={45}
-      mapTypeId="satellite"
       options={{
         disableDefaultUI: true,
         zoomControl: true,
+        tilt: 45,
         heading: 90,
+        mapTypeId: 'satellite',
       }}
     >
       <Marker position={center} />
