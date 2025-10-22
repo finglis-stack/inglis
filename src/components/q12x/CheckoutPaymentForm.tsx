@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, AlertTriangle } from 'lucide-react';
 import { showError } from '@/utils/toast';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { InputOTP, InputOTPGroup } from '@/components/ui/input-otp';
 import { cn, validateLuhnAlphanumeric } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -147,14 +147,28 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
             </div>
             <div className="grid gap-2">
               <Label htmlFor="pin">NIP</Label>
-              <InputOTP id="pin" maxLength={4} value={pin} onChange={setPin}>
-                <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                </InputOTPGroup>
-              </InputOTP>
+              <InputOTP
+                id="pin"
+                maxLength={4}
+                value={pin}
+                onChange={setPin}
+                render={({ slots }) => (
+                  <InputOTPGroup>
+                    {slots.map((slot, index) => (
+                      <div
+                        key={index}
+                        className={cn(
+                          "relative flex h-10 w-10 items-center justify-center border-y border-r border-input text-sm transition-all first:rounded-l-md first:border-l last:rounded-r-md",
+                          slot.isActive && "z-10 ring-2 ring-ring ring-offset-background"
+                        )}
+                      >
+                        {slot.char ? "•" : null}
+                        {slot.isActive && <div className="pointer-events-none absolute inset-0 flex items-center justify-center"><div className="h-4 w-px animate-caret-blink bg-foreground duration-1000" /></div>}
+                      </div>
+                    ))}
+                  </InputOTPGroup>
+                )}
+              />
             </div>
           </div>
         </div>
