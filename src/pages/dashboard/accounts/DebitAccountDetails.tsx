@@ -86,7 +86,27 @@ const DebitAccountDetails = () => {
     };
 
     fetchDetails();
-  }, [accountId, t]);
+
+    const channel = supabase.channel(`transactions_for_debit_account_${accountId}`)
+      .on(
+        'postgres_changes',
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'transactions',
+          filter: `debit_account_id=eq.${accountId}`
+        },
+        (payload) => {
+          setTransactions((currentTransactions) => [payload.new, ...currentTransactions]);
+          refetchBalance();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [accountId, t, refetchBalance]);
 
   if (loading) {
     return (

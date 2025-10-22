@@ -99,7 +99,27 @@ const CreditAccountDetails = () => {
     };
 
     fetchDetails();
-  }, [accountId, t]);
+
+    const channel = supabase.channel(`transactions_for_credit_account_${accountId}`)
+      .on(
+        'postgres_changes',
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'transactions',
+          filter: `credit_account_id=eq.${accountId}`
+        },
+        (payload) => {
+          setTransactions((currentTransactions) => [payload.new, ...currentTransactions]);
+          refetchBalance();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [accountId, t, refetchBalance]);
 
   const handlePayment = async () => {
     const amount = parseFloat(paymentAmount);
@@ -120,13 +140,8 @@ const CreditAccountDetails = () => {
 
       showSuccess(t('accounts.paymentSuccess'));
       setPaymentAmount('');
+      // No need to manually refetch transactions, realtime will handle it.
       refetchBalance();
-      const { data: transactionsData } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('credit_account_id', accountId)
-        .order('created_at', { ascending: false });
-      setTransactions(transactionsData || []);
     } catch (error) {
       showError(`${t('accounts.paymentError')}: ${error.message}`);
     }
