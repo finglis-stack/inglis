@@ -168,8 +168,8 @@ const CreditAccountDetails = () => {
   const profileName = account.profiles.type === 'personal' ? account.profiles.full_name : account.profiles.legal_name;
   const cardNumber = `${account.cards.user_initials} ${account.cards.issuer_id} ${account.cards.random_letters} ****${account.cards.unique_identifier.slice(-3)} ${account.cards.check_digit}`;
 
-  const currentBalance = balanceData?.current_balance || 0;
-  const availableCredit = balanceData?.available_credit || account.credit_limit;
+  const currentBalance = balanceData?.current_balance;
+  const availableCredit = balanceData?.available_credit;
 
   return (
     <div className="space-y-6">
@@ -213,7 +213,7 @@ const CreditAccountDetails = () => {
                     {t('accounts.currentBalance')} <span className="text-xs">({secondsUntilRefresh}s)</span>
                   </p>
                   <p className="text-2xl font-bold">
-                    {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(currentBalance)}
+                    {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(currentBalance ?? 0)}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {t('accounts.on')} {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.credit_limit)}
@@ -221,9 +221,13 @@ const CreditAccountDetails = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t('accounts.availableCredit')}</p>
-                  <p className="text-lg font-semibold text-green-600">
-                    {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(availableCredit)}
-                  </p>
+                  {typeof availableCredit === 'number' && availableCredit <= 0 ? (
+                    <Badge variant="destructive">Solde zéro de disponible</Badge>
+                  ) : (
+                    <p className="text-lg font-semibold text-green-600">
+                      {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(availableCredit ?? 0)}
+                    </p>
+                  )}
                 </div>
               </>
             )}

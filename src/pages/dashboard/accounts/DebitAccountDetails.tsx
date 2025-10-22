@@ -129,7 +129,7 @@ const DebitAccountDetails = () => {
   const profileName = account.profiles.type === 'personal' ? account.profiles.full_name : account.profiles.legal_name;
   const cardNumber = `${account.cards.user_initials} ${account.cards.issuer_id} ${account.cards.random_letters} ****${account.cards.unique_identifier.slice(-3)} ${account.cards.check_digit}`;
 
-  const currentBalance = balanceData?.current_balance || 0;
+  const currentBalance = balanceData?.current_balance;
 
   return (
     <div className="space-y-6">
@@ -170,9 +170,13 @@ const DebitAccountDetails = () => {
                 <p className="text-sm text-muted-foreground mb-1">
                   <span className="text-xs">({secondsUntilRefresh}s)</span>
                 </p>
-                <p className="text-4xl font-bold">
-                  {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(currentBalance)}
-                </p>
+                {typeof currentBalance === 'number' && currentBalance <= 0 ? (
+                  <Badge variant="destructive">Solde zéro de disponible</Badge>
+                ) : (
+                  <p className="text-4xl font-bold">
+                    {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(currentBalance ?? 0)}
+                  </p>
+                )}
               </>
             )}
           </CardContent>
