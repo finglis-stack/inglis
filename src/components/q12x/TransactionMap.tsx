@@ -60,12 +60,13 @@ const MapWithKey = ({ apiKey, latitude, longitude }: { apiKey: string, latitude:
     <GoogleMap
       mapContainerStyle={containerStyle}
       center={center}
-      zoom={15}
+      zoom={18}
       tilt={45}
       mapTypeId="satellite"
       options={{
         disableDefaultUI: true,
         zoomControl: true,
+        heading: 90,
       }}
     >
       <Marker position={center} />
