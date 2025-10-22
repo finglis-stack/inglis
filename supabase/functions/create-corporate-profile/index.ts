@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -38,6 +39,8 @@ serve(async (req) => {
       .single();
     if (institutionError) throw institutionError;
 
+    const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, 10) : null;
+
     const recordToInsert = {
       institution_id: institution.id,
       type: 'corporate',
@@ -46,7 +49,7 @@ serve(async (req) => {
       business_number: profileData.businessNumber,
       jurisdiction: profileData.jurisdiction,
       business_address: profileData.businessAddress, // Already a JSON object
-      pin: profileData.pin, // Plain text
+      pin: hashedPin,
     };
 
     const { error: insertError } = await supabaseAdmin.from('profiles').insert(recordToInsert);

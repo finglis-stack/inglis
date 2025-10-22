@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -39,10 +40,13 @@ serve(async (req) => {
     const { data: profile, error: profileError } = await supabaseAdmin.from('profiles').select('id').eq('id', profile_id).eq('institution_id', institution.id).single();
     if (profileError || !profile) throw new Error("Profile not found or access denied.");
 
-    // Update the profile with the new plaintext PIN
+    // Hash the new PIN before updating
+    const hashedPin = bcrypt.hashSync(new_pin, 10);
+
+    // Update the profile with the new hashed PIN
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
-      .update({ pin: new_pin })
+      .update({ pin: hashedPin })
       .eq('id', profile_id);
     if (updateError) throw updateError;
 

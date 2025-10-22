@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
 
 console.log("Function api-v1-tokenize-card cold start");
 
@@ -43,8 +44,9 @@ serve(async (req) => {
       throw new Error('Carte invalide ou non trouvée.');
     }
 
-    // 2. Validate PIN (THIS IS INSECURE FOR PRODUCTION)
-    if (card.pin !== pin) {
+    // 2. Validate PIN by comparing hashes
+    const isPinValid = bcrypt.compareSync(pin, card.pin);
+    if (!isPinValid) {
       throw new Error('Le NIP est incorrect.');
     }
 
