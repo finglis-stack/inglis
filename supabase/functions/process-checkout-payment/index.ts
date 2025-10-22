@@ -23,8 +23,9 @@ serve(async (req) => {
       throw new Error('checkoutId, card_token, and amount are required.');
     }
 
-    // Capture de l'adresse IP
-    const ipAddress = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip');
+    // Capture et nettoyage de l'adresse IP
+    const ipHeader = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip');
+    const ipAddress = ipHeader ? ipHeader.split(',')[0].trim() : null;
 
     // 1. Valider le checkout
     const { data: checkout, error: checkoutError } = await supabaseAdmin

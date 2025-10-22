@@ -152,11 +152,11 @@ const Q12xTransactionDetails = () => {
               <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><MapPin className="h-5 w-5" /> Géolocalisation (approximative)</h3>
               {locationLoading ? (
                 <Skeleton className="h-[250px] w-full rounded-lg" />
-              ) : location ? (
+              ) : location && location.latitude && location.longitude ? (
                 <TransactionMap latitude={location.latitude} longitude={location.longitude} />
               ) : (
                 <div className="h-[250px] w-full rounded-lg bg-gray-100 flex items-center justify-center text-center p-4">
-                  <p className="text-sm text-muted-foreground">{locationError || "Données de localisation non disponibles."}</p>
+                  <p className="text-sm text-muted-foreground">{locationError || "Données de localisation non disponibles pour cette adresse IP."}</p>
                 </div>
               )}
             </div>
