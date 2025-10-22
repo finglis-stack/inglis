@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Info, MapPin } from 'lucide-react';
 import { showError } from '@/utils/toast';
 import AvailabilityCell from '@/components/q12x/AvailabilityCell';
-import { Button } from '@/components/ui/button';
+import TransactionMap from '@/components/q12x/TransactionMap';
 
 const Q12xTransactionDetails = () => {
   const { id } = useParams();
@@ -132,20 +132,6 @@ const Q12xTransactionDetails = () => {
               <p className="text-sm text-muted-foreground">Émetteur de la carte</p>
               <p>{issuerName}</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Géolocalisation (approximative)</p>
-              {locationLoading ? <Skeleton className="h-6 w-3/4" /> : location ? (
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  <span>{location.city}, {location.region}, {location.country_name}</span>
-                  <Button variant="link" size="sm" asChild className="p-0 h-auto">
-                    <a href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}&t=k`} target="_blank" rel="noopener noreferrer">
-                      Voir en 3D
-                    </a>
-                  </Button>
-                </div>
-              ) : <p className="text-xs">Données de localisation non disponibles.</p>}
-            </div>
             <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-lg flex items-start gap-3">
               <Info className="h-5 w-5 text-indigo-600 mt-1 flex-shrink-0" />
               <div>
@@ -155,6 +141,16 @@ const Q12xTransactionDetails = () => {
               </div>
             </div>
           </div>
+          {(locationLoading || location) && (
+            <div className="md:col-span-2">
+              <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><MapPin className="h-5 w-5" /> Géolocalisation (approximative)</h3>
+              {locationLoading ? (
+                <Skeleton className="h-[250px] w-full rounded-lg" />
+              ) : location ? (
+                <TransactionMap latitude={location.latitude} longitude={location.longitude} />
+              ) : null}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
