@@ -59,7 +59,7 @@ serve(async (req) => {
       p_card_id: cardId,
       p_amount: finalAmount,
       p_type: 'purchase',
-      p_description: `Paiement: ${checkout.name}`,
+      p_description: `Paiement: ${checkout.name} (${checkout.id})`,
       p_merchant_account_id: checkout.merchant_account_id,
     });
 
