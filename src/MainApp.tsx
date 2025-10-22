@@ -65,6 +65,7 @@ import NewMerchantStep1 from '@/pages/dashboard/settings/merchants/NewMerchantSt
 import NewMerchantStep2 from '@/pages/dashboard/settings/merchants/NewMerchantStep2';
 import NewMerchantStep3 from '@/pages/dashboard/settings/merchants/NewMerchantStep3';
 import NewMerchantStep4 from '@/pages/dashboard/settings/merchants/NewMerchantStep4';
+import PublicCheckoutPage from "@/pages/q12x/PublicCheckoutPage";
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,8 @@ const MainApp = () => (
         <Route element={<HostedFormLayout />}>
           <Route path="/checkout/v1/form" element={<HostedPaymentForm />} />
         </Route>
+
+        <Route path="/pay/:checkoutId" element={<PublicCheckoutPage />} />
 
         <Route path="/onboarding/welcome" element={<Welcome />} />
         <Route path="/onboarding/create-account" element={<CreateAccount />} />
