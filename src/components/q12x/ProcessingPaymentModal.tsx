@@ -1,5 +1,5 @@
+import { useState, useEffect } from 'react';
 import Lottie from "lottie-react";
-import animationData from "/public/animations/happy-fox.json";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,17 @@ interface ProcessingPaymentModalProps {
 }
 
 const ProcessingPaymentModal = ({ isOpen }: ProcessingPaymentModalProps) => {
+  const [animationData, setAnimationData] = useState(null);
+
+  useEffect(() => {
+    if (isOpen && !animationData) {
+      fetch('/animations/happy-fox.json')
+        .then((response) => response.json())
+        .then((data) => setAnimationData(data))
+        .catch(error => console.error("Error loading animation:", error));
+    }
+  }, [isOpen, animationData]);
+
   return (
     <Dialog open={isOpen}>
       <DialogContent
@@ -32,7 +43,11 @@ const ProcessingPaymentModal = ({ isOpen }: ProcessingPaymentModalProps) => {
           </DialogDescription>
         </DialogHeader>
         <div className="py-8">
-          <Lottie animationData={animationData} loop={true} style={{ height: 150 }} />
+          {animationData ? (
+            <Lottie animationData={animationData} loop={true} style={{ height: 150 }} />
+          ) : (
+            <div style={{ height: 150 }} />
+          )}
         </div>
       </DialogContent>
     </Dialog>
