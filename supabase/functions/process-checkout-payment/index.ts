@@ -23,6 +23,9 @@ serve(async (req) => {
       throw new Error('checkoutId, card_token, and amount are required.');
     }
 
+    // Capture de l'adresse IP
+    const ipAddress = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip');
+
     // 1. Valider le checkout
     const { data: checkout, error: checkoutError } = await supabaseAdmin
       .from('checkouts')
@@ -58,12 +61,19 @@ serve(async (req) => {
     const { data: transactionResult, error: rpcError } = await supabaseAdmin.rpc('process_transaction', {
       p_card_id: cardId,
       p_amount: finalAmount,
-      p_type: 'purchase',
       p_description: `Paiement: ${checkout.name} (${checkout.id})`,
       p_merchant_account_id: checkout.merchant_account_id,
     });
 
     if (rpcError) throw rpcError;
+
+    // 5. Mettre à jour la transaction avec l'adresse IP
+    if (transactionResult && transactionResult.transaction_id && ipAddress) {
+      await supabaseAdmin
+        .from('transactions')
+        .update({ ip_address: ipAddress })
+        .eq('id', transactionResult.transaction_id);
+    }
 
     return new Response(JSON.stringify({ success: true, transaction: transactionResult }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

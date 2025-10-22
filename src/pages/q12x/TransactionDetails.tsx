@@ -3,14 +3,17 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Info } from 'lucide-react';
+import { ArrowLeft, Info, MapPin } from 'lucide-react';
 import { showError } from '@/utils/toast';
 import AvailabilityCell from '@/components/q12x/AvailabilityCell';
+import { Button } from '@/components/ui/button';
 
 const Q12xTransactionDetails = () => {
   const { id } = useParams();
   const [transaction, setTransaction] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [location, setLocation] = useState<any>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   useEffect(() => {
     const fetchTransaction = async () => {
@@ -51,6 +54,26 @@ const Q12xTransactionDetails = () => {
     };
     fetchTransaction();
   }, [id]);
+
+  useEffect(() => {
+    if (transaction?.ip_address) {
+      const fetchLocation = async () => {
+        setLocationLoading(true);
+        try {
+          const response = await fetch(`https://ipapi.co/${transaction.ip_address}/json/`);
+          const data = await response.json();
+          if (!data.error) {
+            setLocation(data);
+          }
+        } catch (e) {
+          console.error("Erreur de géolocalisation:", e);
+        } finally {
+          setLocationLoading(false);
+        }
+      };
+      fetchLocation();
+    }
+  }, [transaction]);
 
   if (loading) {
     return <Skeleton className="h-64 w-full" />;
@@ -108,6 +131,20 @@ const Q12xTransactionDetails = () => {
             <div>
               <p className="text-sm text-muted-foreground">Émetteur de la carte</p>
               <p>{issuerName}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Géolocalisation (approximative)</p>
+              {locationLoading ? <Skeleton className="h-6 w-3/4" /> : location ? (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  <span>{location.city}, {location.region}, {location.country_name}</span>
+                  <Button variant="link" size="sm" asChild className="p-0 h-auto">
+                    <a href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}&t=k`} target="_blank" rel="noopener noreferrer">
+                      Voir en 3D
+                    </a>
+                  </Button>
+                </div>
+              ) : <p className="text-xs">Données de localisation non disponibles.</p>}
             </div>
             <div className="bg-indigo-50 border border-indigo-200 p-4 rounded-lg flex items-start gap-3">
               <Info className="h-5 w-5 text-indigo-600 mt-1 flex-shrink-0" />
