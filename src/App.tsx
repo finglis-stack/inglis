@@ -55,6 +55,7 @@ import Step2Security from "@/pages/dashboard/accounts/new-transaction/Step2Secur
 import Step3Review from "@/pages/dashboard/accounts/new-transaction/Step3Review";
 import TransactionDetails from "@/pages/dashboard/accounts/TransactionDetails";
 import PendingAuthorizations from "@/pages/dashboard/accounts/PendingAuthorizations";
+import PublicCheckoutPage from "@/pages/q12x/PublicCheckoutPage";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/checkout/:checkoutId" element={<PublicCheckoutPage />} />
           <Route path="/card-structure" element={<CardStructure />} />
           <Route path="/credit-report-access" element={<CreditReportAccess />} />
           <Route path="/set-card-pin/:token" element={<SetCardPin />} />
