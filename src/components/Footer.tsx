@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 
 export const Footer = () => {
-  const { t } = useTranslation('landing');
+  const { t } = useTranslation();
 
   return (
     <footer className="py-6 border-t">

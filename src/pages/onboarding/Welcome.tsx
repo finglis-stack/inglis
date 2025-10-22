@@ -5,19 +5,18 @@ import { useTranslation, Trans } from 'react-i18next';
 
 const Welcome = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation('onboarding');
+  const { t } = useTranslation();
 
   return (
     <OnboardingLayout>
-      <h1 className="text-3xl font-bold mb-4">{t('welcome.title')}</h1>
+      <h1 className="text-3xl font-bold mb-4">{t('onboarding.welcome.title')}</h1>
       <div className="space-y-4 text-muted-foreground">
         <p>
-          {t('welcome.p1')}
+          {t('onboarding.welcome.p1')}
         </p>
         <p>
           <Trans
-            i18nKey="welcome.p2"
-            t={t}
+            i18nKey="onboarding.welcome.p2"
             components={[
               <a href="/terms" target="_blank" className="underline hover:text-primary" />,
               <a href="/privacy" target="_blank" className="underline hover:text-primary" />,
@@ -26,7 +25,7 @@ const Welcome = () => {
         </p>
       </div>
       <Button onClick={() => navigate('/onboarding/institution-info')} className="w-full mt-8">
-        {t('welcome.acceptButton')}
+        {t('onboarding.welcome.acceptButton')}
       </Button>
     </OnboardingLayout>
   );

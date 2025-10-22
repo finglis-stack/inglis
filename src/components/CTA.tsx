@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 
 export const CTA = () => {
-  const { t } = useTranslation('landing');
+  const { t } = useTranslation();
 
   return (
     <section className="py-20">

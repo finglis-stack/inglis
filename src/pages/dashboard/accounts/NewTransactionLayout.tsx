@@ -1,20 +1,19 @@
 import { Outlet, Link, useParams, useLocation } from 'react-router-dom';
 import { StepIndicator } from '@/components/dashboard/users/StepIndicator';
-import { useTranslation } from 'react-i18next';
+
+const transactionSteps = [
+  { id: 1, name: "Détails", description: "Montant et marchand" },
+  { id: 2, name: "Sécurité", description: "Justification et confirmation" },
+  { id: 3, name: "Vérification", description: "Résumé et soumission" },
+];
 
 const NewTransactionLayout = () => {
-  const { t } = useTranslation(['dashboard', 'common']);
   const { accountId } = useParams();
   const location = useLocation();
   
+  // Déterminer le type de compte à partir de l'URL
   const accountType = location.pathname.includes('/debit/') ? 'debit' : 'credit';
   const backUrl = `/dashboard/accounts/${accountType}/${accountId}`;
-
-  const transactionSteps = [
-    { id: 1, name: t('newTransaction.step1_title'), description: t('newTransaction.step1_desc') },
-    { id: 2, name: t('newTransaction.step2_title'), description: t('newTransaction.step2_desc') },
-    { id: 3, name: t('newTransaction.step3_title'), description: t('newTransaction.step3_desc') },
-  ];
 
   const path = location.pathname;
   let currentStepId = 1;
@@ -34,10 +33,10 @@ const NewTransactionLayout = () => {
             <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="h-10" />
           </Link>
           <h1 className="text-xl font-bold text-gray-800 hidden sm:block">
-            {t('newTransaction.title')}
+            Ajouter une Transaction Manuelle
           </h1>
           <Link to={backUrl} className="text-sm font-medium text-gray-600 hover:text-primary">
-            {t('cancel', { ns: 'common' })}
+            Annuler
           </Link>
         </div>
       </header>

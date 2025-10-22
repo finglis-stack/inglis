@@ -9,69 +9,49 @@ const corsHeaders = {
 
 async function pushDataToCreditBureau(supabaseAdmin, profile, institutionName) {
   if (!profile.sin) {
-    console.warn(`Profile ${profile.id} has no SIN, cannot push data.`);
+    console.warn(`Profil ${profile.id} n'a pas de NAS, impossible de pousser les données.`);
     return;
   }
 
-  // Fetch accounts with card and program info
+  // Fetch credit accounts with card and program info
   const { data: creditAccounts, error: creditAccountsError } = await supabaseAdmin
     .from('credit_accounts')
     .select('*, cards(*, card_programs(program_name))')
-    .eq('profile_id', profile.id)
-    .in('status', ['active', 'inactive']);
+    .eq('profile_id', profile.id);
   if (creditAccountsError) throw creditAccountsError;
 
+  // Fetch debit accounts with card and program info
   const { data: debitAccounts, error: debitAccountsError } = await supabaseAdmin
     .from('debit_accounts')
     .select('*, cards(*, card_programs(program_name))')
-    .eq('profile_id', profile.id)
-    .in('status', ['active', 'inactive']);
+    .eq('profile_id', profile.id);
   if (debitAccountsError) throw debitAccountsError;
 
   const newHistoryEntries = [];
-  const currencyFormatter = new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' });
 
-  // Process Credit Accounts
-  for (const acc of creditAccounts) {
-    const { data: balanceData, error: balanceError } = await supabaseAdmin
-      .rpc('get_credit_account_balance', { p_account_id: acc.id })
-      .single();
-    if (balanceError) {
-      console.error(`Error fetching balance for credit account ${acc.id}:`, balanceError.message);
-      continue;
-    }
-    
-    const current_balance = balanceData.current_balance;
-    const debtRatio = acc.credit_limit > 0 ? (current_balance / acc.credit_limit) * 100 : 0;
+  creditAccounts.forEach(acc => {
+    const debtRatio = acc.credit_limit > 0 ? (acc.current_balance / acc.credit_limit) * 100 : 0;
     const programName = acc.cards?.card_programs?.program_name || 'N/A';
-
     newHistoryEntries.push({
       date: new Date().toISOString().split('T')[0],
-      type: programName,
-      details: `Émetteur: ${institutionName}, Solde: ${currencyFormatter.format(current_balance)}, Ratio d'endettement: ${debtRatio.toFixed(2)}%`,
-      status: acc.status === 'active' ? 'Actif' : 'Inactif'
+      type: 'Mise à jour de compte de crédit',
+      details: `Produit: Carte de Crédit - ${programName}. Fourni par: ${institutionName}. Limite: ${acc.credit_limit}, Solde: ${acc.current_balance}, Ratio d'endettement: ${debtRatio.toFixed(2)}%. Tentatives de dépassement (mois): 0 (non suivi).`,
+      status: acc.status
     });
-  }
+  });
 
-  // Process Debit Accounts
-  for (const acc of debitAccounts) {
-    const { data: balanceData, error: balanceError } = await supabaseAdmin
-      .rpc('get_debit_account_balance', { p_account_id: acc.id })
-      .single();
-    if (balanceError) {
-      console.error(`Error fetching balance for debit account ${acc.id}:`, balanceError.message);
-      continue;
-    }
-
-    const current_balance = balanceData.current_balance;
+  debitAccounts.forEach(acc => {
     const programName = acc.cards?.card_programs?.program_name || 'N/A';
-
     newHistoryEntries.push({
       date: new Date().toISOString().split('T')[0],
-      type: programName,
-      details: `Émetteur: ${institutionName}, Solde: ${currencyFormatter.format(current_balance)}`,
-      status: acc.status === 'active' ? 'Actif' : 'Inactif'
+      type: 'Mise à jour de compte de débit',
+      details: `Produit: Carte de Débit - ${programName}. Fourni par: ${institutionName}. Solde: ${acc.current_balance}.`,
+      status: acc.status
     });
+  });
+
+  if (newHistoryEntries.length === 0) {
+    return; // No accounts to report
   }
 
   const { data: report, error: reportError } = await supabaseAdmin
@@ -82,12 +62,7 @@ async function pushDataToCreditBureau(supabaseAdmin, profile, institutionName) {
 
   if (reportError && reportError.code !== 'PGRST116') throw reportError;
 
-  // Filter out old entries from this specific institution to prevent duplicates
-  const filteredHistory = (report?.credit_history || []).filter(entry => 
-    !entry.details.includes(`Émetteur: ${institutionName}`)
-  );
-
-  const updatedHistory = filteredHistory.concat(newHistoryEntries);
+  const updatedHistory = (report?.credit_history || []).concat(newHistoryEntries);
 
   const { error: updateError } = await supabaseAdmin
     .from('credit_reports')

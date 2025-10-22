@@ -7,18 +7,18 @@ import { useTranslation } from 'react-i18next';
 import UserAccounts from './UserAccounts';
 
 const CorporateProfile = ({ profile, cards, creditAccounts, debitAccounts, profileId }) => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
 
   const getStatusInfo = (status) => {
     switch (status) {
       case 'active':
-        return { text: t('userProfile.statusActive'), className: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200' };
+        return { text: t('dashboard.userProfile.statusActive'), className: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200' };
       case 'attention':
-        return { text: t('userProfile.statusAttention'), className: 'bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200' };
+        return { text: t('dashboard.userProfile.statusAttention'), className: 'bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200' };
       case 'risky':
-        return { text: t('userProfile.statusRisky'), className: 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200' };
+        return { text: t('dashboard.userProfile.statusRisky'), className: 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200' };
       default:
-        return { text: t('userProfile.statusUnknown'), className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200' };
+        return { text: t('dashboard.userProfile.statusUnknown'), className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200' };
     }
   };
 
@@ -38,12 +38,12 @@ const CorporateProfile = ({ profile, cards, creditAccounts, debitAccounts, profi
                     <Badge className={cn('cursor-pointer', statusInfo.className)}>{statusInfo.text}</Badge>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p><strong>{t('userProfile.riskScore')}:</strong> {profile.risk_score}/100</p>
-                    <p className="text-sm text-muted-foreground">{t('userProfile.riskReason', { status: statusInfo.text.toLowerCase() })}</p>
+                    <p><strong>{t('dashboard.userProfile.riskScore')}:</strong> {profile.risk_score}/100</p>
+                    <p className="text-sm text-muted-foreground">{t('dashboard.userProfile.riskReason', { status: statusInfo.text.toLowerCase() })}</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <CardDescription>{t('userProfile.corporateProfileTitle')} {profile.operating_name && `(${t('userProfile.operatingAs')} ${profile.operating_name})`}</CardDescription>
+              <CardDescription>{t('dashboard.userProfile.corporateProfileTitle')} {profile.operating_name && `(${t('dashboard.userProfile.operatingAs')} ${profile.operating_name})`}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -52,16 +52,16 @@ const CorporateProfile = ({ profile, cards, creditAccounts, debitAccounts, profi
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>{t('userProfile.registrationInfo')}</CardTitle>
+            <CardTitle>{t('dashboard.userProfile.registrationInfo')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p><strong>{t('userProfile.businessNumber')}:</strong> {profile.business_number || 'N/A'}</p>
-            <p><strong>{t('userProfile.jurisdiction')}:</strong> {profile.jurisdiction || 'N/A'}</p>
+            <p><strong>{t('dashboard.userProfile.businessNumber')}:</strong> {profile.business_number || 'N/A'}</p>
+            <p><strong>{t('dashboard.userProfile.jurisdiction')}:</strong> {profile.jurisdiction || 'N/A'}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>{t('userProfile.businessAddress')}</CardTitle>
+            <CardTitle>{t('dashboard.userProfile.businessAddress')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
             <p>{profile.business_address?.street}</p>

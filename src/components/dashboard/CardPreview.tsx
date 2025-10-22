@@ -21,7 +21,7 @@ const getInitials = (name?: string): string => {
 };
 
 export const CardPreview = ({ programName, cardType, cardColor, userName }: CardPreviewProps) => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
   const isLight = cardColor.includes('fde0cf'); // Simple check for rose gold
 
   const displayName = (userName || 'LÉA TREMBLAY').toUpperCase();
@@ -38,7 +38,7 @@ export const CardPreview = ({ programName, cardType, cardColor, userName }: Card
       <div className="flex justify-between items-start">
         <div>
           <p className="text-sm opacity-80">{programName}</p>
-          <p className="text-lg font-semibold uppercase">{t(`newCardProgram.${cardType}`)}</p>
+          <p className="text-lg font-semibold uppercase">{t(`dashboard.newCardProgram.${cardType}`)}</p>
         </div>
         <img src="/logo.png" alt="Logo" className={cn("h-8", !isLight && "brightness-0 invert")} />
       </div>

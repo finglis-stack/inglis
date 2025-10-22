@@ -10,7 +10,7 @@ import { showError, showSuccess } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
 const Step3ReviewCard = () => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { cardData, resetCard } = useNewCard();
   const [loading, setLoading] = useState(true);
@@ -66,7 +66,7 @@ const Step3ReviewCard = () => {
         throw new Error(functionError.error || error.message);
       }
 
-      showSuccess(t('newCard.successMessage'));
+      showSuccess(t('dashboard.newCard.successMessage'));
       resetCard();
       navigate('/dashboard/cards');
     } catch (err) {
@@ -84,18 +84,18 @@ const Step3ReviewCard = () => {
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div>
         <Card>
-          <CardHeader><CardTitle>{t('newCard.reviewTitle')}</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{t('dashboard.newCard.reviewTitle')}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <h4 className="font-semibold">{t('newCard.user')}</h4>
+              <h4 className="font-semibold">{t('dashboard.newCard.user')}</h4>
               <p className="text-muted-foreground">{profile.type === 'personal' ? profile.full_name : profile.legal_name}</p>
             </div>
             <div>
-              <h4 className="font-semibold">{t('newCard.program')}</h4>
+              <h4 className="font-semibold">{t('dashboard.newCard.program')}</h4>
               <p className="text-muted-foreground">{program.program_name}</p>
             </div>
             <div>
-              <h4 className="font-semibold">{t('newCard.cardType')}</h4>
+              <h4 className="font-semibold">{t('dashboard.newCard.cardType')}</h4>
               <p className="text-muted-foreground capitalize">{program.card_type}</p>
             </div>
           </CardContent>
@@ -110,10 +110,10 @@ const Step3ReviewCard = () => {
       </div>
       <div className="md:col-span-2 flex justify-between mt-8">
         <Button variant="outline" onClick={() => navigate('/dashboard/cards/new/step-2')} disabled={submitting}>
-          {t('sharedSteps.previous')}
+          {t('dashboard.sharedSteps.previous')}
         </Button>
         <Button onClick={handleSubmit} disabled={submitting}>
-          {submitting ? t('newCard.creating') : t('newCard.createButton')}
+          {submitting ? t('dashboard.newCard.creating') : t('dashboard.newCard.createButton')}
         </Button>
       </div>
     </div>

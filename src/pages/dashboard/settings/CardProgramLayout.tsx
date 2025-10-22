@@ -2,7 +2,7 @@ import { Outlet, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 export const CardProgramLayout = () => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -12,10 +12,10 @@ export const CardProgramLayout = () => {
             <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="h-10" />
           </Link>
           <h1 className="text-xl font-bold text-gray-800 hidden sm:block">
-            {t('newCardProgram.title')}
+            {t('dashboard.newCardProgram.title')}
           </h1>
           <Link to="/dashboard/settings/card-programs" className="text-sm font-medium text-gray-600 hover:text-primary">
-            {t('newCardProgram.cancel')}
+            {t('dashboard.newCardProgram.cancel')}
           </Link>
         </div>
       </header>

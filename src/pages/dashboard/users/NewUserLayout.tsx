@@ -3,23 +3,23 @@ import { useTranslation } from 'react-i18next';
 import { StepIndicator } from '@/components/dashboard/users/StepIndicator';
 
 const personalSteps = (t) => [
-  { id: 1, name: t('personalSteps.step1_title'), description: t('personalSteps.step1_desc_short') },
-  { id: 2, name: t('personalSteps.step2_title'), description: t('personalSteps.step2_desc_short') },
-  { id: 3, name: t('personalSteps.step3_title'), description: t('personalSteps.step3_desc_short') },
-  { id: 4, name: t('pin_title_short', { ns: 'common' }), description: t('pin_desc_short', { ns: 'common' }) },
-  { id: 5, name: t('personalSteps.step5_title'), description: t('personalSteps.step5_desc_short') },
+  { id: 1, name: t('dashboard.personalSteps.step1_title'), description: t('dashboard.personalSteps.step1_desc_short') },
+  { id: 2, name: t('dashboard.personalSteps.step2_title'), description: t('dashboard.personalSteps.step2_desc_short') },
+  { id: 3, name: t('dashboard.personalSteps.step3_title'), description: t('dashboard.personalSteps.step3_desc_short') },
+  { id: 4, name: t('dashboard.sharedSteps.pin_title_short'), description: t('dashboard.sharedSteps.pin_desc_short') },
+  { id: 5, name: t('dashboard.personalSteps.step5_title'), description: t('dashboard.personalSteps.step5_desc_short') },
 ];
 
 const corporateSteps = (t) => [
-  { id: 1, name: t('corporateSteps.step1_title'), description: t('corporateSteps.step1_desc_short') },
-  { id: 2, name: t('corporateSteps.step2_title'), description: t('corporateSteps.step2_desc_short') },
-  { id: 3, name: t('corporateSteps.step3_title'), description: t('corporateSteps.step3_desc_short') },
-  { id: 4, name: t('pin_title_short', { ns: 'common' }), description: t('pin_desc_short', { ns: 'common' }) },
-  { id: 5, name: t('corporateSteps.step5_title'), description: t('corporateSteps.step5_desc_short') },
+  { id: 1, name: t('dashboard.corporateSteps.step1_title'), description: t('dashboard.corporateSteps.step1_desc_short') },
+  { id: 2, name: t('dashboard.corporateSteps.step2_title'), description: t('dashboard.corporateSteps.step2_desc_short') },
+  { id: 3, name: t('dashboard.corporateSteps.step3_title'), description: t('dashboard.corporateSteps.step3_desc_short') },
+  { id: 4, name: t('dashboard.sharedSteps.pin_title_short'), description: t('dashboard.sharedSteps.pin_desc_short') },
+  { id: 5, name: t('dashboard.corporateSteps.step5_title'), description: t('dashboard.corporateSteps.step5_desc_short') },
 ];
 
 const NewUserLayout = () => {
-  const { t } = useTranslation(['dashboard', 'common']);
+  const { t } = useTranslation();
   const location = useLocation();
 
   const path = location.pathname;
@@ -41,10 +41,10 @@ const NewUserLayout = () => {
             <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="h-10" />
           </Link>
           <h1 className="text-xl font-bold text-gray-800 hidden sm:block">
-            {t('newUser.title')}
+            {t('dashboard.newUser.title')}
           </h1>
           <Link to="/dashboard/users" className="text-sm font-medium text-gray-600 hover:text-primary">
-            {t('newUser.cancel')}
+            {t('dashboard.newUser.cancel')}
           </Link>
         </div>
       </header>

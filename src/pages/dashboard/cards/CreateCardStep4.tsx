@@ -15,7 +15,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Label } from '@/components/ui/label';
 
 const CreateCardStep4 = () => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { cardData, resetCard } = useNewCard();
   
@@ -87,7 +87,7 @@ const CreateCardStep4 = () => {
         throw new Error(functionError.error || error.message);
       }
 
-      showSuccess(t('newCard.successMessage'));
+      showSuccess(t('dashboard.newCard.successMessage'));
       resetCard();
       navigate('/dashboard/cards');
     } catch (err) {
@@ -109,28 +109,28 @@ const CreateCardStep4 = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <Card>
-            <CardHeader><CardTitle>{t('newCard.reviewTitle')}</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t('dashboard.newCard.reviewTitle')}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-semibold">{t('newCard.user')}</h4>
+                <h4 className="font-semibold">{t('dashboard.newCard.user')}</h4>
                 <p className="text-muted-foreground">{userName}</p>
               </div>
               <div>
-                <h4 className="font-semibold">{t('newCard.program')}</h4>
+                <h4 className="font-semibold">{t('dashboard.newCard.program')}</h4>
                 <p className="text-muted-foreground">{program.program_name}</p>
               </div>
               {program.card_type === 'credit' && (
                 <>
                   <div>
-                    <h4 className="font-semibold">{t('newCard.creditLimit')}</h4>
+                    <h4 className="font-semibold">{t('dashboard.newCard.creditLimit')}</h4>
                     <p className="text-muted-foreground">${cardData.creditLimit}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold">{t('newCard.interestRatePurchases')}</h4>
+                    <h4 className="font-semibold">{t('dashboard.newCard.interestRatePurchases')}</h4>
                     <p className="text-muted-foreground">{cardData.interestRate}%</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold">{t('newCard.interestRateCashAdvances')}</h4>
+                    <h4 className="font-semibold">{t('dashboard.newCard.interestRateCashAdvances')}</h4>
                     <p className="text-muted-foreground">{cardData.cashAdvanceRate}%</p>
                   </div>
                 </>
@@ -150,24 +150,24 @@ const CreateCardStep4 = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('newCard.agreementTitle')}</CardTitle>
-          <CardDescription>{t('newCard.agreementDesc')}</CardDescription>
+          <CardTitle>{t('dashboard.newCard.agreementTitle')}</CardTitle>
+          <CardDescription>{t('dashboard.newCard.agreementDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <PDFDownloadLink
             document={<CardAgreementPDF t={t} program={program} institution={institution} validationCode={validationCode} interestRate={cardData.interestRate} cashAdvanceRate={cardData.cashAdvanceRate} />}
-            fileName={`${t('newCard.pdf.fileName')}_${userName?.replace(/\s/g, '_')}.pdf`}
+            fileName={`${t('dashboard.newCard.pdf.fileName')}_${userName?.replace(/\s/g, '_')}.pdf`}
           >
             {({ loading: pdfLoading }) => (
               <Button variant="outline" disabled={pdfLoading}>
                 <Download className="mr-2 h-4 w-4" />
-                {pdfLoading ? t('newCard.generatingPDF') : t('newCard.downloadAgreement')}
+                {pdfLoading ? t('dashboard.newCard.generatingPDF') : t('dashboard.newCard.downloadAgreement')}
               </Button>
             )}
           </PDFDownloadLink>
 
           <div className="grid gap-2 max-w-xs">
-            <Label htmlFor="validation-code">{t('newCard.enterValidationCode')}</Label>
+            <Label htmlFor="validation-code">{t('dashboard.newCard.enterValidationCode')}</Label>
             <InputOTP id="validation-code" maxLength={6} value={enteredCode} onChange={setEnteredCode}>
               <InputOTPGroup>
                 <InputOTPSlot index={0} />
@@ -184,10 +184,10 @@ const CreateCardStep4 = () => {
 
       <div className="flex justify-between mt-8">
         <Button variant="outline" onClick={() => navigate('/dashboard/cards/new/step-3')} disabled={submitting}>
-          {t('sharedSteps.previous')}
+          {t('dashboard.sharedSteps.previous')}
         </Button>
         <Button onClick={handleSubmit} disabled={!isCodeCorrect || submitting}>
-          {submitting ? t('newCard.creating') : t('newCard.createButton')}
+          {submitting ? t('dashboard.newCard.creating') : t('dashboard.newCard.createButton')}
         </Button>
       </div>
     </div>

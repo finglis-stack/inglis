@@ -11,11 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import ResetPinDialog from './ResetPinDialog';
-import { useTranslation } from 'react-i18next';
 
 const UserAccounts = ({ cards, creditAccounts, debitAccounts, className, profileId }) => {
-  const { t } = useTranslation('dashboard');
-
   const getStatusVariant = (status) => {
     switch ((status || '').toLowerCase()) {
       case 'active':
@@ -44,17 +41,17 @@ const UserAccounts = ({ cards, creditAccounts, debitAccounts, className, profile
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>{t('userProfile.accountsAndCards')}</CardTitle>
+        <CardTitle>Comptes et Cartes</CardTitle>
       </CardHeader>
       <CardContent>
         {cards.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('userProfile.card')}</TableHead>
-                <TableHead>{t('userProfile.program')}</TableHead>
-                <TableHead>{t('userProfile.associatedAccount')}</TableHead>
-                <TableHead className="text-right">{t('userProfile.actions')}</TableHead>
+                <TableHead>Carte</TableHead>
+                <TableHead>Programme</TableHead>
+                <TableHead>Compte Associé</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -72,16 +69,16 @@ const UserAccounts = ({ cards, creditAccounts, debitAccounts, className, profile
                         <div className="flex items-center gap-2">
                           {account.type === 'credit' ? <CreditCard className="h-4 w-4 text-blue-500 flex-shrink-0" /> : <Wallet className="h-4 w-4 text-green-500 flex-shrink-0" />}
                           <div>
-                            <p className="font-semibold capitalize">{account.type === 'credit' ? t('userProfile.creditAccount') : t('userProfile.debitAccount')}</p>
+                            <p className="font-semibold capitalize">{account.type === 'credit' ? 'Crédit' : 'Débit'}</p>
                             {account.type === 'credit' ? (
-                              <p className="text-xs text-muted-foreground">{t('userProfile.limit')}: {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.credit_limit)}</p>
+                              <p className="text-xs text-muted-foreground">Limite: {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.credit_limit)}</p>
                             ) : (
-                              <p className="text-xs text-muted-foreground">{t('userProfile.balance')}: {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.current_balance)}</p>
+                              <p className="text-xs text-muted-foreground">Solde: {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.current_balance)}</p>
                             )}
                           </div>
                         </div>
                       ) : (
-                        <p className="text-xs text-muted-foreground">{t('userProfile.noLinkedAccount')}</p>
+                        <p className="text-xs text-muted-foreground">Aucun compte lié</p>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -96,7 +93,7 @@ const UserAccounts = ({ cards, creditAccounts, debitAccounts, className, profile
                             <DropdownMenuItem asChild>
                               <Link to={`/dashboard/accounts/debit/${account.id}`}>
                                 <Settings className="mr-2 h-4 w-4" />
-                                {t('userProfile.manageAccount')}
+                                Gérer le compte
                               </Link>
                             </DropdownMenuItem>
                           )}
@@ -104,14 +101,14 @@ const UserAccounts = ({ cards, creditAccounts, debitAccounts, className, profile
                             <DropdownMenuItem asChild>
                               <Link to={`/dashboard/accounts/credit/${account.id}`}>
                                 <Settings className="mr-2 h-4 w-4" />
-                                {t('userProfile.manageAccount')}
+                                Gérer le compte
                               </Link>
                             </DropdownMenuItem>
                           )}
                           <ResetPinDialog profileId={profileId} cardId={card.id}>
                             <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                               <KeyRound className="mr-2 h-4 w-4" />
-                              {t('userProfile.resetCardPin')}
+                              Réinitialiser NIP carte
                             </DropdownMenuItem>
                           </ResetPinDialog>
                         </DropdownMenuContent>
@@ -123,7 +120,7 @@ const UserAccounts = ({ cards, creditAccounts, debitAccounts, className, profile
             </TableBody>
           </Table>
         ) : (
-          <p className="text-sm text-muted-foreground">{t('userProfile.noCards')}</p>
+          <p className="text-sm text-muted-foreground">Aucune carte associée à ce profil.</p>
         )}
       </CardContent>
     </Card>

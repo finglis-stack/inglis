@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation('login');
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,13 +45,13 @@ const Login = () => {
           <Link to="/">
             <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="mx-auto h-12 mb-4" />
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
-          <p className="text-gray-500">{t('subtitle')}</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('login.title')}</h1>
+          <p className="text-gray-500">{t('login.subtitle')}</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <Label htmlFor="email">{t('emailLabel')}</Label>
+            <Label htmlFor="email">{t('login.emailLabel')}</Label>
             <Input
               id="email"
               name="email"
@@ -66,10 +66,10 @@ const Login = () => {
 
           <div>
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">{t('passwordLabel')}</Label>
+              <Label htmlFor="password">{t('login.passwordLabel')}</Label>
               <div className="text-sm">
                 <a href="#" className="font-medium text-primary hover:underline">
-                  {t('forgotPassword')}
+                  {t('login.forgotPassword')}
                 </a>
               </div>
             </div>
@@ -87,15 +87,15 @@ const Login = () => {
 
           <div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? '...' : t('button')}
+              {loading ? '...' : t('login.button')}
             </Button>
           </div>
         </form>
 
         <p className="text-center text-sm text-gray-500">
-          {t('noAccount')}{' '}
+          {t('login.noAccount')}{' '}
           <Link to="/onboarding/welcome" className="font-medium text-primary hover:underline">
-            {t('signUp')}
+            {t('login.signUp')}
           </Link>
         </p>
       </div>

@@ -26,7 +26,7 @@ const featureKeys = [
 ];
 
 export const Features = () => {
-  const { t } = useTranslation('landing');
+  const { t } = useTranslation();
 
   return (
     <section id="features" className="py-20 bg-secondary">

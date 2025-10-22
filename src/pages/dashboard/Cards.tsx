@@ -19,7 +19,7 @@ import { showError } from '@/utils/toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const Cards = () => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
   const [cards, setCards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
@@ -65,7 +65,7 @@ const Cards = () => {
           <DropdownMenuItem asChild>
             <Link to={`/dashboard/accounts/debit/${card.debit_account_id}`}>
               <Settings className="mr-2 h-4 w-4" />
-              {t('cards.actionManageAccount')}
+              Gérer le compte
             </Link>
           </DropdownMenuItem>
         )}
@@ -73,13 +73,13 @@ const Cards = () => {
           <DropdownMenuItem asChild>
             <Link to={`/dashboard/accounts/credit/${card.credit_account_id}`}>
               <Settings className="mr-2 h-4 w-4" />
-              {t('cards.actionManageAccount')}
+              Gérer le compte
             </Link>
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem>{t('cards.actionView')}</DropdownMenuItem>
-        <DropdownMenuItem>{t('cards.actionDeactivate')}</DropdownMenuItem>
+        <DropdownMenuItem>{t('dashboard.cards.actionView')}</DropdownMenuItem>
+        <DropdownMenuItem>{t('dashboard.cards.actionDeactivate')}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -88,11 +88,11 @@ const Cards = () => {
     return (
       <div>
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold">{t('cards.title')}</h1>
+          <h1 className="text-2xl font-bold">{t('dashboard.cards.title')}</h1>
           <Button asChild size="sm">
             <Link to="/dashboard/cards/new">
               <PlusCircle className="mr-2 h-4 w-4" />
-              {t('cards.addCard')}
+              {t('dashboard.cards.addCard')}
             </Link>
           </Button>
         </div>
@@ -126,7 +126,7 @@ const Cards = () => {
             ))}
           </div>
         ) : (
-          <p className="text-center text-muted-foreground py-8">{t('cards.noCards')}</p>
+          <p className="text-center text-muted-foreground py-8">{t('dashboard.cards.noCards')}</p>
         )}
       </div>
     );
@@ -135,30 +135,30 @@ const Cards = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">{t('cards.title')}</h1>
+        <h1 className="text-3xl font-bold">{t('dashboard.cards.title')}</h1>
         <Button asChild>
           <Link to="/dashboard/cards/new">
             <PlusCircle className="mr-2 h-4 w-4" />
-            {t('cards.addCard')}
+            {t('dashboard.cards.addCard')}
           </Link>
         </Button>
       </div>
       
       <Card>
         <CardHeader>
-          <CardTitle>{t('cards.listTitle')}</CardTitle>
-          <CardDescription>{t('cards.listDesc')}</CardDescription>
+          <CardTitle>{t('dashboard.cards.listTitle')}</CardTitle>
+          <CardDescription>{t('dashboard.cards.listDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('cards.colHolder')}</TableHead>
-                <TableHead>{t('cards.colProgram')}</TableHead>
-                <TableHead>{t('cards.colNumber')}</TableHead>
-                <TableHead>{t('cards.colStatus')}</TableHead>
-                <TableHead>{t('cards.colDate')}</TableHead>
-                <TableHead className="text-right">{t('cards.colActions')}</TableHead>
+                <TableHead>{t('dashboard.cards.colHolder')}</TableHead>
+                <TableHead>{t('dashboard.cards.colProgram')}</TableHead>
+                <TableHead>{t('dashboard.cards.colNumber')}</TableHead>
+                <TableHead>{t('dashboard.cards.colStatus')}</TableHead>
+                <TableHead>{t('dashboard.cards.colDate')}</TableHead>
+                <TableHead className="text-right">{t('dashboard.cards.colActions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -188,7 +188,7 @@ const Cards = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center h-24">
-                    {t('cards.noCards')}
+                    {t('dashboard.cards.noCards')}
                   </TableCell>
                 </TableRow>
               )}

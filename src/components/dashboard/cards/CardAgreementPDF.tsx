@@ -38,61 +38,61 @@ export const CardAgreementPDF = ({ t, program, institution, validationCode, inte
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.header}>{t('newCard.pdf.title', { institutionName: institution.name })}</Text>
+        <Text style={styles.header}>{t('dashboard.newCard.pdf.title', { institutionName: institution.name })}</Text>
 
         {isCredit && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('newCard.pdf.interestRates')}</Text>
+            <Text style={styles.sectionTitle}>{t('dashboard.newCard.pdf.interestRates')}</Text>
             <View style={styles.table}>
               <View style={styles.tableRow}>
-                <View style={{...styles.tableCol, ...styles.col25, ...styles.tableColHeader}}><Text>{t('newCard.pdf.rateType')}</Text></View>
-                <View style={{...styles.tableCol, ...styles.col25, ...styles.tableColHeader}}><Text>{t('newCard.pdf.purchases')}</Text></View>
-                <View style={{...styles.tableCol, ...styles.col50, ...styles.tableColHeader, borderRightWidth: 0}}><Text>{t('newCard.pdf.cashAdvances')}</Text></View>
+                <View style={{...styles.tableCol, ...styles.col25, ...styles.tableColHeader}}><Text>{t('dashboard.newCard.pdf.rateType')}</Text></View>
+                <View style={{...styles.tableCol, ...styles.col25, ...styles.tableColHeader}}><Text>{t('dashboard.newCard.pdf.purchases')}</Text></View>
+                <View style={{...styles.tableCol, ...styles.col50, ...styles.tableColHeader, borderRightWidth: 0}}><Text>{t('dashboard.newCard.pdf.cashAdvances')}</Text></View>
               </View>
               <View style={styles.tableRow}>
-                <View style={{...styles.tableCol, ...styles.col25}}><Text style={styles.bold}>{t('newCard.pdf.regularRate')}</Text></View>
+                <View style={{...styles.tableCol, ...styles.col25}}><Text style={styles.bold}>{t('dashboard.newCard.pdf.regularRate')}</Text></View>
                 <View style={{...styles.tableCol, ...styles.col25}}><Text>{interestRate ? `${parseFloat(interestRate).toFixed(2).replace('.', ',')} %` : 'N/A'}</Text></View>
                 <View style={{...styles.tableCol, ...styles.col50, borderRightWidth: 0}}><Text>{cashAdvanceRate ? `${parseFloat(cashAdvanceRate).toFixed(2).replace('.', ',')} %` : 'N/A'}</Text></View>
               </View>
             </View>
-            <Text style={styles.subText}>{t('newCard.pdf.ratesDisclaimer')}</Text>
+            <Text style={styles.subText}>{t('dashboard.newCard.pdf.ratesDisclaimer')}</Text>
           </View>
         )}
 
         {isCredit && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('newCard.pdf.gracePeriod')}</Text>
-            <Text style={styles.text}>{t('newCard.pdf.gracePeriodDesc', { days: program.grace_period || 21 })}</Text>
+            <Text style={styles.sectionTitle}>{t('dashboard.newCard.pdf.gracePeriod')}</Text>
+            <Text style={styles.text}>{t('dashboard.newCard.pdf.gracePeriodDesc', { days: program.grace_period || 21 })}</Text>
           </View>
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('newCard.pdf.annualFees')}</Text>
+          <Text style={styles.sectionTitle}>{t('dashboard.newCard.pdf.annualFees')}</Text>
           <View style={styles.table}>
             <View style={styles.tableRow}>
-              <View style={{...styles.tableCol, ...styles.col50, ...styles.tableColHeader}}><Text>{t('newCard.pdf.card')}</Text></View>
-              <View style={{...styles.tableCol, ...styles.col50, ...styles.tableColHeader, borderRightWidth: 0}}><Text>{t('newCard.pdf.annualFee')}</Text></View>
+              <View style={{...styles.tableCol, ...styles.col50, ...styles.tableColHeader}}><Text>{t('dashboard.newCard.pdf.card')}</Text></View>
+              <View style={{...styles.tableCol, ...styles.col50, ...styles.tableColHeader, borderRightWidth: 0}}><Text>{t('dashboard.newCard.pdf.annualFee')}</Text></View>
             </View>
             <View style={styles.tableRow}>
               <View style={{...styles.tableCol, ...styles.col50}}><Text>{program.program_name}</Text></View>
               <View style={{...styles.tableCol, ...styles.col50, borderRightWidth: 0}}>
                 {feeModel === 'none' && <Text>0,00 $</Text>}
-                {feeModel === 'annual_user' && <Text>{t('newCard.pdf.annualFeeUser')}</Text>}
+                {feeModel === 'annual_user' && <Text>{t('dashboard.newCard.pdf.annualFeeUser')}</Text>}
                 {feeModel === 'custom' && <Text>{program.issuance_fee ? `${program.issuance_fee.toFixed(2)} $` : '0,00 $'}</Text>}
-                {feeModel === 'per_transaction_user' && <Text>{t('newCard.pdf.noAnnualFee')}</Text>}
+                {feeModel === 'per_transaction_user' && <Text>{t('dashboard.newCard.pdf.noAnnualFee')}</Text>}
               </View>
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('newCard.pdf.otherFees')}</Text>
-          <Text style={styles.text}><Text style={styles.bold}>{t('newCard.pdf.transactionFee')}:</Text> {feeModel === 'per_transaction_user' ? t('newCard.pdf.transactionFeeDescUser') : t('newCard.pdf.noDirectFee')}</Text>
+          <Text style={styles.sectionTitle}>{t('dashboard.newCard.pdf.otherFees')}</Text>
+          <Text style={styles.text}><Text style={styles.bold}>{t('dashboard.newCard.pdf.transactionFee')}:</Text> {feeModel === 'per_transaction_user' ? t('dashboard.newCard.pdf.transactionFeeDescUser') : t('dashboard.newCard.pdf.noDirectFee')}</Text>
         </View>
 
         <View style={styles.validationSection}>
-          <Text style={styles.validationTitle}>{t('newCard.pdf.validationPrompt')}</Text>
-          <Text>{t('newCard.pdf.validationInstructions')}</Text>
+          <Text style={styles.validationTitle}>{t('dashboard.newCard.pdf.validationPrompt')}</Text>
+          <Text>{t('dashboard.newCard.pdf.validationInstructions')}</Text>
           <Text style={styles.validationCode}>{validationCode}</Text>
         </View>
       </Page>

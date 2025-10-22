@@ -3,13 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { StepIndicator } from '@/components/dashboard/users/StepIndicator';
 
 const cardSteps = (t) => [
-  { id: 1, name: t('newCard.step1_title'), description: t('newCard.step1_desc') },
-  { id: 2, name: t('newCard.step2_title'), description: t('newCard.step2_desc') },
-  { id: 3, name: t('newCard.step3_title'), description: t('newCard.step3_desc') },
+  { id: 1, name: t('dashboard.newCard.step1_title'), description: t('dashboard.newCard.step1_desc') },
+  { id: 2, name: t('dashboard.newCard.step2_title'), description: t('dashboard.newCard.step2_desc') },
+  { id: 3, name: t('dashboard.newCard.step3_title'), description: t('dashboard.newCard.step3_desc') },
 ];
 
 const NewCardLayout = () => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
   const location = useLocation();
 
   const path = location.pathname;
@@ -31,10 +31,10 @@ const NewCardLayout = () => {
             <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="h-10" />
           </Link>
           <h1 className="text-xl font-bold text-gray-800 hidden sm:block">
-            {t('newCard.title')}
+            {t('dashboard.newCard.title')}
           </h1>
           <Link to="/dashboard/cards" className="text-sm font-medium text-gray-600 hover:text-primary">
-            {t('newCard.cancel')}
+            {t('dashboard.newCard.cancel')}
           </Link>
         </div>
       </header>

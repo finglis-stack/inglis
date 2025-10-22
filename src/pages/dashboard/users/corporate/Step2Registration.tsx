@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 const Step2Registration = () => {
   const navigate = useNavigate();
   const { userData, updateUser } = useNewUser();
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     businessNumber: userData.businessNumber || '',
     jurisdiction: userData.jurisdiction || '',
@@ -29,17 +29,17 @@ const Step2Registration = () => {
     <form onSubmit={handleSubmit}>
       <div className="space-y-4">
         <div className="grid gap-2">
-          <Label htmlFor="businessNumber">{t('corporateSteps.businessNumber')}</Label>
+          <Label htmlFor="businessNumber">{t('dashboard.corporateSteps.businessNumber')}</Label>
           <Input id="businessNumber" required value={formData.businessNumber} onChange={handleChange} />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="jurisdiction">{t('corporateSteps.jurisdiction')}</Label>
+          <Label htmlFor="jurisdiction">{t('dashboard.corporateSteps.jurisdiction')}</Label>
           <Input id="jurisdiction" required value={formData.jurisdiction} onChange={handleChange} />
         </div>
       </div>
       <div className="flex justify-between mt-8">
-        <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/corporate/step-1')}>{t('sharedSteps.previous')}</Button>
-        <Button type="submit">{t('sharedSteps.next')}</Button>
+        <Button variant="outline" type="button" onClick={() => navigate('/dashboard/users/new/corporate/step-1')}>{t('dashboard.sharedSteps.previous')}</Button>
+        <Button type="submit">{t('dashboard.sharedSteps.next')}</Button>
       </div>
     </form>
   );

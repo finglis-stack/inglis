@@ -9,15 +9,15 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ className, onLinkClick }: SidebarProps) => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
 
   const navItems = [
-    { to: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: t('sidebar.dashboard') },
-    { to: '/dashboard/cards', icon: <CreditCard className="h-5 w-5" />, label: t('sidebar.cards') },
-    { to: '/dashboard/users', icon: <Users className="h-5 w-5" />, label: t('sidebar.users') },
-    { to: '/dashboard/transactions', icon: <ArrowRightLeft className="h-5 w-5" />, label: t('sidebar.transactions') },
-    { to: '/dashboard/credit-files', icon: <FileText className="h-5 w-5" />, label: t('sidebar.creditFiles') },
-    { to: '/dashboard/settings', icon: <Settings className="h-5 w-5" />, label: t('sidebar.settings') },
+    { to: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: t('dashboard.sidebar.dashboard') },
+    { to: '/dashboard/cards', icon: <CreditCard className="h-5 w-5" />, label: t('dashboard.sidebar.cards') },
+    { to: '/dashboard/users', icon: <Users className="h-5 w-5" />, label: t('dashboard.sidebar.users') },
+    { to: '/dashboard/transactions', icon: <ArrowRightLeft className="h-5 w-5" />, label: t('dashboard.sidebar.transactions') },
+    { to: '/dashboard/credit-files', icon: <FileText className="h-5 w-5" />, label: t('dashboard.sidebar.creditFiles') },
+    { to: '/dashboard/settings', icon: <Settings className="h-5 w-5" />, label: t('dashboard.sidebar.settings') },
   ];
 
   return (

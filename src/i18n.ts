@@ -10,17 +10,15 @@ i18n
   .init({
     supportedLngs: ["en", "fr"],
     fallbackLng: "fr",
-    ns: ['common', 'landing', 'onboarding', 'login', 'dashboard'],
-    defaultNS: 'common',
     detection: {
       order: ["cookie", "htmlTag", "localStorage", "path", "subdomain"],
       caches: ["cookie"],
     },
     backend: {
-      loadPath: '/locales/{{lng}}/{{ns}}.json',
+      loadPath: '/locales/{{lng}}/translation.json',
     },
     react: {
-      useSuspense: true,
+      useSuspense: false,
     },
   });
 

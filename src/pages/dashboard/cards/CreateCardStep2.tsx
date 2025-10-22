@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 const CreateCardStep2 = () => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { updateCard } = useNewCard();
   const [programs, setPrograms] = useState<any[]>([]);
@@ -65,13 +65,13 @@ const CreateCardStep2 = () => {
             </Card>
           ))
         ) : (
-          <p>{t('cardPrograms.noPrograms')}</p>
+          <p>{t('dashboard.cardPrograms.noPrograms')}</p>
         )}
       </div>
 
       <div className="flex justify-between mt-8">
-        <Button variant="outline" onClick={() => navigate('/dashboard/cards/new')}>{t('sharedSteps.previous')}</Button>
-        <Button onClick={handleNext} disabled={!selectedProgramId}>{t('sharedSteps.next')}</Button>
+        <Button variant="outline" onClick={() => navigate('/dashboard/cards/new')}>{t('dashboard.sharedSteps.previous')}</Button>
+        <Button onClick={handleNext} disabled={!selectedProgramId}>{t('dashboard.sharedSteps.next')}</Button>
       </div>
     </div>
   );

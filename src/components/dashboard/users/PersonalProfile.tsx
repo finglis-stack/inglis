@@ -8,18 +8,18 @@ import { format, parseISO } from 'date-fns';
 import UserAccounts from './UserAccounts';
 
 const PersonalProfile = ({ profile, decryptedSin, decryptedAddress, cards, creditAccounts, debitAccounts, profileId }) => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
 
   const getStatusInfo = (status) => {
     switch (status) {
       case 'active':
-        return { text: t('userProfile.statusActive'), className: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200' };
+        return { text: t('dashboard.userProfile.statusActive'), className: 'bg-green-100 text-green-800 border-green-200 hover:bg-green-200' };
       case 'attention':
-        return { text: t('userProfile.statusAttention'), className: 'bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200' };
+        return { text: t('dashboard.userProfile.statusAttention'), className: 'bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200' };
       case 'risky':
-        return { text: t('userProfile.statusRisky'), className: 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200' };
+        return { text: t('dashboard.userProfile.statusRisky'), className: 'bg-red-100 text-red-800 border-red-200 hover:bg-red-200' };
       default:
-        return { text: t('userProfile.statusUnknown'), className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200' };
+        return { text: t('dashboard.userProfile.statusUnknown'), className: 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200' };
     }
   };
 
@@ -29,13 +29,13 @@ const PersonalProfile = ({ profile, decryptedSin, decryptedAddress, cards, credi
 
   if (age !== null) {
     if (age < 18) {
-      ageTags.push({ text: t('userProfile.tagMinor'), className: 'bg-blue-100 text-blue-800 border-blue-200' });
+      ageTags.push({ text: t('dashboard.userProfile.tagMinor'), className: 'bg-blue-100 text-blue-800 border-blue-200' });
     }
     if (age >= 12 && age <= 19) {
-      ageTags.push({ text: t('userProfile.tagTeen'), className: 'bg-indigo-100 text-indigo-800 border-indigo-200' });
+      ageTags.push({ text: t('dashboard.userProfile.tagTeen'), className: 'bg-indigo-100 text-indigo-800 border-indigo-200' });
     }
     if (age >= 20 && age <= 25) {
-      ageTags.push({ text: t('userProfile.tagYoungAdult'), className: 'bg-purple-100 text-purple-800 border-purple-200' });
+      ageTags.push({ text: t('dashboard.userProfile.tagYoungAdult'), className: 'bg-purple-100 text-purple-800 border-purple-200' });
     }
   }
 
@@ -55,15 +55,15 @@ const PersonalProfile = ({ profile, decryptedSin, decryptedAddress, cards, credi
                     <Badge className={cn('cursor-pointer', statusInfo.className)}>{statusInfo.text}</Badge>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p><strong>{t('userProfile.riskScore')}:</strong> {profile.risk_score}/100</p>
-                    <p className="text-sm text-muted-foreground">{t('userProfile.riskReason', { status: statusInfo.text.toLowerCase() })}</p>
+                    <p><strong>{t('dashboard.userProfile.riskScore')}:</strong> {profile.risk_score}/100</p>
+                    <p className="text-sm text-muted-foreground">{t('dashboard.userProfile.riskReason', { status: statusInfo.text.toLowerCase() })}</p>
                   </TooltipContent>
                 </Tooltip>
                 {ageTags.map((tag, index) => (
                   <Badge key={index} className={cn(tag.className)}>{tag.text}</Badge>
                 ))}
               </div>
-              <CardDescription>{t('userProfile.personalProfileTitle')}</CardDescription>
+              <CardDescription>{t('dashboard.userProfile.personalProfileTitle')}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -72,16 +72,16 @@ const PersonalProfile = ({ profile, decryptedSin, decryptedAddress, cards, credi
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>{t('userProfile.contactInfo')}</CardTitle>
+            <CardTitle>{t('dashboard.userProfile.contactInfo')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p><strong>{t('userProfile.email')}:</strong> {profile.email || 'N/A'}</p>
-            <p><strong>{t('userProfile.phone')}:</strong> {profile.phone || 'N/A'}</p>
+            <p><strong>{t('dashboard.userProfile.email')}:</strong> {profile.email || 'N/A'}</p>
+            <p><strong>{t('dashboard.userProfile.phone')}:</strong> {profile.phone || 'N/A'}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>{t('userProfile.address')}</CardTitle>
+            <CardTitle>{t('dashboard.userProfile.address')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
             {decryptedAddress ? (
@@ -91,7 +91,7 @@ const PersonalProfile = ({ profile, decryptedSin, decryptedAddress, cards, credi
                 <p>{decryptedAddress.country}</p>
               </>
             ) : (
-              <p>{profile.address ? t('userProfile.addressLocked') : t('userProfile.addressNotProvided')}</p>
+              <p>{profile.address ? t('dashboard.userProfile.addressLocked') : t('dashboard.userProfile.addressNotProvided')}</p>
             )}
           </CardContent>
         </Card>
@@ -100,11 +100,11 @@ const PersonalProfile = ({ profile, decryptedSin, decryptedAddress, cards, credi
 
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>{t('userProfile.identityInfo')}</CardTitle>
+            <CardTitle>{t('dashboard.userProfile.identityInfo')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p><strong>{t('userProfile.dob')}:</strong> {formattedDob}</p>
-            <p><strong>{t('userProfile.sin')}:</strong> {decryptedSin || (profile.sin ? t('userProfile.sinLocked') : t('userProfile.sinNotProvided'))}</p>
+            <p><strong>{t('dashboard.userProfile.dob')}:</strong> {formattedDob}</p>
+            <p><strong>{t('dashboard.userProfile.sin')}:</strong> {decryptedSin || (profile.sin ? t('dashboard.userProfile.sinLocked') : t('dashboard.userProfile.sinNotProvided'))}</p>
           </CardContent>
         </Card>
       </div>

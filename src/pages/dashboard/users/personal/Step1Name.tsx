@@ -10,7 +10,7 @@ const Step1Name = () => {
   const navigate = useNavigate();
   const { userData, updateUser } = useNewUser();
   const [fullName, setFullName] = useState(userData.fullName || '');
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -22,12 +22,12 @@ const Step1Name = () => {
     <form onSubmit={handleSubmit}>
       <div className="space-y-4">
         <div className="grid gap-2">
-          <Label htmlFor="fullName">{t('personalSteps.fullName')}</Label>
+          <Label htmlFor="fullName">{t('dashboard.personalSteps.fullName')}</Label>
           <Input id="fullName" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
         </div>
       </div>
       <div className="flex justify-end gap-4 mt-8">
-        <Button type="submit">{t('sharedSteps.next')}</Button>
+        <Button type="submit">{t('dashboard.sharedSteps.next')}</Button>
       </div>
     </form>
   );
