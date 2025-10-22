@@ -83,6 +83,7 @@ import Step4Review from "@/pages/q12x/SignupStep4Review";
 import Checkouts from "@/pages/q12x/Checkouts";
 import NewCheckout from "@/pages/q12x/NewCheckout";
 import PublicCheckoutPage from "@/pages/q12x/PublicCheckoutPage";
+import PaymentSuccess from "@/pages/q12x/PaymentSuccess";
 
 const queryClient = new QueryClient();
 
@@ -136,6 +137,7 @@ const Q12xAppRoutes = () => (
     <Route path="/login" element={<Q12xLogin />} />
     <Route path="/dashboard" element={<Q12xDashboardLayout />}><Route index element={<Q12xDashboard />} /><Route path="transactions" element={<Q12xTransactions />} /><Route path="transactions/:id" element={<Q12xTransactionDetails />} /><Route path="checkouts" element={<Checkouts />} /><Route path="checkouts/new" element={<NewCheckout />} /></Route>
     <Route path="/pay/:checkoutId" element={<PublicCheckoutPage />} />
+    <Route path="/payment-success" element={<PaymentSuccess />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

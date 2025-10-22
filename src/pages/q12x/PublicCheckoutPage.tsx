@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
-import { showError, showSuccess } from '@/utils/toast';
 import { CheckoutPaymentForm } from '@/components/q12x/CheckoutPaymentForm';
 import ProcessingPaymentModal from '@/components/q12x/ProcessingPaymentModal';
 
 const PublicCheckoutPage = () => {
   const { checkoutId } = useParams();
+  const navigate = useNavigate();
   const [checkout, setCheckout] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -47,7 +47,7 @@ const PublicCheckoutPage = () => {
     try {
       const amount = checkout.is_amount_variable ? parseFloat(variableAmount) : checkout.amount;
       if (isNaN(amount) || amount <= 0) {
-        showError("Montant invalide.");
+        setPaymentError("Montant invalide.");
         setShowProcessingModal(false);
         setProcessing(false);
         return;
@@ -57,12 +57,9 @@ const PublicCheckoutPage = () => {
         body: cardDetails
       });
 
-      if (tokenError) {
-        // Cet erreur sera attrapée par le bloc catch
-        throw tokenError;
-      }
+      if (tokenError) throw tokenError;
 
-      const { error: paymentError } = await supabase.functions.invoke('process-checkout-payment', {
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('process-checkout-payment', {
         body: {
           checkoutId: checkout.id,
           card_token: tokenData.token,
@@ -70,16 +67,11 @@ const PublicCheckoutPage = () => {
         }
       });
 
-      if (paymentError) {
-        // Cet erreur sera attrapée par le bloc catch
-        throw paymentError;
-      }
+      if (paymentError) throw paymentError;
 
-      showSuccess("Paiement réussi !");
-      if (checkout.success_url) {
-        window.location.href = checkout.success_url;
-      }
-      // Sur succès, la redirection ou le message de succès se produit, la modale disparaît avec la page.
+      // Redirection vers la page de succès
+      navigate(`/payment-success?transactionId=${paymentData.transaction.transaction_id}&amount=${amount}`);
+
     } catch (err) {
       setShowProcessingModal(false);
       setPaymentError("Le paiement a été refusé par l'institution émettrice de la carte.");
