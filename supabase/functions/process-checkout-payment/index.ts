@@ -64,7 +64,7 @@ serve(async (req) => {
       p_type: 'purchase',
       p_description: `Paiement: ${checkout.name} (${checkout.id})`,
       p_merchant_account_id: checkout.merchant_account_id,
-      p_ip_address: ipAddress, // Ajout de l'adresse IP ici
+      p_ip_address: ipAddress,
     });
 
     if (rpcError) throw rpcError;

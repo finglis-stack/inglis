@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,10 +10,12 @@ import TransactionMap from '@/components/q12x/TransactionMap';
 
 const Q12xTransactionDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [transaction, setTransaction] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState<any>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTransaction = async () => {
@@ -59,14 +61,18 @@ const Q12xTransactionDetails = () => {
     if (transaction?.ip_address) {
       const fetchLocation = async () => {
         setLocationLoading(true);
+        setLocationError(null);
         try {
           const response = await fetch(`https://ipapi.co/${transaction.ip_address}/json/`);
           const data = await response.json();
-          if (!data.error) {
+          if (data.error) {
+            setLocationError(data.reason || 'Impossible de géolocaliser l\'adresse IP.');
+          } else {
             setLocation(data);
           }
         } catch (e) {
           console.error("Erreur de géolocalisation:", e);
+          setLocationError('Le service de géolocalisation est indisponible.');
         } finally {
           setLocationLoading(false);
         }
@@ -141,14 +147,18 @@ const Q12xTransactionDetails = () => {
               </div>
             </div>
           </div>
-          {(locationLoading || location) && (
+          {transaction.ip_address && (
             <div className="md:col-span-2">
               <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><MapPin className="h-5 w-5" /> Géolocalisation (approximative)</h3>
               {locationLoading ? (
                 <Skeleton className="h-[250px] w-full rounded-lg" />
               ) : location ? (
                 <TransactionMap latitude={location.latitude} longitude={location.longitude} />
-              ) : null}
+              ) : (
+                <div className="h-[250px] w-full rounded-lg bg-gray-100 flex items-center justify-center text-center p-4">
+                  <p className="text-sm text-muted-foreground">{locationError || "Données de localisation non disponibles."}</p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
