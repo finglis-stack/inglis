@@ -61,6 +61,7 @@ serve(async (req) => {
     const { data: transactionResult, error: rpcError } = await supabaseAdmin.rpc('process_transaction', {
       p_card_id: cardId,
       p_amount: finalAmount,
+      p_type: 'purchase', // Correction : Ajout du type de transaction manquant
       p_description: `Paiement: ${checkout.name} (${checkout.id})`,
       p_merchant_account_id: checkout.merchant_account_id,
     });
