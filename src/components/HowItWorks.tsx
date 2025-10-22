@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 
 export const HowItWorks = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('landing');
 
   return (
     <section id="how-it-works" className="py-20">

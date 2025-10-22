@@ -18,7 +18,7 @@ const ChangePinDialog = ({ profileId, onPinChanged }) => {
   const [open, setOpen] = useState(false);
   const [newPin, setNewPin] = useState('');
   const [loading, setLoading] = useState(false);
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
 
   const handleSave = async () => {
     setLoading(true);
@@ -43,13 +43,13 @@ const ChangePinDialog = ({ profileId, onPinChanged }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">{t('dashboard.userProfile.changePinTitle')}</Button>
+        <Button variant="outline">{t('userProfile.changePinTitle')}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('dashboard.userProfile.changePinTitle')}</DialogTitle>
+          <DialogTitle>{t('userProfile.changePinTitle')}</DialogTitle>
           <DialogDescription>
-            {t('dashboard.userProfile.changePinDesc')}
+            {t('userProfile.changePinDesc')}
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-center py-4">
@@ -63,9 +63,9 @@ const ChangePinDialog = ({ profileId, onPinChanged }) => {
           </InputOTP>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>{t('dashboard.userProfile.cancel')}</Button>
+          <Button variant="ghost" onClick={() => setOpen(false)}>{t('userProfile.cancel')}</Button>
           <Button onClick={handleSave} disabled={loading || newPin.length !== 4}>
-            {loading ? t('dashboard.userProfile.saving') : t('dashboard.userProfile.save')}
+            {loading ? t('userProfile.saving') : t('userProfile.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

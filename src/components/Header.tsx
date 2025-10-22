@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 
 export const Header = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('landing');
 
   const navLinks = [
     { href: "/#features", label: t('header.solution') },

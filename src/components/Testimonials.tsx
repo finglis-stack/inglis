@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTranslation } from "react-i18next";
 
 export const Testimonials = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('landing');
 
   return (
     <section id="testimonials" className="py-20 bg-secondary">

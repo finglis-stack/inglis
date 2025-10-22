@@ -1,8 +1,10 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+// --- MainApp Imports ---
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import Welcome from "@/pages/onboarding/Welcome";
@@ -55,11 +57,36 @@ import Step2Security from "@/pages/dashboard/accounts/new-transaction/Step2Secur
 import Step3Review from "@/pages/dashboard/accounts/new-transaction/Step3Review";
 import TransactionDetails from "@/pages/dashboard/accounts/TransactionDetails";
 import PendingAuthorizations from "@/pages/dashboard/accounts/PendingAuthorizations";
+import ApiSettings from "@/pages/dashboard/settings/ApiSettings";
+import HostedPaymentForm from "@/pages/HostedPaymentForm";
+import HostedFormLayout from '@/pages/HostedFormLayout';
+import Merchants from '@/pages/dashboard/settings/Merchants';
+import { NewMerchantProvider } from '@/context/NewMerchantContext';
+import NewMerchantLayout from '@/pages/dashboard/settings/NewMerchantLayout';
+import NewMerchantStep1 from '@/pages/dashboard/settings/merchants/NewMerchantStep1';
+import NewMerchantStep2 from '@/pages/dashboard/settings/merchants/NewMerchantStep2';
+import NewMerchantStep3 from '@/pages/dashboard/settings/merchants/NewMerchantStep3';
+import NewMerchantStep4 from '@/pages/dashboard/settings/merchants/NewMerchantStep4';
+
+// --- Q12xApp Imports ---
+import Q12xLogin from "@/pages/q12x/Login";
+import Q12xDashboardLayout from "@/pages/q12x/DashboardLayout";
+import Q12xDashboard from "@/pages/q12x/Dashboard";
+import Q12xTransactions from "@/pages/q12x/Transactions";
+import Q12xTransactionDetails from "@/pages/q12x/TransactionDetails";
+import { Q12xOnboardingProvider } from "@/context/Q12xOnboardingContext";
+import SignupLayout from "@/pages/q12x/SignupLayout";
+import Step1Account from "@/pages/q12x/SignupStep1Account";
+import Step2BusinessInfo from "@/pages/q12x/SignupStep2BusinessInfo";
+import Step3Contact from "@/pages/q12x/SignupStep3Contact";
+import Step4Review from "@/pages/q12x/SignupStep4Review";
+import Checkouts from "@/pages/q12x/Checkouts";
+import NewCheckout from "@/pages/q12x/NewCheckout";
 import PublicCheckoutPage from "@/pages/q12x/PublicCheckoutPage";
 
 const queryClient = new QueryClient();
 
-const InglisDominionRoutes = () => (
+const MainAppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/login" element={<Login />} />
@@ -69,12 +96,13 @@ const InglisDominionRoutes = () => (
     <Route path="/set-profile-pin/:token" element={<SetProfilePin />} />
     <Route path="/confirm-credit-consent/:token" element={<ConfirmCreditConsent />} />
     <Route path="/confirm-credit-pull/:token" element={<ConfirmCreditPull />} />
+    <Route element={<HostedFormLayout />}><Route path="/checkout/v1/form" element={<HostedPaymentForm />} /></Route>
+    <Route path="/pay/:checkoutId" element={<PublicCheckoutPage />} />
     <Route path="/onboarding/welcome" element={<Welcome />} />
     <Route path="/onboarding/create-account" element={<CreateAccount />} />
     <Route path="/onboarding/institution-info" element={<InstitutionInfo />} />
     <Route path="/onboarding/institution-type" element={<InstitutionType />} />
     <Route path="/onboarding/contact-info" element={<ContactInfo />} />
-    
     <Route path="/dashboard" element={<DashboardLayout />}>
       <Route index element={<Dashboard />} />
       <Route path="cards" element={<Cards />} />
@@ -83,6 +111,8 @@ const InglisDominionRoutes = () => (
       <Route path="credit-files" element={<CreditFiles />} />
       <Route path="settings" element={<Settings />} />
       <Route path="settings/card-programs" element={<CardPrograms />} />
+      <Route path="settings/api" element={<ApiSettings />} />
+      <Route path="settings/merchants" element={<Merchants />} />
       <Route path="users" element={<Users />} />
       <Route path="users/profile/:id" element={<UserProfile />} />
       <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
@@ -90,63 +120,29 @@ const InglisDominionRoutes = () => (
       <Route path="accounts/debit/:accountId/pending-authorizations" element={<PendingAuthorizations />} />
       <Route path="accounts/credit/:accountId/pending-authorizations" element={<PendingAuthorizations />} />
     </Route>
-
-    <Route element={<NewTransactionProvider />}>
-      <Route path="/dashboard/accounts/debit/:accountId/new-transaction" element={<NewTransactionLayout />}>
-        <Route index element={<Step1Details />} />
-        <Route path="step-2" element={<Step2Security />} />
-        <Route path="step-3" element={<Step3Review />} />
-      </Route>
-      <Route path="/dashboard/accounts/credit/:accountId/new-transaction" element={<NewTransactionLayout />}>
-        <Route index element={<Step1Details />} />
-        <Route path="step-2" element={<Step2Security />} />
-        <Route path="step-3" element={<Step3Review />} />
-      </Route>
-    </Route>
-
-    <Route element={<NewUserProvider />}>
-      <Route path="/dashboard/users/new" element={<NewUserTypeSelection />} />
-      <Route element={<NewUserLayout />}>
-        <Route path="/dashboard/users/new/personal/step-1" element={<Step1Name />} />
-        <Route path="/dashboard/users/new/personal/step-2" element={<Step2Address />} />
-        <Route path="/dashboard/users/new/personal/step-3" element={<Step3ContactIdentity />} />
-        <Route path="/dashboard/users/new/personal/step-4" element={<Step4SetPin />} />
-        <Route path="/dashboard/users/new/personal/step-5" element={<Step5Review />} />
-        <Route path="/dashboard/users/new/corporate/step-1" element={<Step1BusinessInfo />} />
-        <Route path="/dashboard/users/new/corporate/step-2" element={<Step2Registration />} />
-        <Route path="/dashboard/users/new/corporate/step-3" element={<Step3AddressCorp />} />
-        <Route path="/dashboard/users/new/corporate/step-4" element={<Step4SetPin />} />
-        <Route path="/dashboard/users/new/corporate/step-5" element={<Step5ReviewCorp />} />
-      </Route>
-    </Route>
-
-    <Route element={<NewCardProvider />}>
-      <Route element={<CreateCardLayout />}>
-        <Route path="/dashboard/cards/new" element={<CreateCardStep1 />} />
-        <Route path="/dashboard/cards/new/step-2" element={<CreateCardStep2 />} />
-        <Route path="/dashboard/cards/new/step-3" element={<CreateCardStep3SetLimits />} />
-        <Route path="/dashboard/cards/new/step-4" element={<CreateCardStep4 />} />
-      </Route>
-    </Route>
-
-    <Route element={<CardProgramLayout />}>
-      <Route path="/dashboard/settings/card-programs/new" element={<NewCardProgram />} />
-    </Route>
-
+    <Route element={<NewTransactionProvider />}><Route path="/dashboard/accounts/debit/:accountId/new-transaction" element={<NewTransactionLayout />}><Route index element={<Step1Details />} /><Route path="step-2" element={<Step2Security />} /><Route path="step-3" element={<Step3Review />} /></Route></Route>
+    <Route element={<NewTransactionProvider />}><Route path="/dashboard/accounts/credit/:accountId/new-transaction" element={<NewTransactionLayout />}><Route index element={<Step1Details />} /><Route path="step-2" element={<Step2Security />} /><Route path="step-3" element={<Step3Review />} /></Route></Route>
+    <Route element={<NewUserProvider />}><Route path="/dashboard/users/new" element={<NewUserTypeSelection />} /><Route element={<NewUserLayout />}><Route path="/dashboard/users/new/personal/step-1" element={<Step1Name />} /><Route path="/dashboard/users/new/personal/step-2" element={<Step2Address />} /><Route path="/dashboard/users/new/personal/step-3" element={<Step3ContactIdentity />} /><Route path="/dashboard/users/new/personal/step-4" element={<Step4SetPin />} /><Route path="/dashboard/users/new/personal/step-5" element={<Step5Review />} /><Route path="/dashboard/users/new/corporate/step-1" element={<Step1BusinessInfo />} /><Route path="/dashboard/users/new/corporate/step-2" element={<Step2Registration />} /><Route path="/dashboard/users/new/corporate/step-3" element={<Step3AddressCorp />} /><Route path="/dashboard/users/new/corporate/step-4" element={<Step4SetPin />} /><Route path="/dashboard/users/new/corporate/step-5" element={<Step5ReviewCorp />} /></Route></Route>
+    <Route element={<NewCardProvider />}><Route element={<CreateCardLayout />}><Route path="/dashboard/cards/new" element={<CreateCardStep1 />} /><Route path="/dashboard/cards/new/step-2" element={<CreateCardStep2 />} /><Route path="/dashboard/cards/new/step-3" element={<CreateCardStep3SetLimits />} /><Route path="/dashboard/cards/new/step-4" element={<CreateCardStep4 />} /></Route></Route>
+    <Route element={<CardProgramLayout />}><Route path="/dashboard/settings/card-programs/new" element={<NewCardProgram />} /></Route>
+    <Route element={<NewMerchantProvider />}><Route element={<NewMerchantLayout />}><Route path="/dashboard/settings/merchants/new/step-1" element={<NewMerchantStep1 />} /><Route path="/dashboard/settings/merchants/new/step-2" element={<NewMerchantStep2 />} /><Route path="/dashboard/settings/merchants/new/step-3" element={<NewMerchantStep3 />} /><Route path="/dashboard/settings/merchants/new/step-4" element={<NewMerchantStep4 />} /></Route></Route>
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
 
-const Q12xRoutes = () => (
+const Q12xAppRoutes = () => (
   <Routes>
-    <Route path="/checkout/:checkoutId" element={<PublicCheckoutPage />} />
+    <Route element={<Q12xOnboardingProvider />}><Route path="/" element={<SignupLayout />}><Route index element={<Step1Account />} /><Route path="business-info" element={<Step2BusinessInfo />} /><Route path="contact" element={<Step3Contact />} /><Route path="review" element={<Step4Review />} /></Route></Route>
+    <Route path="/login" element={<Q12xLogin />} />
+    <Route path="/dashboard" element={<Q12xDashboardLayout />}><Route index element={<Q12xDashboard />} /><Route path="transactions" element={<Q12xTransactions />} /><Route path="transactions/:id" element={<Q12xTransactionDetails />} /><Route path="checkouts" element={<Checkouts />} /><Route path="checkouts/new" element={<NewCheckout />} /></Route>
+    <Route path="/pay/:checkoutId" element={<PublicCheckoutPage />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
 
 const App = () => {
   const hostname = window.location.hostname;
-  const isQ12x = hostname === 'q12x.sbs' || hostname.endsWith('.q12x.sbs');
+  const isQ12x = hostname.includes('q12x') || hostname === 'localhost';
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -154,7 +150,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          {isQ12x ? <Q12xRoutes /> : <InglisDominionRoutes />}
+          {isQ12x ? <Q12xAppRoutes /> : <MainAppRoutes />}
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

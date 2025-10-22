@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
 
 const CreateCardStep3SetLimits = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('dashboard');
   const navigate = useNavigate();
   const { cardData, updateCard } = useNewCard();
   const [loading, setLoading] = useState(true);
@@ -82,10 +82,10 @@ const CreateCardStep3SetLimits = () => {
   if (program?.card_type === 'debit') {
     return (
       <div className="space-y-6">
-        <p className="text-muted-foreground">{t('dashboard.newCard.debitNoLimits')}</p>
+        <p className="text-muted-foreground">{t('newCard.debitNoLimits')}</p>
         <div className="flex justify-between mt-8">
-          <Button variant="outline" onClick={() => navigate('/dashboard/cards/new/step-2')}>{t('dashboard.sharedSteps.previous')}</Button>
-          <Button onClick={handleNext}>{t('dashboard.sharedSteps.next')}</Button>
+          <Button variant="outline" onClick={() => navigate('/dashboard/cards/new/step-2')}>{t('sharedSteps.previous')}</Button>
+          <Button onClick={handleNext}>{t('sharedSteps.next')}</Button>
         </div>
       </div>
     );
@@ -96,11 +96,11 @@ const CreateCardStep3SetLimits = () => {
       <div className="space-y-6">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>{t('dashboard.newCard.minorBlockedTitle')}</AlertTitle>
-          <AlertDescription>{t('dashboard.newCard.minorBlockedDesc')}</AlertDescription>
+          <AlertTitle>{t('newCard.minorBlockedTitle')}</AlertTitle>
+          <AlertDescription>{t('newCard.minorBlockedDesc')}</AlertDescription>
         </Alert>
         <div className="flex justify-start mt-8">
-          <Button variant="outline" onClick={() => navigate('/dashboard/cards/new/step-2')}>{t('dashboard.sharedSteps.previous')}</Button>
+          <Button variant="outline" onClick={() => navigate('/dashboard/cards/new/step-2')}>{t('sharedSteps.previous')}</Button>
         </div>
       </div>
     );
@@ -110,15 +110,15 @@ const CreateCardStep3SetLimits = () => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="creditLimit">{t('dashboard.newCard.creditLimit')}</Label>
+          <Label htmlFor="creditLimit">{t('newCard.creditLimit')}</Label>
           <Input id="creditLimit" type="number" placeholder="5000.00" value={creditLimit} onChange={(e) => setCreditLimit(e.target.value)} required />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="cashAdvanceLimit">{t('dashboard.newCard.cashAdvanceLimit')}</Label>
+          <Label htmlFor="cashAdvanceLimit">{t('newCard.cashAdvanceLimit')}</Label>
           <Input id="cashAdvanceLimit" type="number" placeholder="500.00" value={cashAdvanceLimit} onChange={(e) => setCashAdvanceLimit(e.target.value)} />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="interestRate">{t('dashboard.newCard.interestRatePurchases')}</Label>
+          <Label htmlFor="interestRate">{t('newCard.interestRatePurchases')}</Label>
           <Input 
             id="interestRate" 
             type="number" 
@@ -135,7 +135,7 @@ const CreateCardStep3SetLimits = () => {
           )}
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="cashAdvanceRate">{t('dashboard.newCard.interestRateCashAdvances')}</Label>
+          <Label htmlFor="cashAdvanceRate">{t('newCard.interestRateCashAdvances')}</Label>
           <Input 
             id="cashAdvanceRate" 
             type="number" 
@@ -153,8 +153,8 @@ const CreateCardStep3SetLimits = () => {
         </div>
       </div>
       <div className="flex justify-between mt-8">
-        <Button variant="outline" onClick={() => navigate('/dashboard/cards/new/step-2')}>{t('dashboard.sharedSteps.previous')}</Button>
-        <Button onClick={handleNext} disabled={!creditLimit || !interestRate || !cashAdvanceRate}>{t('dashboard.sharedSteps.next')}</Button>
+        <Button variant="outline" onClick={() => navigate('/dashboard/cards/new/step-2')}>{t('sharedSteps.previous')}</Button>
+        <Button onClick={handleNext} disabled={!creditLimit || !interestRate || !cashAdvanceRate}>{t('sharedSteps.next')}</Button>
       </div>
     </div>
   );

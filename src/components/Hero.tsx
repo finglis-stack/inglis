@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 
 export const Hero = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('landing');
 
   return (
     <section className="relative py-20 md:py-32 lg:py-40 text-center text-white overflow-hidden">

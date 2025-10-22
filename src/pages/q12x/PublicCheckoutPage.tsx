@@ -1,180 +1,149 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertTriangle, CreditCard, Lock, Calendar } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import ProcessingPaymentModal from '@/components/q12x/ProcessingPaymentModal';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-
-const paymentSchema = z.object({
-  cardNumber: z.string().min(18, "Le numéro de carte est requis."),
-  expiresAt: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Date invalide (MM/AA)."),
-  pin: z.string().length(4, "Le NIP doit contenir 4 chiffres."),
-});
+import { Loader2 } from 'lucide-react';
+import { showError, showSuccess } from '@/utils/toast';
+import { CheckoutPaymentForm } from '@/components/q12x/CheckoutPaymentForm';
 
 const PublicCheckoutPage = () => {
   const { checkoutId } = useParams();
   const [checkout, setCheckout] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
-
-  const form = useForm<z.infer<typeof paymentSchema>>({
-    resolver: zodResolver(paymentSchema),
-    defaultValues: {
-      cardNumber: "",
-      expiresAt: "",
-      pin: "",
-    },
-  });
+  const [processing, setProcessing] = useState(false);
+  const [variableAmount, setVariableAmount] = useState('');
 
   useEffect(() => {
-    const fetchCheckoutData = async () => {
-      if (!checkoutId) {
-        setPaymentError("Lien de paiement invalide.");
-        setLoading(false);
-        return;
-      }
+    const fetchCheckout = async () => {
+      if (!checkoutId) return;
       setLoading(true);
-      const { data: checkoutData, error: checkoutError } = await supabase
+      const { data, error } = await supabase
         .from('checkouts')
         .select('*, merchant_accounts(name)')
         .eq('id', checkoutId)
         .eq('status', 'active')
         .single();
 
-      if (checkoutError || !checkoutData) {
-        setPaymentError("Ce lien de paiement est invalide ou a expiré.");
+      if (error || !data) {
+        setCheckout(null);
       } else {
-        setCheckout(checkoutData);
+        setCheckout(data);
       }
       setLoading(false);
     };
-    fetchCheckoutData();
+    fetchCheckout();
   }, [checkoutId]);
 
-  const onSubmit = async (values: z.infer<typeof paymentSchema>) => {
-    setIsProcessing(true);
-    setPaymentError(null);
+  const handlePaymentSubmit = async (cardDetails: any) => {
+    setProcessing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('process-public-payment', {
-        body: {
-          checkoutId,
-          ...values,
-        },
+      const amount = checkout.is_amount_variable ? parseFloat(variableAmount) : checkout.amount;
+      if (isNaN(amount) || amount <= 0) {
+        throw new Error("Montant invalide.");
+      }
+
+      const { data: tokenData, error: tokenError } = await supabase.functions.invoke('api-v1-tokenize-card', {
+        body: cardDetails
       });
 
-      if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error);
+      if (tokenError) {
+        const functionError = await tokenError.context.json();
+        throw new Error(functionError.error || "La carte est invalide ou les informations sont incorrectes.");
       }
 
-      if (data.success && data.success_url) {
-        window.location.href = data.success_url;
-      } else {
-        setIsProcessing(false);
-        // Fallback au cas où il n'y a pas d'URL de succès
-        form.reset();
-        // Idéalement, afficher un message de succès ici
+      const { error: paymentError } = await supabase.functions.invoke('process-checkout-payment', {
+        body: {
+          checkoutId: checkout.id,
+          card_token: tokenData.token,
+          amount: amount,
+        }
+      });
+
+      if (paymentError) {
+        const functionError = await paymentError.context.json();
+        throw new Error(functionError.error || "Le paiement a échoué.");
       }
+
+      showSuccess("Paiement réussi !");
+      if (checkout.success_url) {
+        window.location.href = checkout.success_url;
+      }
+      // Afficher un message de succès si pas de redirection
     } catch (err) {
-      setIsProcessing(false);
-      setPaymentError(err.message || "Votre institution émettrice a refusé le paiement.");
+      showError(err.message);
+      if (checkout.cancel_url) {
+        // Ne pas rediriger en cas d'erreur pour que l'utilisateur puisse réessayer
+      }
+    } finally {
+      setProcessing(false);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <Skeleton className="h-[500px] w-full max-w-md" />
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
       </div>
     );
   }
 
+  if (!checkout) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 text-center">
+        <div>
+          <h1 className="text-2xl font-bold font-mono text-gray-900 mb-4">Q12x</h1>
+          <h2 className="text-xl font-semibold text-gray-800">Lien de paiement invalide</h2>
+          <p className="text-muted-foreground mt-2">Ce lien a peut-être expiré ou été désactivé.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const finalAmount = checkout.is_amount_variable ? parseFloat(variableAmount) || 0 : checkout.amount;
+
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <ProcessingPaymentModal isOpen={isProcessing} />
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          {checkout?.merchant_accounts?.name && <p className="text-muted-foreground">{checkout.merchant_accounts.name}</p>}
-          <CardTitle className="text-4xl font-bold">
-            {checkout?.amount ? new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(checkout.amount) : 'Paiement'}
-          </CardTitle>
-          {checkout?.description && <CardDescription>{checkout.description}</CardDescription>}
-        </CardHeader>
-        <CardContent>
-          {paymentError && !isProcessing && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Paiement Refusé</AlertTitle>
-              <AlertDescription>{paymentError}</AlertDescription>
-            </Alert>
-          )}
-          {checkout ? (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField control={form.control} name="cardNumber" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Numéro de carte</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="XX XXXXXX XX XXXXXXX X" {...field} className="pl-10" />
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="expiresAt" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Expiration</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input placeholder="MM/AA" {...field} className="pl-10" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="pin" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>NIP</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input type="password" placeholder="****" {...field} className="pl-10" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </div>
-                <Button type="submit" className="w-full" disabled={isProcessing}>
-                  Payer {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(checkout.amount)}
-                </Button>
-              </form>
-            </Form>
-          ) : (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Erreur</AlertTitle>
-              <AlertDescription>{paymentError}</AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-        <CardFooter className="text-xs text-muted-foreground justify-center">
-          <Lock className="h-3 w-3 mr-1" /> Paiement sécurisé par Inglis Dominium
-        </CardFooter>
-      </Card>
+    <div className="min-h-screen flex flex-col lg:flex-row font-sans">
+      {/* Colonne de gauche : Résumé */}
+      <div className="w-full lg:w-1/2 bg-gray-50 p-8 lg:p-12 flex flex-col justify-center">
+        <div className="max-w-md mx-auto w-full">
+          <h1 className="text-2xl font-bold font-mono text-gray-900 mb-6">Q12x</h1>
+          <p className="text-sm text-gray-500">Payer à</p>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">{checkout.merchant_accounts.name}</h2>
+          {checkout.description && <p className="text-gray-600 mb-6">{checkout.description}</p>}
+          
+          <div className="border-t border-b border-gray-200 py-4">
+            {checkout.is_amount_variable ? (
+              <div className="grid gap-2">
+                <Label htmlFor="amount">Montant à payer</Label>
+                <Input 
+                  id="amount" 
+                  type="number" 
+                  value={variableAmount} 
+                  onChange={(e) => setVariableAmount(e.target.value)} 
+                  placeholder="0.00" 
+                  className="text-lg font-semibold"
+                />
+              </div>
+            ) : (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Total</span>
+                <span className="text-2xl font-semibold text-gray-900">
+                  {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(checkout.amount)}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Colonne de droite : Formulaire de paiement */}
+      <div className="w-full lg:w-1/2 bg-white p-8 lg:p-12 flex items-center justify-center">
+        <div className="max-w-md w-full">
+          <CheckoutPaymentForm onSubmit={handlePaymentSubmit} processing={processing} amount={finalAmount} />
+        </div>
+      </div>
     </div>
   );
 };

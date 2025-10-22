@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 
 const CreateAccount = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t } = useTranslation(['onboarding', 'common']);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ const CreateAccount = () => {
   useEffect(() => {
     const savedData = localStorage.getItem('onboardingData');
     if (!savedData) {
-      showError(t('onboarding.createAccount.fillInfoFirstError'));
+      showError(t('createAccount.fillInfoFirstError'));
       navigate('/onboarding/institution-info');
     }
   }, [navigate, t]);
@@ -29,7 +29,7 @@ const CreateAccount = () => {
 
     const savedData = localStorage.getItem('onboardingData');
     if (!savedData) {
-      showError(t('onboarding.createAccount.missingDataError'));
+      showError(t('createAccount.missingDataError'));
       navigate('/onboarding/institution-info');
       setLoading(false);
       return;
@@ -47,7 +47,7 @@ const CreateAccount = () => {
     }
 
     if (!signUpData.user) {
-        showError(t('onboarding.createAccount.creationFailedError'));
+        showError(t('createAccount.creationFailedError'));
         setLoading(false);
         return;
     }
@@ -67,9 +67,9 @@ const CreateAccount = () => {
     const { error: insertError } = await supabase.from('institutions').insert(finalData);
 
     if (insertError) {
-      showError(t('onboarding.createAccount.saveInfoError', { message: insertError.message }));
+      showError(t('createAccount.saveInfoError', { message: insertError.message }));
     } else {
-      showSuccess(t('onboarding.createAccount.successMessage'));
+      showSuccess(t('createAccount.successMessage'));
       localStorage.removeItem('onboardingData');
       navigate('/dashboard');
     }
@@ -79,23 +79,23 @@ const CreateAccount = () => {
 
   return (
     <OnboardingLayout>
-      <h1 className="text-3xl font-bold mb-2">{t('onboarding.createAccount.title')}</h1>
-      <p className="text-muted-foreground mb-6">{t('onboarding.createAccount.subtitle')}</p>
+      <h1 className="text-3xl font-bold mb-2">{t('createAccount.title')}</h1>
+      <p className="text-muted-foreground mb-6">{t('createAccount.subtitle')}</p>
       <form onSubmit={handleSubmit}>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="email">{t('onboarding.createAccount.emailLabel')}</Label>
+            <Label htmlFor="email">{t('createAccount.emailLabel')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder={t('onboarding.createAccount.emailPlaceholder')}
+              placeholder={t('createAccount.emailPlaceholder')}
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">{t('onboarding.createAccount.passwordLabel')}</Label>
+            <Label htmlFor="password">{t('createAccount.passwordLabel')}</Label>
             <Input 
               id="password" 
               type="password" 
@@ -106,10 +106,10 @@ const CreateAccount = () => {
           </div>
           <div className="flex justify-between mt-4">
             <Button type="button" variant="outline" onClick={() => navigate('/onboarding/contact-info')}>
-                {t('onboarding.common.previous')}
+                {t('previous', { ns: 'common' })}
             </Button>
             <Button type="submit" disabled={loading}>
-                {loading ? t('onboarding.createAccount.loadingButton') : t('onboarding.createAccount.submitButton')}
+                {loading ? t('createAccount.loadingButton') : t('createAccount.submitButton')}
             </Button>
           </div>
         </div>

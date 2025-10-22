@@ -6,8 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { showError } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 const Step2Security = () => {
+  const { t } = useTranslation(['dashboard', 'common']);
   const navigate = useNavigate();
   const { transactionData, updateTransaction } = useNewTransaction();
 
@@ -22,11 +24,11 @@ const Step2Security = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!reason.trim()) {
-      showError("Veuillez entrer une justification pour cette transaction manuelle.");
+      showError(t('newTransaction.justificationRequired'));
       return;
     }
     if (enteredCode !== securityCode) {
-      showError("Le code de sécurité est incorrect.");
+      showError(t('newTransaction.incorrectSecurityCode'));
       return;
     }
     updateTransaction({ reason });
@@ -36,12 +38,12 @@ const Step2Security = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid gap-2">
-        <Label htmlFor="reason">Justification de la saisie manuelle</Label>
-        <Textarea id="reason" placeholder="Ex: Correction d'une erreur, test de système, etc." value={reason} onChange={(e) => setReason(e.target.value)} required />
+        <Label htmlFor="reason">{t('newTransaction.justification')}</Label>
+        <Textarea id="reason" placeholder={t('newTransaction.justificationPlaceholder')} value={reason} onChange={(e) => setReason(e.target.value)} required />
       </div>
       <div className="grid gap-4 p-4 border rounded-md bg-gray-50">
-        <Label>Confirmation de sécurité</Label>
-        <p className="text-sm text-muted-foreground">Pour éviter les erreurs, veuillez recopier le code de sécurité ci-dessous.</p>
+        <Label>{t('newTransaction.securityConfirmation')}</Label>
+        <p className="text-sm text-muted-foreground">{t('newTransaction.securityConfirmationDesc')}</p>
         <div className="text-center text-2xl font-bold tracking-widest bg-white p-2 border rounded-md">
           {securityCode}
         </div>
@@ -59,8 +61,8 @@ const Step2Security = () => {
         </div>
       </div>
       <div className="flex justify-between mt-8">
-        <Button type="button" variant="outline" onClick={() => navigate('..')}>Précédent</Button>
-        <Button type="submit">Suivant</Button>
+        <Button type="button" variant="outline" onClick={() => navigate('..')}>{t('sharedSteps.previous')}</Button>
+        <Button type="submit">{t('sharedSteps.next')}</Button>
       </div>
     </form>
   );
