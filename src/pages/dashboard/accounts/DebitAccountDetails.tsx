@@ -12,6 +12,7 @@ import DebitAccountAccessLog from '@/components/dashboard/accounts/DebitAccountA
 import { useDebitAccountBalance } from '@/hooks/useDebitAccountBalance';
 import { useTranslation } from 'react-i18next';
 import AddFundsDialog from '@/components/dashboard/accounts/AddFundsDialog';
+import { Separator } from '@/components/ui/separator';
 
 const DebitAccountDetails = () => {
   const { t } = useTranslation('dashboard');
@@ -130,6 +131,7 @@ const DebitAccountDetails = () => {
   const cardNumber = `${account.cards.user_initials} ${account.cards.issuer_id} ${account.cards.random_letters} ****${account.cards.unique_identifier.slice(-3)} ${account.cards.check_digit}`;
 
   const currentBalance = balanceData?.current_balance;
+  const availableBalance = balanceData?.available_balance;
 
   return (
     <div className="space-y-6">
@@ -160,23 +162,26 @@ const DebitAccountDetails = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-1">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5" /> {t('accounts.currentBalance')}</CardTitle>
+            <CardTitle className="flex items-center gap-2"><DollarSign className="h-5 w-5" /> Solde du compte</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             {balanceLoading ? (
-              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-24 w-full" />
             ) : (
               <>
-                <p className="text-sm text-muted-foreground mb-1">
-                  <span className="text-xs">({secondsUntilRefresh}s)</span>
-                </p>
-                {typeof currentBalance === 'number' && currentBalance <= 0 ? (
-                  <Badge variant="destructive">Solde zéro de disponible</Badge>
-                ) : (
-                  <p className="text-4xl font-bold">
+                <div>
+                  <p className="text-sm text-muted-foreground">Solde disponible <span className="text-xs">({secondsUntilRefresh}s)</span></p>
+                  <p className="text-3xl font-bold text-green-600">
+                    {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(availableBalance ?? 0)}
+                  </p>
+                </div>
+                <Separator />
+                <div>
+                  <p className="text-sm text-muted-foreground">Solde comptable</p>
+                  <p className="text-xl font-semibold">
                     {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(currentBalance ?? 0)}
                   </p>
-                )}
+                </div>
               </>
             )}
           </CardContent>

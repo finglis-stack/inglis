@@ -14,18 +14,17 @@ export const useDebitAccountBalance = (accountId: string) => {
 
       if (error) throw error;
       
-      // Réinitialiser le compteur à chaque fetch
       setSecondsUntilRefresh(30);
       
-      // La fonction retourne un tableau avec un seul élément
       return data[0] || {
         current_balance: 0,
+        available_balance: 0,
         total_deposits: 0,
         total_withdrawals: 0,
       };
     },
-    refetchInterval: 30000, // Rafraîchir toutes les 30 secondes
-    staleTime: 25000, // Considérer les données comme fraîches pendant 25 secondes
+    refetchInterval: 30000,
+    staleTime: 25000,
   });
 
   useEffect(() => {
