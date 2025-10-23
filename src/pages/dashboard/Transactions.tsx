@@ -18,17 +18,23 @@ const Transactions = () => {
   const navigate = useNavigate();
 
   const [transactions, setTransactions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const totalPages = Math.ceil(totalCount / TRANSACTIONS_PER_PAGE);
 
   const fetchTransactions = useCallback(async () => {
+    if (!searchTerm) {
+      setTransactions([]);
+      setTotalCount(0);
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase.rpc('search_transactions', {
@@ -53,19 +59,19 @@ const Transactions = () => {
   }, [searchTerm, sortBy, sortOrder, currentPage]);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setSearchTerm(searchQuery);
-      setCurrentPage(1); // Reset to first page on new search
-    }, 500); // Debounce search input
+    if (hasSearched) {
+      fetchTransactions();
+    }
+  }, [fetchTransactions, hasSearched]);
 
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchQuery]);
-
-  useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchTerm(searchQuery);
+    setCurrentPage(1);
+    if (!hasSearched) {
+      setHasSearched(true);
+    }
+  };
 
   const handleSort = (column: string) => {
     if (sortBy === column) {
@@ -74,7 +80,7 @@ const Transactions = () => {
       setSortBy(column);
       setSortOrder('desc');
     }
-    setCurrentPage(1); // Reset to first page on sort change
+    setCurrentPage(1);
   };
 
   const SortableHeader = ({ column, label }: { column: string; label: string }) => (
@@ -93,89 +99,102 @@ const Transactions = () => {
       
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Historique des transactions</CardTitle>
-              <CardDescription>Recherchez et filtrez toutes les transactions de votre institution.</CardDescription>
-            </div>
-            <div className="relative w-full max-w-sm">
+          <CardTitle>Rechercher une transaction</CardTitle>
+          <CardDescription>Recherchez par nom, UUID de transaction ou numéro de carte.</CardDescription>
+          <form onSubmit={handleSearch} className="flex gap-2 pt-4">
+            <div className="relative w-full max-w-lg">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Rechercher par nom, UUID, carte..."
+                placeholder="Entrez votre recherche ici..."
                 className="pl-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-          </div>
+            <Button type="submit" disabled={loading}>
+              {loading ? t('users.searchingButton') : t('users.searchButton')}
+            </Button>
+          </form>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <SortableHeader column="profile_name" label="Titulaire" />
-                  <TableHead>Description</TableHead>
-                  <SortableHeader column="amount" label="Montant" />
-                  <SortableHeader column="status" label="Statut" />
-                  <SortableHeader column="created_at" label="Date" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  [...Array(5)].map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={5}><Skeleton className="h-6 w-full" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : transactions.length > 0 ? (
-                  transactions.map((tx) => (
-                    <TableRow key={tx.id} onClick={() => navigate(`/dashboard/transactions/${tx.id}`)} className="cursor-pointer">
-                      <TableCell className="font-medium">{tx.profile_name}</TableCell>
-                      <TableCell>{tx.description}</TableCell>
-                      <TableCell className={`font-mono ${tx.type === 'payment' ? 'text-green-600' : 'text-red-600'}`}>
-                        {tx.type === 'payment' ? '+' : '-'} {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(tx.amount)}
-                      </TableCell>
-                      <TableCell><Badge variant="outline">{tx.status}</Badge></TableCell>
-                      <TableCell>{new Date(tx.created_at).toLocaleString('fr-CA')}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24">
-                      {t('users.noResults')}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          <div className="flex items-center justify-between space-x-2 py-4">
-            <div className="text-sm text-muted-foreground">
-              {totalCount} résultat(s) trouvé(s).
+          {!hasSearched ? (
+            <div className="text-center py-24 border-2 border-dashed rounded-lg">
+              <Search className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Rechercher des transactions</h3>
+              <p className="mt-1 text-sm text-gray-500">Utilisez la barre de recherche ci-dessus pour commencer.</p>
             </div>
-            <div className="space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Précédent
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(p => p + 1)}
-                disabled={currentPage >= totalPages}
-              >
-                Suivant
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className="border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <SortableHeader column="profile_name" label="Titulaire" />
+                      <TableHead>Description</TableHead>
+                      <SortableHeader column="amount" label="Montant" />
+                      <SortableHeader column="status" label="Statut" />
+                      <SortableHeader column="created_at" label="Date" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loading ? (
+                      [...Array(5)].map((_, i) => (
+                        <TableRow key={i}>
+                          <TableCell colSpan={5}><Skeleton className="h-6 w-full" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : transactions.length > 0 ? (
+                      transactions.map((tx) => (
+                        <TableRow key={tx.id} onClick={() => navigate(`/dashboard/transactions/${tx.id}`)} className="cursor-pointer hover:bg-muted/50">
+                          <TableCell className="font-medium">{tx.profile_name}</TableCell>
+                          <TableCell>{tx.description}</TableCell>
+                          <TableCell className={`font-mono ${tx.type === 'payment' ? 'text-green-600' : 'text-red-600'}`}>
+                            {tx.type === 'payment' ? '+' : '-'} {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(tx.amount)}
+                          </TableCell>
+                          <TableCell><Badge variant="outline">{tx.status}</Badge></TableCell>
+                          <TableCell>{new Date(tx.created_at).toLocaleString('fr-CA')}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center h-24">
+                          {t('users.noResults')}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+              {totalCount > TRANSACTIONS_PER_PAGE && (
+                <div className="flex items-center justify-between space-x-2 py-4">
+                  <div className="text-sm text-muted-foreground">
+                    {totalCount} résultat(s) trouvé(s).
+                  </div>
+                  <div className="space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Précédent
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => p + 1)}
+                      disabled={currentPage >= totalPages}
+                    >
+                      Suivant
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
