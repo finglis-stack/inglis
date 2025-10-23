@@ -9,7 +9,7 @@ import { showError } from '@/utils/toast';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
-import TransactionMap from '@/components/dashboard/TransactionMap';
+import TransactionMap from '@/components/dashboard/transactions/TransactionMap';
 
 const TransactionDetails = () => {
   const { t } = useTranslation('dashboard');
