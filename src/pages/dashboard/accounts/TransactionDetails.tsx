@@ -3,12 +3,13 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Clock, Hash, Globe, Percent, Calendar, Info } from 'lucide-react';
+import { ArrowLeft, Clock, Hash, Globe, Percent, Calendar, Info, MapPin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
+import TransactionMap from '@/components/dashboard/TransactionMap';
 
 const TransactionDetails = () => {
   const { t } = useTranslation('dashboard');
@@ -16,6 +17,9 @@ const TransactionDetails = () => {
   const navigate = useNavigate();
   const [transaction, setTransaction] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [location, setLocation] = useState<any>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTransaction = async () => {
@@ -43,6 +47,30 @@ const TransactionDetails = () => {
     };
     fetchTransaction();
   }, [id, navigate, t]);
+
+  useEffect(() => {
+    if (transaction?.ip_address) {
+      const fetchLocation = async () => {
+        setLocationLoading(true);
+        setLocationError(null);
+        try {
+          const response = await fetch(`https://ipapi.co/${transaction.ip_address}/json/`);
+          const data = await response.json();
+          if (data.error) {
+            setLocationError(data.reason || 'Impossible de géolocaliser l\'adresse IP.');
+          } else {
+            setLocation(data);
+          }
+        } catch (e) {
+          console.error("Erreur de géolocalisation:", e);
+          setLocationError('Le service de géolocalisation est indisponible.');
+        } finally {
+          setLocationLoading(false);
+        }
+      };
+      fetchLocation();
+    }
+  }, [transaction]);
 
   const getPotentialInterest = () => {
     if (!transaction || !transaction.credit_accounts || transaction.type !== 'purchase') {
@@ -113,6 +141,24 @@ const TransactionDetails = () => {
                     <p className="text-lg font-semibold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(interest.monthly)}</p>
                   </div>
                 </div>
+              </div>
+            </>
+          )}
+
+          {transaction.ip_address && (
+            <>
+              <Separator />
+              <div>
+                <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><MapPin className="h-5 w-5" /> Géolocalisation (approximative)</h3>
+                {locationLoading ? (
+                  <Skeleton className="h-[250px] w-full rounded-lg" />
+                ) : location && location.latitude && location.longitude ? (
+                  <TransactionMap latitude={location.latitude} longitude={location.longitude} />
+                ) : (
+                  <div className="h-[250px] w-full rounded-lg bg-gray-100 flex items-center justify-center text-center p-4">
+                    <p className="text-sm text-muted-foreground">{locationError || "Données de localisation non disponibles pour cette adresse IP."}</p>
+                  </div>
+                )}
               </div>
             </>
           )}
