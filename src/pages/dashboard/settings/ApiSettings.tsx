@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PlusCircle, Copy, Check, Trash2, Loader2, FlaskConical } from 'lucide-react';
+import { PlusCircle, Copy, Check, Trash2, Loader2, FlaskConical, UserPlus } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 
@@ -196,6 +196,40 @@ fetch(apiUrl, {
 .catch(console.error);
   `;
 
+  const profileCreationExample = `
+// Sur votre serveur backend
+const apiKey = 'sk_live_...';
+const apiUrl = 'https://bsmclnbeywqosuhijhae.supabase.co/functions/v1/profiles';
+
+const newProfileData = {
+  full_name: "John Doe",
+  email: "john.doe@example.com",
+  pin: "1234", // NIP à 4 chiffres
+  phone: "514-555-1234", // Optionnel
+  dob: "1990-01-15", // Optionnel, format AAAA-MM-JJ
+  sin: "123456789", // Optionnel
+  address: { // Optionnel
+    "street": "123 rue Principale",
+    "city": "Montréal",
+    "province": "QC",
+    "postalCode": "H1A 1A1",
+    "country": "Canada"
+  }
+};
+
+fetch(apiUrl, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': \`Bearer \${apiKey}\`
+  },
+  body: JSON.stringify(newProfileData)
+})
+.then(res => res.json())
+.then(console.log)
+.catch(console.error);
+  `;
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">{t('settings.apiKeys')}</h1>
@@ -289,6 +323,27 @@ fetch(apiUrl, {
               Exécuter la transaction de test
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><UserPlus className="h-5 w-5" /> API de Création de Profils Utilisateurs</CardTitle>
+          <CardDescription>Utilisez cet endpoint pour créer de nouveaux profils utilisateurs (end-users) via votre backend.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm mb-4">
+            Effectuez une requête <code className="bg-muted p-1 rounded font-mono text-xs">POST</code> à l'URL suivante avec votre clé API secrète.
+          </p>
+          <pre className="bg-gray-900 text-white p-4 rounded-md text-sm overflow-x-auto mb-4"><code>{profileCreationExample}</code></pre>
+          <h4 className="font-semibold">Réponse en cas de succès (201 Created)</h4>
+          <pre className="bg-gray-900 text-white p-4 rounded-md text-sm overflow-x-auto mt-2"><code>
+{`{
+  "success": true,
+  "message": "User profile created successfully.",
+  "profile_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+}`}
+          </code></pre>
         </CardContent>
       </Card>
 
