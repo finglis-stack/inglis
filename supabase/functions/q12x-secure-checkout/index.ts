@@ -67,7 +67,7 @@ serve(async (req) => {
       profile_id: profile.id,
       risk_score: riskScore,
       decision: decision,
-      signals: { ...fraud_signals, ipAddress, riskReasons },
+      signals: { ...fraud_signals, ipAddress, riskReasons, card_token },
     }).select('id').single();
     if (logError) console.error("Failed to log risk assessment:", logError.message);
 
