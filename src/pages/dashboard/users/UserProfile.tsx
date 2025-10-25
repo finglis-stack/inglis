@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import PersonalProfile from '@/components/dashboard/users/PersonalProfile';
 import CorporateProfile from '@/components/dashboard/users/CorporateProfile';
@@ -20,6 +20,7 @@ import RiskAnalysis from '@/components/dashboard/users/RiskAnalysis';
 
 const UserProfile = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { t } = useTranslation('dashboard');
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);

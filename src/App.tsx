@@ -64,6 +64,7 @@ import PendingAuthorizations from "@/pages/dashboard/accounts/PendingAuthorizati
 import ApiSettings from "@/pages/dashboard/settings/ApiSettings";
 import HostedPaymentForm from "@/pages/HostedPaymentForm";
 import HostedFormLayout from '@/pages/HostedFormLayout';
+import RiskAnalysisDetails from '@/pages/dashboard/risk/RiskAnalysisDetails';
 
 // --- Q12xApp Imports ---
 import Q12xLogin from "@/pages/q12x/Login";
@@ -112,6 +113,7 @@ const MainAppRoutes = () => (
       <Route path="settings/api" element={<ApiSettings />} />
       <Route path="users" element={<Users />} />
       <Route path="users/profile/:id" element={<UserProfile />} />
+      <Route path="risk-analysis/:assessmentId" element={<RiskAnalysisDetails />} />
       <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
       <Route path="accounts/credit/:accountId" element={<CreditAccountDetails />} />
       <Route path="accounts/debit/:accountId/pending-authorizations" element={<PendingAuthorizations />} />

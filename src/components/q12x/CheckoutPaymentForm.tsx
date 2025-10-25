@@ -63,6 +63,7 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
   const [expiryEntryDuration, setExpiryEntryDuration] = useState<number | null>(null);
   const pinEntryStart = useRef<number | null>(null);
   const [pinEntryDuration, setPinEntryDuration] = useState<number | null>(null);
+  const pinTimestamps = useRef<number[]>([]);
 
   useEffect(() => {
     if (cardNumber.length === 18) {
@@ -105,6 +106,12 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
   };
 
   const handlePinChange = (value: string) => {
+    if (value.length > pin.length) { // Only record timestamps on new digit entry
+      pinTimestamps.current.push(Date.now());
+    } else { // User is deleting
+      pinTimestamps.current.pop();
+    }
+
     if (value.length === 1 && !pinEntryStart.current) {
       pinEntryStart.current = Date.now();
     }
@@ -112,7 +119,6 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
       setPinEntryDuration(Date.now() - pinEntryStart.current);
     }
     if (value.length < 4) {
-      pinEntryStart.current = null;
       setPinEntryDuration(null);
     }
     setPin(value);
@@ -138,6 +144,16 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
       showError(t('publicCheckout.form.invalidPin'));
       return;
     }
+
+    let pinInterDigitAvgMs = null;
+    if (pinTimestamps.current.length === 4) {
+      const diffs = [];
+      for (let i = 1; i < pinTimestamps.current.length; i++) {
+        diffs.push(pinTimestamps.current[i] - pinTimestamps.current[i-1]);
+      }
+      pinInterDigitAvgMs = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+    }
+
     onSubmit(
       {
         card_number: parsedCard,
@@ -148,6 +164,7 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
         pan_entry_duration_ms: panEntryDuration,
         expiry_entry_duration_ms: expiryEntryDuration,
         pin_entry_duration_ms: pinEntryDuration,
+        pin_inter_digit_avg_ms: pinInterDigitAvgMs,
       }
     );
   };
