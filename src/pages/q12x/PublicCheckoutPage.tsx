@@ -7,10 +7,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, Lock } from 'lucide-react';
 import { CheckoutPaymentForm } from '@/components/q12x/CheckoutPaymentForm';
 import ProcessingPaymentModal from '@/components/q12x/ProcessingPaymentModal';
+import { useTranslation, Trans } from 'react-i18next';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 const PublicCheckoutPage = () => {
   const { checkoutId } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation('q12x');
   const [checkout, setCheckout] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -47,7 +50,7 @@ const PublicCheckoutPage = () => {
     try {
       const amount = checkout.is_amount_variable ? parseFloat(variableAmount) : checkout.amount;
       if (isNaN(amount) || amount <= 0) {
-        setPaymentError("Montant invalide.");
+        setPaymentError(t('publicCheckout.form.invalidAmount'));
         setShowProcessingModal(false);
         setProcessing(false);
         return;
@@ -69,12 +72,11 @@ const PublicCheckoutPage = () => {
 
       if (paymentError) throw paymentError;
 
-      // Redirection vers la page de succès
       navigate(`/payment-success?transactionId=${paymentData.transaction.transaction_id}&amount=${amount}`);
 
     } catch (err) {
       setShowProcessingModal(false);
-      setPaymentError("Le paiement a été refusé par l'institution émettrice de la carte.");
+      setPaymentError(t('publicCheckout.form.paymentRefused'));
     } finally {
       setProcessing(false);
     }
@@ -93,8 +95,8 @@ const PublicCheckoutPage = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 text-center">
         <div>
           <h1 className="text-2xl font-bold font-mono text-gray-900 mb-4">Q12x</h1>
-          <h2 className="text-xl font-semibold text-gray-800">Lien de paiement invalide</h2>
-          <p className="text-muted-foreground mt-2">Ce lien a peut-être expiré ou été désactivé.</p>
+          <h2 className="text-xl font-semibold text-gray-800">{t('publicCheckout.invalidLink')}</h2>
+          <p className="text-muted-foreground mt-2">{t('publicCheckout.invalidLinkDesc')}</p>
         </div>
       </div>
     );
@@ -105,18 +107,20 @@ const PublicCheckoutPage = () => {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row font-sans">
       <ProcessingPaymentModal isOpen={showProcessingModal} />
-      {/* Colonne de gauche : Résumé */}
       <div className="w-full lg:w-1/2 bg-gray-50 p-8 lg:p-12 flex flex-col justify-center">
         <div className="max-w-md mx-auto w-full">
-          <h1 className="text-2xl font-bold font-mono text-gray-900 mb-6">Q12x</h1>
-          <p className="text-sm text-gray-500">Paiement à</p>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold font-mono text-gray-900">Q12x</h1>
+            <LanguageSwitcher />
+          </div>
+          <p className="text-sm text-gray-500">{t('publicCheckout.paymentTo')}</p>
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">{checkout.merchant_accounts.name}</h2>
           {checkout.description && <p className="text-gray-600 mb-6">{checkout.description}</p>}
           
           <div className="border-t border-b border-gray-200 py-4">
             {checkout.is_amount_variable ? (
               <div className="grid gap-2">
-                <Label htmlFor="amount">Montant à payer</Label>
+                <Label htmlFor="amount">{t('publicCheckout.amountToPay')}</Label>
                 <Input 
                   id="amount" 
                   type="number" 
@@ -128,7 +132,7 @@ const PublicCheckoutPage = () => {
               </div>
             ) : (
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Total</span>
+                <span className="text-gray-600">{t('publicCheckout.total')}</span>
                 <span className="text-2xl font-semibold text-gray-900">
                   {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(checkout.amount)}
                 </span>
@@ -137,16 +141,15 @@ const PublicCheckoutPage = () => {
           </div>
           <div className="mt-8 text-xs text-gray-400 flex items-center justify-center gap-2">
             <Lock className="h-3 w-3" />
-            <span>Paiements sécurisés par Inglis Dominium</span>
+            <span>{t('publicCheckout.securePayment')}</span>
           </div>
         </div>
       </div>
 
-      {/* Colonne de droite : Formulaire de paiement */}
       <div className="w-full lg:w-1/2 bg-white p-8 lg:p-12 flex flex-col justify-center">
         <div className="max-w-md w-full mx-auto">
-          <h3 className="text-xl font-semibold mb-1">Informations de paiement</h3>
-          <p className="text-sm text-muted-foreground mb-6">Entrez les détails de votre carte Inglis Dominium pour continuer.</p>
+          <h3 className="text-xl font-semibold mb-1">{t('publicCheckout.paymentInfo')}</h3>
+          <p className="text-sm text-muted-foreground mb-6">{t('publicCheckout.paymentInfoDesc')}</p>
           <CheckoutPaymentForm 
             onSubmit={handlePaymentSubmit} 
             processing={processing} 
@@ -154,7 +157,16 @@ const PublicCheckoutPage = () => {
             error={paymentError}
           />
           <div className="text-center mt-6 text-xs text-gray-400">
-            <p>En procédant au paiement, vous acceptez les <a href="#" className="underline hover:text-gray-600">Termes</a> et la <a href="#" className="underline hover:text-gray-600">Politique de confidentialité</a>.</p>
+            <p>
+              <Trans
+                i18nKey="publicCheckout.terms"
+                t={t}
+                components={[
+                  <a href="#" className="underline hover:text-gray-600" />,
+                  <a href="#" className="underline hover:text-gray-600" />,
+                ]}
+              />
+            </p>
           </div>
         </div>
       </div>

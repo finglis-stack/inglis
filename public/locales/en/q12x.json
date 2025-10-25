@@ -1,0 +1,126 @@
+{
+  "login": {
+    "title": "Login",
+    "subtitle": "Access your merchant dashboard.",
+    "emailLabel": "Email address",
+    "passwordLabel": "Password",
+    "button": "Sign In",
+    "loading": "Signing in...",
+    "noAccount": "Don't have an account yet?",
+    "signUp": "Sign up"
+  },
+  "dashboardLayout": {
+    "navDashboard": "Dashboard",
+    "navTransactions": "Transactions",
+    "navCheckouts": "Checkouts",
+    "signOut": "Sign Out"
+  },
+  "dashboard": {
+    "welcome": "Welcome, {{name}}!",
+    "subtitle": "Here is an overview of your payment activity.",
+    "todayRevenue": "Today's Revenue",
+    "availableBalance": "Available Balance for Payout",
+    "availableBalanceDesc": "Total settled amount ready to be transferred.",
+    "inTransitBalance": "In-transit Balance",
+    "inTransitBalanceDesc": "Total amount of captured transactions."
+  },
+  "transactions": {
+    "title": "Transaction History",
+    "table": {
+      "date": "Date",
+      "description": "Description",
+      "status": "Status",
+      "availability": "Availability",
+      "amount": "Amount",
+      "loading": "Loading...",
+      "noTransactions": "No transactions found."
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{page}}"
+    }
+  },
+  "transactionDetails": {
+    "back": "Back to transactions",
+    "title": "Transaction Details",
+    "amount": "Amount",
+    "description": "Description",
+    "date": "Date",
+    "fundsAvailability": "Funds Availability",
+    "cardUsed": "Card Used",
+    "cardIssuer": "Card Issuer",
+    "interchangeFee": "Interchange Fee",
+    "interchangeFeeValue": "$0.00",
+    "interchangeFeeDesc": "Transactions on the Inglis Dominium network have no interchange fees.",
+    "geolocation": "Geolocation (approximate)",
+    "geolocationError": "The geolocation service is unavailable.",
+    "geolocationUnavailable": "Location data is not available for this IP address."
+  },
+  "checkouts": {
+    "title": "Checkouts",
+    "subtitle": "Create and manage your payment links.",
+    "create": "Create Checkout",
+    "listTitle": "Your Payment Links",
+    "listDesc": "Share these links to receive payments.",
+    "colName": "Name",
+    "colAmount": "Amount",
+    "colStatus": "Status",
+    "colDate": "Creation Date",
+    "colActions": "Actions",
+    "amountVariable": "Variable",
+    "noCheckouts": "No checkouts created yet.",
+    "linkCopied": "Link copied!"
+  },
+  "newCheckout": {
+    "title": "Create a New Checkout",
+    "desc": "Set up a reusable payment link.",
+    "nameLabel": "Checkout Name",
+    "nameDesc": "An internal name to help you identify it.",
+    "descriptionLabel": "Description (Optional)",
+    "descriptionDesc": "Will be displayed to the customer on the payment page.",
+    "amountLabel": "Amount",
+    "variableAmountLabel": "Allow the customer to set the amount",
+    "successUrlLabel": "Success URL (Optional)",
+    "cancelUrlLabel": "Cancel URL (Optional)",
+    "createButton": "Create Checkout",
+    "cancelButton": "Cancel"
+  },
+  "publicCheckout": {
+    "invalidLink": "Invalid Payment Link",
+    "invalidLinkDesc": "This link may have expired or been disabled.",
+    "paymentTo": "Payment to",
+    "total": "Total",
+    "amountToPay": "Amount to pay",
+    "securePayment": "Secure payments by Inglis Dominium",
+    "paymentInfo": "Payment Information",
+    "paymentInfoDesc": "Enter your Inglis Dominium card details to continue.",
+    "terms": "By proceeding with the payment, you agree to the <0>Terms</0> and <1>Privacy Policy</1>.",
+    "form": {
+      "cardNumber": "Card Number",
+      "expiry": "Expiry (MM/YY)",
+      "pin": "PIN",
+      "pay": "Pay {{amount}}",
+      "modifyCard": "Modify card number",
+      "invalidCard": "The card number is invalid.",
+      "invalidExpiry": "Expiry date must be in MM/YY format.",
+      "invalidPin": "PIN must be 4 digits.",
+      "paymentRefused": "The payment was declined by the card's issuing institution."
+    }
+  },
+  "paymentSuccess": {
+    "title": "Payment Successful!",
+    "desc": "Your transaction has been completed successfully.",
+    "amountPaid": "Amount Paid:",
+    "transactionId": "Transaction ID:",
+    "close": "Close"
+  },
+  "processingModal": {
+    "title": "Processing your payment",
+    "desc": "Please wait while we communicate with your financial institution."
+  },
+  "availability": {
+    "available": "Available",
+    "in": "in"
+  }
+}

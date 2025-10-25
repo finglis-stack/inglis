@@ -1,0 +1,126 @@
+{
+  "login": {
+    "title": "Connexion",
+    "subtitle": "Accédez à votre tableau de bord marchand.",
+    "emailLabel": "Adresse e-mail",
+    "passwordLabel": "Mot de passe",
+    "button": "Se connecter",
+    "loading": "Connexion...",
+    "noAccount": "Pas encore de compte ?",
+    "signUp": "Inscrivez-vous"
+  },
+  "dashboardLayout": {
+    "navDashboard": "Tableau de bord",
+    "navTransactions": "Transactions",
+    "navCheckouts": "Checkouts",
+    "signOut": "Se déconnecter"
+  },
+  "dashboard": {
+    "welcome": "Bienvenue, {{name}} !",
+    "subtitle": "Voici un aperçu de votre activité de paiement.",
+    "todayRevenue": "Recettes d'aujourd'hui",
+    "availableBalance": "Solde disponible pour virement",
+    "availableBalanceDesc": "Montant total réglé et prêt à être viré.",
+    "inTransitBalance": "Solde en transit",
+    "inTransitBalanceDesc": "Montant total des transactions capturées."
+  },
+  "transactions": {
+    "title": "Historique des Transactions",
+    "table": {
+      "date": "Date",
+      "description": "Description",
+      "status": "Statut",
+      "availability": "Disponibilité",
+      "amount": "Montant",
+      "loading": "Chargement...",
+      "noTransactions": "Aucune transaction trouvée."
+    },
+    "pagination": {
+      "previous": "Précédent",
+      "next": "Suivant",
+      "page": "Page {{page}}"
+    }
+  },
+  "transactionDetails": {
+    "back": "Retour aux transactions",
+    "title": "Détails de la Transaction",
+    "amount": "Montant",
+    "description": "Description",
+    "date": "Date",
+    "fundsAvailability": "Disponibilité des fonds",
+    "cardUsed": "Carte Utilisée",
+    "cardIssuer": "Émetteur de la carte",
+    "interchangeFee": "Frais d'interchange",
+    "interchangeFeeValue": "0,00 $",
+    "interchangeFeeDesc": "Les transactions sur le réseau Inglis Dominium n'ont aucun frais d'interchange.",
+    "geolocation": "Géolocalisation (approximative)",
+    "geolocationError": "Le service de géolocalisation est indisponible.",
+    "geolocationUnavailable": "Données de localisation non disponibles pour cette adresse IP."
+  },
+  "checkouts": {
+    "title": "Checkouts",
+    "subtitle": "Créez et gérez vos liens de paiement.",
+    "create": "Créer un Checkout",
+    "listTitle": "Vos Liens de Paiement",
+    "listDesc": "Partagez ces liens pour recevoir des paiements.",
+    "colName": "Nom",
+    "colAmount": "Montant",
+    "colStatus": "Statut",
+    "colDate": "Date de création",
+    "colActions": "Actions",
+    "amountVariable": "Variable",
+    "noCheckouts": "Aucun checkout créé.",
+    "linkCopied": "Lien copié !"
+  },
+  "newCheckout": {
+    "title": "Créer un nouveau Checkout",
+    "desc": "Configurez un lien de paiement réutilisable.",
+    "nameLabel": "Nom du Checkout",
+    "nameDesc": "Un nom interne pour vous aider à l'identifier.",
+    "descriptionLabel": "Description (Optionnel)",
+    "descriptionDesc": "Sera affichée au client sur la page de paiement.",
+    "amountLabel": "Montant",
+    "variableAmountLabel": "Permettre au client de définir le montant",
+    "successUrlLabel": "URL de succès (Optionnel)",
+    "cancelUrlLabel": "URL d'annulation (Optionnel)",
+    "createButton": "Créer le Checkout",
+    "cancelButton": "Annuler"
+  },
+  "publicCheckout": {
+    "invalidLink": "Lien de paiement invalide",
+    "invalidLinkDesc": "Ce lien a peut-être expiré ou été désactivé.",
+    "paymentTo": "Paiement à",
+    "total": "Total",
+    "amountToPay": "Montant à payer",
+    "securePayment": "Paiements sécurisés par Inglis Dominium",
+    "paymentInfo": "Informations de paiement",
+    "paymentInfoDesc": "Entrez les détails de votre carte Inglis Dominium pour continuer.",
+    "terms": "En procédant au paiement, vous acceptez les <0>Termes</0> et la <1>Politique de confidentialité</1>.",
+    "form": {
+      "cardNumber": "Numéro de carte",
+      "expiry": "Expiration (MM/AA)",
+      "pin": "NIP",
+      "pay": "Payer {{amount}}",
+      "modifyCard": "Modifier le numéro de carte",
+      "invalidCard": "Le numéro de carte est invalide.",
+      "invalidExpiry": "La date d'expiration doit être au format MM/AA.",
+      "invalidPin": "Le NIP doit contenir 4 chiffres.",
+      "paymentRefused": "Le paiement a été refusé par l'institution émettrice de la carte."
+    }
+  },
+  "paymentSuccess": {
+    "title": "Paiement réussi !",
+    "desc": "Votre transaction a été complétée avec succès.",
+    "amountPaid": "Montant payé :",
+    "transactionId": "ID de transaction :",
+    "close": "Fermer"
+  },
+  "processingModal": {
+    "title": "Traitement de votre paiement",
+    "desc": "Veuillez patienter pendant que nous communiquons avec votre institution financière."
+  },
+  "availability": {
+    "available": "Disponible",
+    "in": "dans"
+  }
+}

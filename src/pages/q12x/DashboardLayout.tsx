@@ -4,9 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { LayoutDashboard, ArrowRightLeft, Link as LinkIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 const Q12xDashboardLayout = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('q12x');
 
   useEffect(() => {
     const checkUser = async () => {
@@ -40,21 +43,24 @@ const Q12xDashboardLayout = () => {
             <nav className="flex items-center gap-4">
               <NavLink to="/dashboard" end className={navLinkClasses}>
                 <LayoutDashboard className="h-4 w-4" />
-                Tableau de bord
+                {t('dashboardLayout.navDashboard')}
               </NavLink>
               <NavLink to="/dashboard/transactions" className={navLinkClasses}>
                 <ArrowRightLeft className="h-4 w-4" />
-                Transactions
+                {t('dashboardLayout.navTransactions')}
               </NavLink>
               <NavLink to="/dashboard/checkouts" className={navLinkClasses}>
                 <LinkIcon className="h-4 w-4" />
-                Checkouts
+                {t('dashboardLayout.navCheckouts')}
               </NavLink>
             </nav>
           </div>
-          <Button onClick={handleSignOut} variant="ghost" className="hover:bg-gray-200">
-            Se déconnecter
-          </Button>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <Button onClick={handleSignOut} variant="ghost" className="hover:bg-gray-200">
+              {t('dashboardLayout.signOut')}
+            </Button>
+          </div>
         </div>
       </header>
       <main className="container mx-auto p-8">

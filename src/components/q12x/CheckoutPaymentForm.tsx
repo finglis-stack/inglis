@@ -7,6 +7,7 @@ import { showError } from '@/utils/toast';
 import { InputOTP, InputOTPGroup } from '@/components/ui/input-otp';
 import { cn, validateLuhnAlphanumeric } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useTranslation } from 'react-i18next';
 
 interface CheckoutPaymentFormProps {
   onSubmit: (cardDetails: any) => void;
@@ -47,6 +48,7 @@ const formatExpiry = (value: string): string => {
 };
 
 export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: CheckoutPaymentFormProps) => {
+  const { t } = useTranslation('q12x');
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [pin, setPin] = useState('');
@@ -61,13 +63,13 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
         setCardNumberError(null);
       } else {
         setShowDetails(false);
-        setCardNumberError("Le numéro de carte est invalide.");
+        setCardNumberError(t('publicCheckout.form.invalidCard'));
       }
     } else {
       setShowDetails(false);
       setCardNumberError(null);
     }
-  }, [cardNumber]);
+  }, [cardNumber, t]);
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const cleaned = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -90,15 +92,15 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
     e.preventDefault();
     const parsedCard = parseCardNumber(cardNumber);
     if (!parsedCard || !validateLuhnAlphanumeric(cardNumber)) {
-      showError("Le numéro de carte est invalide.");
+      showError(t('publicCheckout.form.invalidCard'));
       return;
     }
     if (!/^\d{2}\/\d{2}$/.test(expiry)) {
-      showError("La date d'expiration doit être au format MM/AA.");
+      showError(t('publicCheckout.form.invalidExpiry'));
       return;
     }
     if (pin.length !== 4) {
-      showError("Le NIP doit contenir 4 chiffres.");
+      showError(t('publicCheckout.form.invalidPin'));
       return;
     }
     onSubmit({
@@ -123,7 +125,7 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
       )}
       <div className="space-y-4">
         <div className="grid gap-2">
-          <Label htmlFor="card-number">Numéro de carte</Label>
+          <Label htmlFor="card-number">{t('publicCheckout.form.cardNumber')}</Label>
           <Input 
             ref={cardNumberInputRef}
             id="card-number" 
@@ -142,11 +144,11 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
         )}>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="expiry">Expiration (MM/AA)</Label>
+              <Label htmlFor="expiry">{t('publicCheckout.form.expiry')}</Label>
               <Input id="expiry" placeholder="MM/AA" value={expiry} onChange={handleExpiryChange} required={showDetails} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="pin">NIP</Label>
+              <Label htmlFor="pin">{t('publicCheckout.form.pin')}</Label>
               <InputOTP
                 id="pin"
                 maxLength={4}
@@ -177,11 +179,11 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
       <div className="space-y-2">
         <Button type="submit" className="w-full bg-gray-800 hover:bg-gray-900 text-white" disabled={processing || !isFormComplete}>
           {processing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Payer {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(amount)}
+          {t('publicCheckout.form.pay', { amount: new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(amount) })}
         </Button>
         {showDetails && (
           <Button variant="link" className="w-full" type="button" onClick={handleModifyCardNumber}>
-            Modifier le numéro de carte
+            {t('publicCheckout.form.modifyCard')}
           </Button>
         )}
       </div>
