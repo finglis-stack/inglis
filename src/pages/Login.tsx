@@ -5,31 +5,34 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
-import { showError } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation('login');
+  const { t } = useTranslation(['login', 'common']);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMessage('');
+
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (signInError) {
-      showError(signInError.message);
+      setErrorMessage(signInError.message);
       setLoading(false);
       return;
     }
 
-    // Check if the user is an institution user
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: institution, error: institutionError } = await supabase
@@ -39,7 +42,7 @@ const Login = () => {
         .single();
 
       if (institutionError || !institution) {
-        showError(t('accessDeniedInstitution'));
+        setErrorMessage(t('accessDeniedInstitution'));
         await supabase.auth.signOut();
         setLoading(false);
         return;
@@ -49,6 +52,16 @@ const Login = () => {
     navigate('/dashboard');
     setLoading(false);
   };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (errorMessage) setErrorMessage('');
+  }
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (errorMessage) setErrorMessage('');
+  }
 
   return (
     <div
@@ -68,6 +81,14 @@ const Login = () => {
           <p className="text-gray-500">{t('subtitle')}</p>
         </div>
 
+        {errorMessage && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>{t('error', { ns: 'common' })}</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <Label htmlFor="email">{t('emailLabel')}</Label>
@@ -78,7 +99,7 @@ const Login = () => {
               autoComplete="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               className="mt-1"
             />
           </div>
@@ -99,7 +120,7 @@ const Login = () => {
               autoComplete="current-password"
               required
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               className="mt-1"
             />
           </div>
