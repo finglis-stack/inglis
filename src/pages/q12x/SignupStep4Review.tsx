@@ -4,9 +4,11 @@ import { useQ12xOnboarding } from '@/context/Q12xOnboardingContext';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
+import { useTranslation } from 'react-i18next';
 
 const Step4Review = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('q12x');
   const { onboardingData, resetData } = useQ12xOnboarding();
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +25,7 @@ const Step4Review = () => {
     }
 
     if (!signUpData.user) {
-      showError("La création du compte a échoué.");
+      showError(t('signup.step4.creationFailed'));
       setLoading(false);
       return;
     }
@@ -38,9 +40,9 @@ const Step4Review = () => {
     });
 
     if (insertError) {
-      showError(`Erreur lors de la création du profil marchand : ${insertError.message}`);
+      showError(t('signup.step4.profileCreationFailed', { message: insertError.message }));
     } else {
-      showSuccess("Compte créé avec succès ! Vous pouvez maintenant vous connecter.");
+      showSuccess(t('signup.step4.success'));
       resetData();
       navigate('/login');
     }
@@ -51,28 +53,28 @@ const Step4Review = () => {
     <div className="space-y-6">
       <div className="space-y-4 p-4 border rounded-md">
         <div>
-          <h4 className="font-semibold">Nom du commerce</h4>
+          <h4 className="font-semibold">{t('signup.step4.businessName')}</h4>
           <p className="text-muted-foreground">{onboardingData.name}</p>
         </div>
         <div>
-          <h4 className="font-semibold">Email</h4>
+          <h4 className="font-semibold">{t('signup.step4.email')}</h4>
           <p className="text-muted-foreground">{onboardingData.email}</p>
         </div>
         <div>
-          <h4 className="font-semibold">Informations sur l'entreprise</h4>
-          <p className="text-muted-foreground">Numéro d'entreprise: {onboardingData.business_number || 'N/A'}</p>
-          <p className="text-muted-foreground">Juridiction: {onboardingData.jurisdiction || 'N/A'}</p>
+          <h4 className="font-semibold">{t('signup.step4.businessInfo')}</h4>
+          <p className="text-muted-foreground">{t('signup.step4.businessNumber')}: {onboardingData.business_number || t('signup.step4.notProvided')}</p>
+          <p className="text-muted-foreground">{t('signup.step4.jurisdiction')}: {onboardingData.jurisdiction || t('signup.step4.notProvided')}</p>
         </div>
         <div>
-          <h4 className="font-semibold">Contact</h4>
-          <p className="text-muted-foreground">Téléphone: {onboardingData.phoneNumber || 'N/A'}</p>
-          <p className="text-muted-foreground">Adresse: {onboardingData.address?.street || 'N/A'}</p>
+          <h4 className="font-semibold">{t('signup.step4.contact')}</h4>
+          <p className="text-muted-foreground">{t('signup.step4.phone')}: {onboardingData.phoneNumber || t('signup.step4.notProvided')}</p>
+          <p className="text-muted-foreground">{t('signup.step4.address')}: {onboardingData.address?.street || t('signup.step4.notProvided')}</p>
         </div>
       </div>
       <div className="flex justify-between mt-4">
-        <Button variant="outline" type="button" onClick={() => navigate('/contact')} disabled={loading}>Précédent</Button>
+        <Button variant="outline" type="button" onClick={() => navigate('/contact')} disabled={loading}>{t('signup.step4.previous')}</Button>
         <Button onClick={handleSubmit} disabled={loading}>
-          {loading ? 'Création en cours...' : 'Terminer l\'inscription'}
+          {loading ? t('signup.step4.submitting') : t('signup.step4.submit')}
         </Button>
       </div>
     </div>

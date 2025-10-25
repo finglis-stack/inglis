@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { showError } from '@/utils/toast';
+import { useTranslation, Trans } from 'react-i18next';
 
 const Step1Account = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('q12x');
   const { onboardingData, updateData } = useQ12xOnboarding();
   const [formData, setFormData] = useState({
     name: onboardingData.name || '',
@@ -24,7 +26,7 @@ const Step1Account = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreed) {
-      showError("Vous devez accepter les conditions d'utilisation.");
+      showError(t('signup.step1.termsError'));
       return;
     }
     updateData(formData);
@@ -35,29 +37,36 @@ const Step1Account = () => {
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid gap-2">
-          <Label htmlFor="name">Nom du commerce</Label>
+          <Label htmlFor="name">{t('signup.step1.nameLabel')}</Label>
           <Input id="name" required value={formData.name} onChange={handleChange} />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="email">Adresse e-mail</Label>
+          <Label htmlFor="email">{t('signup.step1.emailLabel')}</Label>
           <Input id="email" type="email" required value={formData.email} onChange={handleChange} />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="password">Mot de passe</Label>
+          <Label htmlFor="password">{t('signup.step1.passwordLabel')}</Label>
           <Input id="password" type="password" required value={formData.password} onChange={handleChange} />
         </div>
         <div className="flex items-center space-x-2">
           <Checkbox id="terms" checked={agreed} onCheckedChange={(checked) => setAgreed(checked === true)} />
           <Label htmlFor="terms" className="text-sm font-normal">
-            J'accepte les <a href="#" className="underline">conditions d'utilisation</a> et la <a href="#" className="underline">politique de confidentialité</a>.
+            <Trans
+              i18nKey="signup.step1.terms"
+              t={t}
+              components={[
+                <a href="#" className="underline" />,
+                <a href="#" className="underline" />,
+              ]}
+            />
           </Label>
         </div>
-        <Button type="submit" className="w-full">Suivant</Button>
+        <Button type="submit" className="w-full">{t('signup.step1.next')}</Button>
       </form>
       <p className="text-center text-sm text-gray-500 mt-6">
-        Déjà un compte ?{' '}
+        {t('signup.step1.alreadyAccount')}{' '}
         <Link to="/login" className="font-medium text-indigo-600 hover:underline">
-          Connectez-vous
+          {t('signup.step1.signIn')}
         </Link>
       </p>
     </>

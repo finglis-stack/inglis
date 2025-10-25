@@ -9,6 +9,69 @@
     "noAccount": "Don't have an account yet?",
     "signUp": "Sign up"
   },
+  "authLayout": {
+    "bgTitle": "Manage your transactions. Simply.",
+    "bgSubtitle": "Accept Inglis Dominium payments and track your revenue in real-time."
+  },
+  "signup": {
+    "title": "Create your merchant account",
+    "subtitle": "Follow the steps to start accepting payments.",
+    "step1": {
+      "nameLabel": "Business Name",
+      "emailLabel": "Email address",
+      "passwordLabel": "Password",
+      "terms": "I accept the <0>Terms of Use</0> and <1>Privacy Policy</1>.",
+      "termsError": "You must accept the terms of use.",
+      "next": "Next",
+      "alreadyAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "step2": {
+      "neqLabel": "Quebec Enterprise Number (NEQ)",
+      "neqDesc": "The NEQ is a 10-digit identifier assigned upon registration with the enterprise register.",
+      "legalFormLabel": "Business Legal Form",
+      "legalFormPlaceholder": "Select a legal form",
+      "types": {
+        "entreprise_individuelle": "Sole Proprietorship",
+        "societe_par_actions": "Corporation (Inc.)",
+        "societe_en_nom_collectif": "General Partnership",
+        "societe_en_commandite": "Limited Partnership",
+        "cooperative": "Cooperative",
+        "osbl": "Non-Profit Organization"
+      },
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "step3": {
+      "phoneLabel": "Phone Number (Optional)",
+      "addressLabel": "Address (Optional)",
+      "street": "Street",
+      "city": "City",
+      "province": "Province",
+      "postalCode": "Postal Code",
+      "country": "Country",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "step4": {
+      "title": "Review",
+      "businessName": "Business Name",
+      "email": "Email",
+      "businessInfo": "Business Information",
+      "businessNumber": "Business Number",
+      "jurisdiction": "Jurisdiction",
+      "contact": "Contact",
+      "phone": "Phone",
+      "address": "Address",
+      "notProvided": "N/A",
+      "previous": "Previous",
+      "submitting": "Creating account...",
+      "submit": "Finish Signup",
+      "success": "Account created successfully! You can now log in.",
+      "creationFailed": "Account creation failed.",
+      "profileCreationFailed": "Error creating merchant profile: {{message}}"
+    }
+  },
   "dashboardLayout": {
     "navDashboard": "Dashboard",
     "navTransactions": "Transactions",

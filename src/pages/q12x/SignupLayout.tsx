@@ -1,11 +1,13 @@
 import { Outlet } from 'react-router-dom';
 import { AuthLayout } from './AuthLayout';
+import { useTranslation } from 'react-i18next';
 
 const SignupLayout = () => {
+  const { t } = useTranslation('q12x');
   return (
     <AuthLayout
-      title="Créez votre compte marchand"
-      subtitle="Suivez les étapes pour commencer à accepter des paiements."
+      title={t('signup.title')}
+      subtitle={t('signup.subtitle')}
     >
       <Outlet />
     </AuthLayout>

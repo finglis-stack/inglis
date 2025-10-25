@@ -9,6 +9,69 @@
     "noAccount": "Pas encore de compte ?",
     "signUp": "Inscrivez-vous"
   },
+  "authLayout": {
+    "bgTitle": "Gérez vos transactions. Simplement.",
+    "bgSubtitle": "Acceptez les paiements Inglis Dominium et suivez vos revenus en temps réel."
+  },
+  "signup": {
+    "title": "Créez votre compte marchand",
+    "subtitle": "Suivez les étapes pour commencer à accepter des paiements.",
+    "step1": {
+      "nameLabel": "Nom du commerce",
+      "emailLabel": "Adresse e-mail",
+      "passwordLabel": "Mot de passe",
+      "terms": "J'accepte les <0>conditions d'utilisation</0> et la <1>politique de confidentialité</1>.",
+      "termsError": "Vous devez accepter les conditions d'utilisation.",
+      "next": "Suivant",
+      "alreadyAccount": "Déjà un compte ?",
+      "signIn": "Connectez-vous"
+    },
+    "step2": {
+      "neqLabel": "Numéro d'entreprise du Québec (NEQ)",
+      "neqDesc": "Le NEQ est un identifiant de 10 chiffres attribué lors de l'immatriculation au registre des entreprises.",
+      "legalFormLabel": "Forme juridique de l'entreprise",
+      "legalFormPlaceholder": "Sélectionnez une forme juridique",
+      "types": {
+        "entreprise_individuelle": "Entreprise individuelle (travailleur autonome)",
+        "societe_par_actions": "Société par actions (Inc.)",
+        "societe_en_nom_collectif": "Société en nom collectif (S.E.N.C.)",
+        "societe_en_commandite": "Société en commandite (S.E.C.)",
+        "cooperative": "Coopérative",
+        "osbl": "Organisme sans but lucratif (OSBL)"
+      },
+      "previous": "Précédent",
+      "next": "Suivant"
+    },
+    "step3": {
+      "phoneLabel": "Numéro de téléphone (Optionnel)",
+      "addressLabel": "Adresse (Optionnel)",
+      "street": "Rue",
+      "city": "Ville",
+      "province": "Province",
+      "postalCode": "Code Postal",
+      "country": "Pays",
+      "previous": "Précédent",
+      "next": "Suivant"
+    },
+    "step4": {
+      "title": "Vérification",
+      "businessName": "Nom du commerce",
+      "email": "Email",
+      "businessInfo": "Informations sur l'entreprise",
+      "businessNumber": "Numéro d'entreprise",
+      "jurisdiction": "Juridiction",
+      "contact": "Contact",
+      "phone": "Téléphone",
+      "address": "Adresse",
+      "notProvided": "N/A",
+      "previous": "Précédent",
+      "submitting": "Création en cours...",
+      "submit": "Terminer l'inscription",
+      "success": "Compte créé avec succès ! Vous pouvez maintenant vous connecter.",
+      "creationFailed": "La création du compte a échoué.",
+      "profileCreationFailed": "Erreur lors de la création du profil marchand : {{message}}"
+    }
+  },
   "dashboardLayout": {
     "navDashboard": "Tableau de bord",
     "navTransactions": "Transactions",
