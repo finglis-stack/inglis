@@ -113,6 +113,9 @@ serve(async (req) => {
     });
     await supabaseAdmin.from('profiles').update({ last_transaction_at: new Date().toISOString() }).eq('id', profile.id);
 
+    // Mettre à jour les statistiques du profil de manière asynchrone
+    await supabaseAdmin.rpc('update_profile_transaction_stats', { profile_id_to_update: profile.id });
+
     return new Response(JSON.stringify({ success: true, transaction: transactionResult }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200,
     });
