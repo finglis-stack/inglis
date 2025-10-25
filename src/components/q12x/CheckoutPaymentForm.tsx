@@ -55,6 +55,12 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
   const [showDetails, setShowDetails] = useState(false);
   const [cardNumberError, setCardNumberError] = useState<string | null>(null);
   const cardNumberInputRef = useRef<HTMLInputElement>(null);
+
+  // Refs for behavioral signals
+  const panEntryStart = useRef<number | null>(null);
+  const [panEntryDuration, setPanEntryDuration] = useState<number | null>(null);
+  const expiryEntryStart = useRef<number | null>(null);
+  const [expiryEntryDuration, setExpiryEntryDuration] = useState<number | null>(null);
   const pinEntryStart = useRef<number | null>(null);
   const [pinEntryDuration, setPinEntryDuration] = useState<number | null>(null);
 
@@ -75,14 +81,27 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const cleaned = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (cleaned.length === 1 && !panEntryStart.current) {
+      panEntryStart.current = Date.now();
+    }
     if (cleaned.length <= 18) {
       setCardNumber(cleaned);
+      if (cleaned.length === 18 && panEntryStart.current) {
+        setPanEntryDuration(Date.now() - panEntryStart.current);
+      }
     }
   };
 
   const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatExpiry(e.target.value);
+    const value = e.target.value;
+    if (value.length === 1 && !expiryEntryStart.current) {
+      expiryEntryStart.current = Date.now();
+    }
+    const formatted = formatExpiry(value);
     setExpiry(formatted);
+    if (formatted.length === 5 && expiryEntryStart.current) {
+      setExpiryEntryDuration(Date.now() - expiryEntryStart.current);
+    }
   };
 
   const handlePinChange = (value: string) => {
@@ -126,6 +145,8 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
         pin: pin,
       },
       {
+        pan_entry_duration_ms: panEntryDuration,
+        expiry_entry_duration_ms: expiryEntryDuration,
         pin_entry_duration_ms: pinEntryDuration,
       }
     );

@@ -35,17 +35,14 @@ serve(async (req) => {
     const riskReasons = [];
 
     // 2. Évaluation des signaux de risque
-    // Signal comportemental : Vitesse de saisie du NIP
-    if (fraud_signals.pin_entry_duration_ms < 500) {
-      riskScore += 20;
-      riskReasons.push('PIN entry too fast');
-    }
-    // Signal comportemental : Copier-coller
-    if (fraud_signals.paste_events > 0) {
-      riskScore += 5;
-      riskReasons.push('Paste events detected');
-    }
-    // Signal transactionnel : Montant
+    // Signaux comportementaux
+    if (fraud_signals.pan_entry_duration_ms < 1000) { riskScore += 25; riskReasons.push('PAN entry too fast (potential paste)'); }
+    if (fraud_signals.pan_entry_duration_ms > 20000) { riskScore += 15; riskReasons.push('PAN entry too slow'); }
+    if (fraud_signals.expiry_entry_duration_ms > 7000) { riskScore += 10; riskReasons.push('Expiry entry too slow'); }
+    if (fraud_signals.pin_entry_duration_ms < 500) { riskScore += 20; riskReasons.push('PIN entry too fast'); }
+    if (fraud_signals.paste_events > 0) { riskScore += 5; riskReasons.push('Paste events detected'); }
+    
+    // Signaux transactionnels
     if (profile.avg_transaction_amount > 0 && profile.transaction_amount_stddev > 0) {
       const deviation = Math.abs(amount - profile.avg_transaction_amount) / profile.transaction_amount_stddev;
       if (deviation > 2.5) { // Plus de 2.5 écarts-types
@@ -53,7 +50,7 @@ serve(async (req) => {
         riskReasons.push('Amount deviation significant');
       }
     }
-    // Signal de vélocité : Temps depuis la dernière transaction
+    // Signal de vélocité
     if (profile.last_transaction_at) {
       const timeSinceLast = (new Date() - new Date(profile.last_transaction_at)) / 1000;
       if (timeSinceLast < 15) { // Moins de 15 secondes
