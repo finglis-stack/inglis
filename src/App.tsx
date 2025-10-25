@@ -60,13 +60,6 @@ import PendingAuthorizations from "@/pages/dashboard/accounts/PendingAuthorizati
 import ApiSettings from "@/pages/dashboard/settings/ApiSettings";
 import HostedPaymentForm from "@/pages/HostedPaymentForm";
 import HostedFormLayout from '@/pages/HostedFormLayout';
-import Merchants from '@/pages/dashboard/settings/Merchants';
-import { NewMerchantProvider } from '@/context/NewMerchantContext';
-import NewMerchantLayout from '@/pages/dashboard/settings/NewMerchantLayout';
-import NewMerchantStep1 from '@/pages/dashboard/settings/merchants/NewMerchantStep1';
-import NewMerchantStep2 from '@/pages/dashboard/settings/merchants/NewMerchantStep2';
-import NewMerchantStep3 from '@/pages/dashboard/settings/merchants/NewMerchantStep3';
-import NewMerchantStep4 from '@/pages/dashboard/settings/merchants/NewMerchantStep4';
 
 // --- Q12xApp Imports ---
 import Q12xLogin from "@/pages/q12x/Login";
@@ -113,7 +106,6 @@ const MainAppRoutes = () => (
       <Route path="settings" element={<Settings />} />
       <Route path="settings/card-programs" element={<CardPrograms />} />
       <Route path="settings/api" element={<ApiSettings />} />
-      <Route path="settings/merchants" element={<Merchants />} />
       <Route path="users" element={<Users />} />
       <Route path="users/profile/:id" element={<UserProfile />} />
       <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
@@ -126,7 +118,6 @@ const MainAppRoutes = () => (
     <Route element={<NewUserProvider />}><Route path="/dashboard/users/new" element={<NewUserTypeSelection />} /><Route element={<NewUserLayout />}><Route path="/dashboard/users/new/personal/step-1" element={<Step1Name />} /><Route path="/dashboard/users/new/personal/step-2" element={<Step2Address />} /><Route path="/dashboard/users/new/personal/step-3" element={<Step3ContactIdentity />} /><Route path="/dashboard/users/new/personal/step-4" element={<Step4SetPin />} /><Route path="/dashboard/users/new/personal/step-5" element={<Step5Review />} /><Route path="/dashboard/users/new/corporate/step-1" element={<Step1BusinessInfo />} /><Route path="/dashboard/users/new/corporate/step-2" element={<Step2Registration />} /><Route path="/dashboard/users/new/corporate/step-3" element={<Step3AddressCorp />} /><Route path="/dashboard/users/new/corporate/step-4" element={<Step4SetPin />} /><Route path="/dashboard/users/new/corporate/step-5" element={<Step5ReviewCorp />} /></Route></Route>
     <Route element={<NewCardProvider />}><Route element={<CreateCardLayout />}><Route path="/dashboard/cards/new" element={<CreateCardStep1 />} /><Route path="/dashboard/cards/new/step-2" element={<CreateCardStep2 />} /><Route path="/dashboard/cards/new/step-3" element={<CreateCardStep3SetLimits />} /><Route path="/dashboard/cards/new/step-4" element={<CreateCardStep4 />} /></Route></Route>
     <Route element={<CardProgramLayout />}><Route path="/dashboard/settings/card-programs/new" element={<NewCardProgram />} /></Route>
-    <Route element={<NewMerchantProvider />}><Route element={<NewMerchantLayout />}><Route path="/dashboard/settings/merchants/new/step-1" element={<NewMerchantStep1 />} /><Route path="/dashboard/settings/merchants/new/step-2" element={<NewMerchantStep2 />} /><Route path="/dashboard/settings/merchants/new/step-3" element={<NewMerchantStep3 />} /><Route path="/dashboard/settings/merchants/new/step-4" element={<NewMerchantStep4 />} /></Route></Route>
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
