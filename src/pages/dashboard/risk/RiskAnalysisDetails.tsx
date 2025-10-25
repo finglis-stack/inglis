@@ -43,9 +43,10 @@ const RiskAnalysisDetails = () => {
       const [txRes, profileRes] = await Promise.all([transactionPromise, profilePromise]);
 
       let locationData = null;
-      if (txRes.data?.ip_address) {
+      const ip = txRes.data?.ip_address || assessmentData.signals?.ipAddress;
+      if (ip) {
         try {
-          const response = await fetch(`https://ipapi.co/${txRes.data.ip_address}/json/`);
+          const response = await fetch(`https://ipapi.co/${ip}/json/`);
           const data = await response.json();
           if (!data.error) locationData = data;
         } catch (e) { console.error("Erreur de géolocalisation:", e); }
@@ -80,6 +81,9 @@ const RiskAnalysisDetails = () => {
   }
 
   const decisionInfo = getDecisionInfo(assessment.decision);
+  const transactionAmount = details?.transaction?.amount ?? assessment.signals?.amount;
+  const merchantName = details?.transaction?.merchant_accounts?.name ?? assessment.signals?.merchant_name;
+  const locationDisplay = details?.transaction?.location ? `${details.transaction.location.city}, ${details.transaction.location.country_name}` : 'N/A';
 
   return (
     <div className="p-4 md:p-8">
@@ -122,9 +126,9 @@ const RiskAnalysisDetails = () => {
           <Card>
             <CardHeader><CardTitle className="text-base">Contexte de la Transaction</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-6">
-              {renderDetailItem(<DollarSign className="h-5 w-5" />, "Montant", details?.transaction?.amount ? new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(details.transaction.amount) : 'N/A')}
-              {renderDetailItem(<Building className="h-5 w-5" />, "Marchand", details?.transaction?.merchant_accounts?.name || 'N/A')}
-              {renderDetailItem(<Globe className="h-5 w-5" />, "Localisation IP", `${details?.transaction?.location?.city || ''}, ${details?.transaction?.location?.country_name || ''}`)}
+              {renderDetailItem(<DollarSign className="h-5 w-5" />, "Montant", transactionAmount ? new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(transactionAmount) : 'N/A')}
+              {renderDetailItem(<Building className="h-5 w-5" />, "Marchand", merchantName || 'N/A')}
+              {renderDetailItem(<Globe className="h-5 w-5" />, "Localisation IP", locationDisplay)}
               {renderDetailItem(<User className="h-5 w-5" />, "User Agent", <span className="text-xs">{assessment.signals?.user_agent || 'N/A'}</span>)}
               {renderDetailItem(<Hash className="h-5 w-5" />, "ID Transaction", assessment.transaction_id || 'N/A')}
               {renderDetailItem(<Hash className="h-5 w-5" />, "Code d'autorisation", details?.transaction?.authorization_code || 'N/A')}

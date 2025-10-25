@@ -130,14 +130,14 @@ serve(async (req) => {
       logStep('Validation du NIP', 'Le NIP est correct', 0);
     }
 
-    // Pénalités comportementales renforcées
-    if (fraud_signals.pan_entry_duration_ms < 1000) { confidenceScore -= 35; riskReasons.push('Saisie du PAN trop rapide'); logStep('Analyse comportementale', 'Saisie du PAN trop rapide', -35); }
-    if (fraud_signals.pan_entry_duration_ms > 20000) { confidenceScore -= 15; riskReasons.push('Saisie du PAN trop lente'); logStep('Analyse comportementale', 'Saisie du PAN trop lente', -15); }
-    if (fraud_signals.expiry_entry_duration_ms > 7000) { confidenceScore -= 10; riskReasons.push('Saisie de l\'expiration trop lente'); logStep('Analyse comportementale', 'Saisie de l\'expiration trop lente', -10); }
-    if (fraud_signals.pin_entry_duration_ms < 500) { confidenceScore -= 40; riskReasons.push('Saisie du NIP trop rapide'); logStep('Analyse comportementale', 'Saisie du NIP trop rapide', -40); }
-    if (fraud_signals.pin_inter_digit_avg_ms < 50) { confidenceScore -= 50; riskReasons.push('Cadence de saisie du NIP trop rapide (script ?)'); logStep('Analyse comportementale', 'Cadence NIP suspecte (rapide)', -50); }
-    if (fraud_signals.pin_inter_digit_avg_ms > 2000) { confidenceScore -= 15; riskReasons.push('Cadence de saisie du NIP trop lente (hésitation ?)'); logStep('Analyse comportementale', 'Cadence NIP suspecte (lente)', -15); }
-    if (fraud_signals.paste_events > 0) { confidenceScore -= 20; riskReasons.push('Événements de collage détectés'); logStep('Analyse comportementale', 'Collage détecté dans le formulaire', -20); }
+    // Pénalités comportementales ajustées
+    if (fraud_signals.pan_entry_duration_ms < 1500) { confidenceScore -= 20; riskReasons.push('Saisie du PAN trop rapide'); logStep('Analyse comportementale', 'Saisie du PAN trop rapide', -20); }
+    if (fraud_signals.pan_entry_duration_ms > 20000) { confidenceScore -= 10; riskReasons.push('Saisie du PAN trop lente'); logStep('Analyse comportementale', 'Saisie du PAN trop lente', -10); }
+    if (fraud_signals.expiry_entry_duration_ms > 7000) { confidenceScore -= 5; riskReasons.push('Saisie de l\'expiration trop lente'); logStep('Analyse comportementale', 'Saisie de l\'expiration trop lente', -5); }
+    if (fraud_signals.pin_entry_duration_ms < 800) { confidenceScore -= 20; riskReasons.push('Saisie du NIP trop rapide'); logStep('Analyse comportementale', 'Saisie du NIP trop rapide', -20); }
+    if (fraud_signals.pin_inter_digit_avg_ms < 80) { confidenceScore -= 25; riskReasons.push('Cadence de saisie du NIP trop rapide (script ?)'); logStep('Analyse comportementale', 'Cadence NIP suspecte (rapide)', -25); }
+    if (fraud_signals.pin_inter_digit_avg_ms > 2000) { confidenceScore -= 10; riskReasons.push('Cadence de saisie du NIP trop lente (hésitation ?)'); logStep('Analyse comportementale', 'Cadence NIP suspecte (lente)', -10); }
+    if (fraud_signals.paste_events > 0) { confidenceScore -= 15; riskReasons.push('Événements de collage détectés'); logStep('Analyse comportementale', 'Collage détecté dans le formulaire', -15); }
     
     // Analyse de la baseline
     if (profile.avg_transaction_amount != null && profile.avg_transaction_amount > 0) {
@@ -200,7 +200,6 @@ serve(async (req) => {
       signals: { ...fraud_signals, ipAddress, riskReasons, analysis_log },
     });
     
-    // Mise à jour du profil avec les nouvelles informations de transaction
     await supabaseAdmin.from('profiles').update({ 
       last_transaction_at: new Date().toISOString(),
       last_transaction_location: currentLocation ? { latitude: currentLocation.latitude, longitude: currentLocation.longitude, city: currentLocation.city } : null,
@@ -213,10 +212,30 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    let merchantNameForLog = 'Unknown';
+    if (checkoutId) {
+        const { data: checkoutData } = await supabaseAdmin
+            .from('checkouts')
+            .select('merchant_accounts(name)')
+            .eq('id', checkoutId)
+            .single();
+        if (checkoutData && checkoutData.merchant_accounts) {
+            merchantNameForLog = checkoutData.merchant_accounts.name;
+        }
+    }
+
     await supabaseAdmin.from('transaction_risk_assessments').insert({
       profile_id: profile ? profile.id : null,
       risk_score: Math.max(0, confidenceScore), decision: 'BLOCK',
-      signals: { ...fraud_signals, ipAddress, riskReasons, analysis_log, error: error.message },
+      signals: { 
+        ...fraud_signals, 
+        ipAddress, 
+        riskReasons, 
+        analysis_log, 
+        error: error.message,
+        amount: amount, 
+        merchant_name: merchantNameForLog 
+      },
     });
     return new Response(JSON.stringify({ error: "Le paiement a été refusé par l'institution émettrice de la carte." }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400,
