@@ -74,14 +74,6 @@ const PublicCheckoutPage = () => {
         throw new Error(t('publicCheckout.form.invalidAmount'));
       }
 
-      const { data: tokenData, error: tokenError } = await supabase.functions.invoke('api-v1-tokenize-card', {
-        body: cardDetails
-      });
-      if (tokenError) {
-        const message = await getFunctionError(tokenError, t('publicCheckout.form.paymentRefused'));
-        throw new Error(message);
-      }
-
       const fraud_signals = {
         ...behavioralSignals,
         time_on_page_ms: Date.now() - formLoadTime.current,
@@ -95,9 +87,9 @@ const PublicCheckoutPage = () => {
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke('q12x-secure-checkout', {
         body: {
           checkoutId: checkout.id,
-          card_token: tokenData.token,
           amount: amount,
           fraud_signals,
+          ...cardDetails
         }
       });
 
