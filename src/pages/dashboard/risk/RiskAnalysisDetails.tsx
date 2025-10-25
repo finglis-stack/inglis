@@ -7,7 +7,7 @@ import { ArrowLeft, Shield, ShieldAlert, ShieldCheck, Timer, CreditCard, Calenda
 import { Button } from '@/components/ui/button';
 import RiskScoreGauge from '@/components/dashboard/users/RiskScoreGauge';
 import { showError } from '@/utils/toast';
-import RiskAnalysisLog from '@/components/dashboard/users/RiskAnalysisLog';
+import RiskAnalysisLog from '@/components/dashboard/risk/RiskAnalysisLog';
 
 const RiskAnalysisDetails = () => {
   const { assessmentId } = useParams();
@@ -119,9 +119,6 @@ const RiskAnalysisDetails = () => {
           </Card>
         </div>
         <div className="lg:col-span-2 flex flex-col gap-6">
-          {assessment.signals?.analysis_log && (
-            <RiskAnalysisLog log={assessment.signals.analysis_log} />
-          )}
           <Card>
             <CardHeader><CardTitle className="text-base">Contexte de la Transaction</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-6">
@@ -159,6 +156,11 @@ const RiskAnalysisDetails = () => {
           </div>
         </div>
       </div>
+      {assessment.signals?.analysis_log && (
+        <div className="mt-6">
+          <RiskAnalysisLog log={assessment.signals.analysis_log} />
+        </div>
+      )}
     </div>
   );
 };

@@ -27,13 +27,13 @@ const RiskAnalysisLog = ({ log }) => {
                 <div className="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-4 ring-white">
                   <Clock className="h-4 w-4 text-gray-600" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center">
                     <p className="text-sm font-semibold">{item.step}</p>
-                    <p className="text-xs text-gray-400">+{item.timestamp}ms</p>
+                    <p className="text-xs text-gray-400 flex-shrink-0 ml-2">+{item.timestamp}ms</p>
                   </div>
-                  <div className="flex justify-between items-center mt-1">
-                    <p className="text-sm text-muted-foreground">{item.result}</p>
+                  <div className="flex justify-between items-start mt-1">
+                    <p className="text-sm text-muted-foreground break-words pr-4">{item.result}</p>
                     <p className={`text-sm font-mono font-semibold ${getImpactColor(item.impact)}`}>{item.impact}</p>
                   </div>
                 </div>

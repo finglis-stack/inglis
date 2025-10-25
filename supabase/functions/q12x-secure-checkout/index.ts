@@ -103,10 +103,25 @@ serve(async (req) => {
     if (fraud_signals.pin_inter_digit_avg_ms > 2000) { confidenceScore -= 15; riskReasons.push('Cadence de saisie du NIP trop lente (hésitation ?)'); logStep('Analyse comportementale', 'Cadence NIP suspecte (lente)', -15); }
     if (fraud_signals.paste_events > 0) { confidenceScore -= 5; riskReasons.push('Événements de collage détectés'); logStep('Analyse comportementale', 'Collage détecté dans le formulaire', -5); }
     
-    if (profile.avg_transaction_amount > 0 && profile.transaction_amount_stddev > 0) {
-      const deviation = Math.abs(amount - profile.avg_transaction_amount) / profile.transaction_amount_stddev;
-      logStep('Analyse de la baseline', `Écart-type du montant: ${deviation.toFixed(2)}`, 0);
-      if (deviation > 2.5) { confidenceScore -= 30; riskReasons.push('Écart de montant significatif'); logStep('Analyse de la baseline', 'Montant inhabituellement élevé', -30); }
+    if (profile.avg_transaction_amount != null && profile.avg_transaction_amount > 0) {
+      if (profile.transaction_amount_stddev > 0) {
+          const deviation = Math.abs(amount - profile.avg_transaction_amount) / profile.transaction_amount_stddev;
+          logStep('Analyse de la baseline', `Écart-type du montant: ${deviation.toFixed(2)}`, 0);
+          if (deviation > 2.5) { 
+              confidenceScore -= 30; 
+              riskReasons.push('Écart de montant significatif'); 
+              logStep('Analyse de la baseline', 'Montant inhabituellement élevé', -30); 
+          }
+      } else {
+          const difference = Math.abs(amount - profile.avg_transaction_amount);
+          const percentage_diff = (difference / profile.avg_transaction_amount) * 100;
+          logStep('Analyse de la baseline', `Différence de montant: ${percentage_diff.toFixed(0)}% (baseline à 1 tx)`, 0);
+          if (percentage_diff > 300) {
+              confidenceScore -= 25;
+              riskReasons.push('Écart de montant significatif (baseline faible)');
+              logStep('Analyse de la baseline', 'Montant très différent de l\'unique transaction précédente', -25);
+          }
+      }
     } else {
       logStep('Analyse de la baseline', 'Aucun historique pour comparer le montant', 0);
     }
@@ -142,7 +157,6 @@ serve(async (req) => {
     });
     await supabaseAdmin.from('profiles').update({ last_transaction_at: new Date().toISOString() }).eq('id', profile.id);
 
-    // Mettre à jour les statistiques du profil de manière asynchrone
     await supabaseAdmin.rpc('update_profile_transaction_stats', { profile_id_to_update: profile.id });
 
     return new Response(JSON.stringify({ success: true, transaction: transactionResult }), {
