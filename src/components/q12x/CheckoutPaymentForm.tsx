@@ -117,7 +117,7 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
       {error && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Paiement refusé</AlertTitle>
+          <AlertTitle>{t('publicCheckout.form.paymentDeclinedTitle')}</AlertTitle>
           <AlertDescription>
             {error}
           </AlertDescription>

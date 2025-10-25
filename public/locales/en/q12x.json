@@ -97,6 +97,7 @@
     "paymentInfoDesc": "Enter your Inglis Dominium card details to continue.",
     "terms": "By proceeding with the payment, you agree to the <0>Terms</0> and <1>Privacy Policy</1>.",
     "form": {
+      "paymentDeclinedTitle": "Payment Declined",
       "cardNumber": "Card Number",
       "expiry": "Expiry (MM/YY)",
       "pin": "PIN",
