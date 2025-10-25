@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// --- Special Localhost Chooser ---
+import LocalhostChooser from '@/pages/LocalhostChooser';
 
 // --- MainApp Imports ---
 import Index from "@/pages/Index";
@@ -133,17 +137,34 @@ const Q12xAppRoutes = () => (
   </Routes>
 );
 
-const App = () => {
-  const hostname = window.location.hostname;
-  const isQ12x = hostname.includes('q12x') || hostname === 'localhost';
+const AppContent = () => {
+  const [localhostApp, setLocalhostApp] = useState(() => localStorage.getItem('dyad-app-choice'));
 
+  const handleAppChoice = (choice: 'main' | 'q12x') => {
+    localStorage.setItem('dyad-app-choice', choice);
+    setLocalhostApp(choice);
+  };
+
+  const hostname = window.location.hostname;
+
+  if (hostname === 'localhost') {
+    if (localhostApp === 'main') return <MainAppRoutes />;
+    if (localhostApp === 'q12x') return <Q12xAppRoutes />;
+    return <LocalhostChooser onChoose={handleAppChoice} />;
+  }
+
+  const isQ12x = hostname.includes('q12x');
+  return isQ12x ? <Q12xAppRoutes /> : <MainAppRoutes />;
+};
+
+const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider delayDuration={200}>
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          {isQ12x ? <Q12xAppRoutes /> : <MainAppRoutes />}
+          <AppContent />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
