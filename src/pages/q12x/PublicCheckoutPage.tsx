@@ -51,6 +51,18 @@ const PublicCheckoutPage = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [checkoutId]);
 
+  const getFunctionError = async (error: any, fallbackMessage: string): Promise<string> => {
+    if (error.context && typeof error.context.json === 'function') {
+      try {
+        const functionError = await error.context.json();
+        return functionError.error || fallbackMessage;
+      } catch (e) {
+        console.error("Could not parse Edge Function error response:", e);
+      }
+    }
+    return error.message || fallbackMessage;
+  };
+
   const handlePaymentSubmit = async (cardDetails: any, behavioralSignals: any) => {
     setProcessing(true);
     setPaymentError(null);
@@ -59,16 +71,16 @@ const PublicCheckoutPage = () => {
     try {
       const amount = checkout.is_amount_variable ? parseFloat(variableAmount) : checkout.amount;
       if (isNaN(amount) || amount <= 0) {
-        setPaymentError(t('publicCheckout.form.invalidAmount'));
-        setShowProcessingModal(false);
-        setProcessing(false);
-        return;
+        throw new Error(t('publicCheckout.form.invalidAmount'));
       }
 
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke('api-v1-tokenize-card', {
         body: cardDetails
       });
-      if (tokenError) throw tokenError;
+      if (tokenError) {
+        const message = await getFunctionError(tokenError, t('publicCheckout.form.paymentRefused'));
+        throw new Error(message);
+      }
 
       const fraud_signals = {
         ...behavioralSignals,
@@ -90,15 +102,15 @@ const PublicCheckoutPage = () => {
       });
 
       if (paymentError) {
-        const functionError = await paymentError.context.json();
-        throw new Error(functionError.error || "Payment failed");
+        const message = await getFunctionError(paymentError, t('publicCheckout.form.paymentRefused'));
+        throw new Error(message);
       }
 
       navigate(`/payment-success?transactionId=${paymentData.transaction.transaction_id}&amount=${amount}`);
 
     } catch (err) {
       setShowProcessingModal(false);
-      setPaymentError(err.message || t('publicCheckout.form.paymentRefused'));
+      setPaymentError(err.message);
     } finally {
       setProcessing(false);
     }
