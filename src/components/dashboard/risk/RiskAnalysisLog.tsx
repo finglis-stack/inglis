@@ -34,7 +34,7 @@ const RiskAnalysisLog = ({ log }) => {
                   </div>
                   <div className="flex justify-between items-start mt-1">
                     <p className="text-sm text-muted-foreground break-words pr-4">{item.result}</p>
-                    <p className={`text-sm font-mono font-semibold ${getImpactColor(item.impact)}`}>{item.impact}</p>
+                    <p className={`text-sm font-mono font-semibold flex-shrink-0 ${getImpactColor(item.impact)}`}>{item.impact}</p>
                   </div>
                 </div>
               </li>

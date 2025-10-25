@@ -123,7 +123,7 @@ serve(async (req) => {
           }
       }
     } else {
-      logStep('Analyse de la baseline', 'Aucun historique pour comparer le montant', 0);
+      logStep('Analyse de la baseline', 'Première transaction, aucune baseline existante.', 0);
     }
 
     if (profile.last_transaction_at) {
