@@ -10,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useTranslation } from 'react-i18next';
 
 interface CheckoutPaymentFormProps {
-  onSubmit: (cardDetails: any) => void;
+  onSubmit: (cardDetails: any, behavioralSignals: any) => void;
   processing: boolean;
   amount: number;
   error: string | null;
@@ -55,6 +55,8 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
   const [showDetails, setShowDetails] = useState(false);
   const [cardNumberError, setCardNumberError] = useState<string | null>(null);
   const cardNumberInputRef = useRef<HTMLInputElement>(null);
+  const pinEntryStart = useRef<number | null>(null);
+  const [pinEntryDuration, setPinEntryDuration] = useState<number | null>(null);
 
   useEffect(() => {
     if (cardNumber.length === 18) {
@@ -83,6 +85,20 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
     setExpiry(formatted);
   };
 
+  const handlePinChange = (value: string) => {
+    if (value.length === 1 && !pinEntryStart.current) {
+      pinEntryStart.current = Date.now();
+    }
+    if (value.length === 4 && pinEntryStart.current) {
+      setPinEntryDuration(Date.now() - pinEntryStart.current);
+    }
+    if (value.length < 4) {
+      pinEntryStart.current = null;
+      setPinEntryDuration(null);
+    }
+    setPin(value);
+  };
+
   const handleModifyCardNumber = () => {
     setShowDetails(false);
     setTimeout(() => cardNumberInputRef.current?.focus(), 100);
@@ -103,11 +119,16 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
       showError(t('publicCheckout.form.invalidPin'));
       return;
     }
-    onSubmit({
-      card_number: parsedCard,
-      expiry_date: expiry,
-      pin: pin,
-    });
+    onSubmit(
+      {
+        card_number: parsedCard,
+        expiry_date: expiry,
+        pin: pin,
+      },
+      {
+        pin_entry_duration_ms: pinEntryDuration,
+      }
+    );
   };
 
   const isFormComplete = showDetails && /^\d{2}\/\d{2}$/.test(expiry) && pin.length === 4 && !cardNumberError;
@@ -153,7 +174,7 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
                 id="pin"
                 maxLength={4}
                 value={pin}
-                onChange={setPin}
+                onChange={handlePinChange}
                 render={({ slots }) => (
                   <InputOTPGroup>
                     {slots.map((slot, index) => (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,11 @@ const PublicCheckoutPage = () => {
   const [showProcessingModal, setShowProcessingModal] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
+  // State for fraud signals
+  const formLoadTime = useRef(Date.now());
+  const [pasteEvents, setPasteEvents] = useState(0);
+  const [mouseMovements, setMouseMovements] = useState(0);
+
   useEffect(() => {
     const fetchCheckout = async () => {
       if (!checkoutId) return;
@@ -40,9 +45,13 @@ const PublicCheckoutPage = () => {
       setLoading(false);
     };
     fetchCheckout();
+
+    const handleMouseMove = () => setMouseMovements(prev => prev + 1);
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [checkoutId]);
 
-  const handlePaymentSubmit = async (cardDetails: any) => {
+  const handlePaymentSubmit = async (cardDetails: any, behavioralSignals: any) => {
     setProcessing(true);
     setPaymentError(null);
     setShowProcessingModal(true);
@@ -59,24 +68,37 @@ const PublicCheckoutPage = () => {
       const { data: tokenData, error: tokenError } = await supabase.functions.invoke('api-v1-tokenize-card', {
         body: cardDetails
       });
-
       if (tokenError) throw tokenError;
 
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('process-checkout-payment', {
+      const fraud_signals = {
+        ...behavioralSignals,
+        time_on_page_ms: Date.now() - formLoadTime.current,
+        paste_events: pasteEvents,
+        mouse_movements: mouseMovements,
+        user_agent: navigator.userAgent,
+        language: navigator.language,
+        screen_resolution: `${window.screen.width}x${window.screen.height}`,
+      };
+
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('q12x-secure-checkout', {
         body: {
           checkoutId: checkout.id,
           card_token: tokenData.token,
           amount: amount,
+          fraud_signals,
         }
       });
 
-      if (paymentError) throw paymentError;
+      if (paymentError) {
+        const functionError = await paymentError.context.json();
+        throw new Error(functionError.error || "Payment failed");
+      }
 
       navigate(`/payment-success?transactionId=${paymentData.transaction.transaction_id}&amount=${amount}`);
 
     } catch (err) {
       setShowProcessingModal(false);
-      setPaymentError(t('publicCheckout.form.paymentRefused'));
+      setPaymentError(err.message || t('publicCheckout.form.paymentRefused'));
     } finally {
       setProcessing(false);
     }
@@ -105,7 +127,7 @@ const PublicCheckoutPage = () => {
   const finalAmount = checkout.is_amount_variable ? parseFloat(variableAmount) || 0 : checkout.amount;
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row font-sans">
+    <div className="min-h-screen flex flex-col lg:flex-row font-sans" onPaste={() => setPasteEvents(p => p + 1)}>
       <ProcessingPaymentModal isOpen={showProcessingModal} />
       <div className="w-full lg:w-1/2 bg-gray-50 p-8 lg:p-12 flex flex-col justify-center">
         <div className="max-w-md mx-auto w-full">
