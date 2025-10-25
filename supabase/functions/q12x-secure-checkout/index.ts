@@ -24,6 +24,19 @@ const isExpiryValid = (expiry: string) => {
   return lastDayOfExpiryMonth >= now;
 };
 
+// Fonction pour calculer la distance en KM entre deux points GPS (Haversine)
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Rayon de la Terre en km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -53,6 +66,28 @@ serve(async (req) => {
     logStep('Initialisation', 'Début de l\'analyse de la transaction', 0);
     if (!checkoutId || !card_number || !expiry_date || !pin || !amount || !fraud_signals) {
       throw new Error('Missing required payment information.');
+    }
+
+    // Géolocalisation et vérification VPN/Proxy
+    let currentLocation = null;
+    if (ipAddress) {
+      try {
+        const geoResponse = await fetch(`https://ipapi.co/${ipAddress}/json/`);
+        const geoData = await geoResponse.json();
+        if (!geoData.error) {
+          currentLocation = geoData;
+          logStep('Géolocalisation IP', `IP localisée à ${geoData.city}, ${geoData.country_name}`, 0);
+          if (geoData.security?.vpn || geoData.security?.proxy || geoData.security?.tor) {
+            confidenceScore -= 40;
+            riskReasons.push('Utilisation d\'un VPN/Proxy détectée');
+            logStep('Réputation IP', 'VPN, Proxy ou Tor détecté', -40);
+          }
+        } else {
+          logStep('Géolocalisation IP', 'Impossible de géolocaliser l\'adresse IP', 0);
+        }
+      } catch (e) {
+        logStep('Géolocalisation IP', `Erreur du service de géolocalisation: ${e.message}`, 0);
+      }
     }
 
     const { data: cardData, error: cardError } = await supabaseAdmin
@@ -95,40 +130,49 @@ serve(async (req) => {
       logStep('Validation du NIP', 'Le NIP est correct', 0);
     }
 
-    if (fraud_signals.pan_entry_duration_ms < 1000) { confidenceScore -= 25; riskReasons.push('Saisie du PAN trop rapide'); logStep('Analyse comportementale', 'Saisie du PAN trop rapide', -25); }
+    // Pénalités comportementales renforcées
+    if (fraud_signals.pan_entry_duration_ms < 1000) { confidenceScore -= 35; riskReasons.push('Saisie du PAN trop rapide'); logStep('Analyse comportementale', 'Saisie du PAN trop rapide', -35); }
     if (fraud_signals.pan_entry_duration_ms > 20000) { confidenceScore -= 15; riskReasons.push('Saisie du PAN trop lente'); logStep('Analyse comportementale', 'Saisie du PAN trop lente', -15); }
     if (fraud_signals.expiry_entry_duration_ms > 7000) { confidenceScore -= 10; riskReasons.push('Saisie de l\'expiration trop lente'); logStep('Analyse comportementale', 'Saisie de l\'expiration trop lente', -10); }
-    if (fraud_signals.pin_entry_duration_ms < 500) { confidenceScore -= 20; riskReasons.push('Saisie du NIP trop rapide'); logStep('Analyse comportementale', 'Saisie du NIP trop rapide', -20); }
-    if (fraud_signals.pin_inter_digit_avg_ms < 50) { confidenceScore -= 30; riskReasons.push('Cadence de saisie du NIP trop rapide (script ?)'); logStep('Analyse comportementale', 'Cadence NIP suspecte (rapide)', -30); }
+    if (fraud_signals.pin_entry_duration_ms < 500) { confidenceScore -= 40; riskReasons.push('Saisie du NIP trop rapide'); logStep('Analyse comportementale', 'Saisie du NIP trop rapide', -40); }
+    if (fraud_signals.pin_inter_digit_avg_ms < 50) { confidenceScore -= 50; riskReasons.push('Cadence de saisie du NIP trop rapide (script ?)'); logStep('Analyse comportementale', 'Cadence NIP suspecte (rapide)', -50); }
     if (fraud_signals.pin_inter_digit_avg_ms > 2000) { confidenceScore -= 15; riskReasons.push('Cadence de saisie du NIP trop lente (hésitation ?)'); logStep('Analyse comportementale', 'Cadence NIP suspecte (lente)', -15); }
-    if (fraud_signals.paste_events > 0) { confidenceScore -= 5; riskReasons.push('Événements de collage détectés'); logStep('Analyse comportementale', 'Collage détecté dans le formulaire', -5); }
+    if (fraud_signals.paste_events > 0) { confidenceScore -= 20; riskReasons.push('Événements de collage détectés'); logStep('Analyse comportementale', 'Collage détecté dans le formulaire', -20); }
     
+    // Analyse de la baseline
     if (profile.avg_transaction_amount != null && profile.avg_transaction_amount > 0) {
       if (profile.transaction_amount_stddev > 0) {
           const deviation = Math.abs(amount - profile.avg_transaction_amount) / profile.transaction_amount_stddev;
           logStep('Analyse de la baseline', `Écart-type du montant: ${deviation.toFixed(2)}`, 0);
-          if (deviation > 2.5) { 
-              confidenceScore -= 30; 
-              riskReasons.push('Écart de montant significatif'); 
-              logStep('Analyse de la baseline', 'Montant inhabituellement élevé', -30); 
-          }
+          if (deviation > 2.5) { confidenceScore -= 30; riskReasons.push('Écart de montant significatif'); logStep('Analyse de la baseline', 'Montant inhabituellement élevé', -30); }
       } else {
           const difference = Math.abs(amount - profile.avg_transaction_amount);
           const percentage_diff = (difference / profile.avg_transaction_amount) * 100;
           logStep('Analyse de la baseline', `Différence de montant: ${percentage_diff.toFixed(0)}% (baseline à 1 tx)`, 0);
-          if (percentage_diff > 300) {
-              confidenceScore -= 25;
-              riskReasons.push('Écart de montant significatif (baseline faible)');
-              logStep('Analyse de la baseline', 'Montant très différent de l\'unique transaction précédente', -25);
-          }
+          if (percentage_diff > 300) { confidenceScore -= 25; riskReasons.push('Écart de montant significatif (baseline faible)'); logStep('Analyse de la baseline', 'Montant très différent de l\'unique transaction précédente', -25); }
       }
     } else {
       logStep('Analyse de la baseline', 'Première transaction, aucune baseline existante.', 0);
     }
 
-    if (profile.last_transaction_at) {
+    // Analyse de vélocité et "Voyage Impossible"
+    if (profile.last_transaction_at && profile.last_transaction_location?.latitude && currentLocation?.latitude) {
+      const lastTxTime = new Date(profile.last_transaction_at);
+      const timeDiffHours = (new Date() - lastTxTime) / (1000 * 60 * 60);
+      const distanceKm = calculateDistance(profile.last_transaction_location.latitude, profile.last_transaction_location.longitude, currentLocation.latitude, currentLocation.longitude);
+      
+      if (timeDiffHours > 0.001) { // Évite la division par zéro
+        const speedKmh = distanceKm / timeDiffHours;
+        logStep('Analyse de vélocité', `Vitesse calculée: ${speedKmh.toFixed(0)} km/h (${distanceKm.toFixed(1)}km en ${timeDiffHours.toFixed(3)}h)`, 0);
+        if (speedKmh > 800) { // Vitesse d'un avion de ligne
+          confidenceScore -= 75;
+          riskReasons.push('Voyage impossible détecté');
+          logStep('Analyse de vélocité', 'Vitesse de déplacement impossible entre les transactions', -75);
+        }
+      }
+    } else if (profile.last_transaction_at) {
       const timeSinceLast = (new Date() - new Date(profile.last_transaction_at)) / 1000;
-      logStep('Analyse de vélocité', `Dernière transaction il y a ${timeSinceLast.toFixed(0)}s`, 0);
+      logStep('Analyse de vélocité', `Dernière transaction il y a ${timeSinceLast.toFixed(0)}s (pas de données de localisation)`, 0);
       if (timeSinceLast < 15) { confidenceScore -= 40; riskReasons.push('Vélocité des transactions trop élevée'); logStep('Analyse de vélocité', 'Transactions trop rapprochées', -40); }
     } else {
       logStep('Analyse de vélocité', 'Première transaction pour ce profil', 0);
@@ -155,7 +199,12 @@ serve(async (req) => {
       risk_score: confidenceScore, decision: decision,
       signals: { ...fraud_signals, ipAddress, riskReasons, analysis_log },
     });
-    await supabaseAdmin.from('profiles').update({ last_transaction_at: new Date().toISOString() }).eq('id', profile.id);
+    
+    // Mise à jour du profil avec les nouvelles informations de transaction
+    await supabaseAdmin.from('profiles').update({ 
+      last_transaction_at: new Date().toISOString(),
+      last_transaction_location: currentLocation ? { latitude: currentLocation.latitude, longitude: currentLocation.longitude, city: currentLocation.city } : null,
+    }).eq('id', profile.id);
 
     await supabaseAdmin.rpc('update_profile_transaction_stats', { profile_id_to_update: profile.id });
 
