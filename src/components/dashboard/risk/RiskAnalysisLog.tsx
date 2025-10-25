@@ -19,15 +19,15 @@ const RiskAnalysisLog = ({ log }) => {
         <CardTitle>Journal d'Analyse Chronologique</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="relative pl-8">
-          <div className="absolute left-[15px] top-0 h-full w-0.5 bg-gray-200" />
-          <ul className="space-y-4">
+        <div className="relative">
+          <div className="absolute left-4 top-0 h-full w-0.5 bg-gray-200" />
+          <ul className="space-y-6">
             {log.map((item, index) => (
-              <li key={index} className="relative flex items-start gap-4">
-                <div className="absolute left-0 top-1 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-4 ring-white">
+              <li key={index} className="relative pl-12">
+                <div className="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-4 ring-white">
                   <Clock className="h-4 w-4 text-gray-600" />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0">
                   <div className="flex justify-between items-center">
                     <p className="text-sm font-semibold">{item.step}</p>
                     <p className="text-xs text-gray-400 flex-shrink-0 ml-2">+{item.timestamp}ms</p>
