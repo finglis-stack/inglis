@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface AvailabilityCellProps {
   availableAt: string | null;
 }
 
 const AvailabilityCell = ({ availableAt }: AvailabilityCellProps) => {
+  const { t } = useTranslation('q12x');
   const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
@@ -18,7 +20,7 @@ const AvailabilityCell = ({ availableAt }: AvailabilityCellProps) => {
       const diff = availableDate.getTime() - now.getTime();
 
       if (diff <= 0) {
-        setTimeLeft('Disponible');
+        setTimeLeft(t('availability.available'));
         clearInterval(interval);
       } else {
         const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -35,17 +37,17 @@ const AvailabilityCell = ({ availableAt }: AvailabilityCellProps) => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [availableAt]);
+  }, [availableAt, t]);
 
   if (!availableAt) {
     return null;
   }
 
-  if (timeLeft === 'Disponible') {
+  if (timeLeft === t('availability.available')) {
     return (
       <Badge variant="default" className="bg-green-600 hover:bg-green-700">
         <CheckCircle className="h-3 w-3 mr-1" />
-        Disponible
+        {t('availability.available')}
       </Badge>
     );
   }

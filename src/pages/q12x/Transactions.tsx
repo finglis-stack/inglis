@@ -8,10 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import AvailabilityCell from '@/components/q12x/AvailabilityCell';
+import { useTranslation } from 'react-i18next';
 
 const TRANSACTIONS_PER_PAGE = 15;
 
 const Q12xTransactions = () => {
+  const { t } = useTranslation('q12x');
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,23 +66,23 @@ const Q12xTransactions = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Historique des Transactions</CardTitle>
+        <CardTitle>{t('transactions.title')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="border rounded-lg">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Disponibilité</TableHead>
-                <TableHead className="text-right">Montant</TableHead>
+                <TableHead>{t('transactions.table.date')}</TableHead>
+                <TableHead>{t('transactions.table.description')}</TableHead>
+                <TableHead>{t('transactions.table.status')}</TableHead>
+                <TableHead>{t('transactions.table.availability')}</TableHead>
+                <TableHead className="text-right">{t('transactions.table.amount')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={5} className="text-center">Chargement...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center">{t('transactions.table.loading')}</TableCell></TableRow>
               ) : transactions.length > 0 ? (
                 transactions.map((tx) => (
                   <TableRow
@@ -104,18 +106,18 @@ const Q12xTransactions = () => {
                   </TableRow>
                 ))
               ) : (
-                <TableRow><TableCell colSpan={5} className="text-center h-24">Aucune transaction trouvée.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center h-24">{t('transactions.table.noTransactions')}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
         </div>
         <div className="flex justify-end items-center gap-4 mt-4">
           <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 1 || loading}>
-            <ArrowLeft className="h-4 w-4 mr-2" /> Précédent
+            <ArrowLeft className="h-4 w-4 mr-2" /> {t('transactions.pagination.previous')}
           </Button>
-          <span className="text-sm">Page {page}</span>
+          <span className="text-sm">{t('transactions.pagination.page', { page })}</span>
           <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={!hasMore || loading}>
-            Suivant <ArrowRight className="h-4 w-4 ml-2" />
+            {t('transactions.pagination.next')} <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
         </div>
       </CardContent>

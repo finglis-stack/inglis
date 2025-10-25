@@ -9,8 +9,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { showError, showSuccess } from '@/utils/toast';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const NewCheckout = () => {
+  const { t } = useTranslation('q12x');
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -66,42 +68,42 @@ const NewCheckout = () => {
     <div className="max-w-2xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle>Créer un nouveau Checkout</CardTitle>
-          <CardDescription>Configurez un lien de paiement réutilisable.</CardDescription>
+          <CardTitle>{t('newCheckout.title')}</CardTitle>
+          <CardDescription>{t('newCheckout.desc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid gap-2">
-              <Label htmlFor="name">Nom du Checkout</Label>
+              <Label htmlFor="name">{t('newCheckout.nameLabel')}</Label>
               <Input id="name" value={formData.name} onChange={handleChange} required />
-              <p className="text-xs text-muted-foreground">Un nom interne pour vous aider à l'identifier.</p>
+              <p className="text-xs text-muted-foreground">{t('newCheckout.nameDesc')}</p>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">Description (Optionnel)</Label>
+              <Label htmlFor="description">{t('newCheckout.descriptionLabel')}</Label>
               <Textarea id="description" value={formData.description} onChange={handleChange} />
-              <p className="text-xs text-muted-foreground">Sera affichée au client sur la page de paiement.</p>
+              <p className="text-xs text-muted-foreground">{t('newCheckout.descriptionDesc')}</p>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="amount">Montant</Label>
+              <Label htmlFor="amount">{t('newCheckout.amountLabel')}</Label>
               <Input id="amount" type="number" value={formData.amount} onChange={handleChange} disabled={formData.is_amount_variable} required={!formData.is_amount_variable} />
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox id="is_amount_variable" checked={formData.is_amount_variable} onCheckedChange={handleCheckboxChange} />
-              <Label htmlFor="is_amount_variable" className="text-sm font-normal">Permettre au client de définir le montant</Label>
+              <Label htmlFor="is_amount_variable" className="text-sm font-normal">{t('newCheckout.variableAmountLabel')}</Label>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="success_url">URL de succès (Optionnel)</Label>
+              <Label htmlFor="success_url">{t('newCheckout.successUrlLabel')}</Label>
               <Input id="success_url" type="url" placeholder="https://votresite.com/merci" value={formData.success_url} onChange={handleChange} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="cancel_url">URL d'annulation (Optionnel)</Label>
+              <Label htmlFor="cancel_url">{t('newCheckout.cancelUrlLabel')}</Label>
               <Input id="cancel_url" type="url" placeholder="https://votresite.com/erreur" value={formData.cancel_url} onChange={handleChange} />
             </div>
             <div className="flex justify-end gap-4">
-              <Button variant="ghost" asChild type="button"><Link to="/dashboard/checkouts">Annuler</Link></Button>
+              <Button variant="ghost" asChild type="button"><Link to="/dashboard/checkouts">{t('newCheckout.cancelButton')}</Link></Button>
               <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Créer le Checkout
+                {t('newCheckout.createButton')}
               </Button>
             </div>
           </form>

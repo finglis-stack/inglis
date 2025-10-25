@@ -7,12 +7,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { useTranslation } from 'react-i18next';
 
 interface ProcessingPaymentModalProps {
   isOpen: boolean;
 }
 
 const ProcessingPaymentModal = ({ isOpen }: ProcessingPaymentModalProps) => {
+  const { t } = useTranslation('q12x');
   const [animationData, setAnimationData] = useState(null);
 
   useEffect(() => {
@@ -37,9 +39,9 @@ const ProcessingPaymentModal = ({ isOpen }: ProcessingPaymentModalProps) => {
           }
         `}</style>
         <DialogHeader>
-          <DialogTitle>Traitement de votre paiement</DialogTitle>
+          <DialogTitle>{t('processingModal.title')}</DialogTitle>
           <DialogDescription>
-            Veuillez patienter pendant que nous communiquons avec votre institution financière.
+            {t('processingModal.desc')}
           </DialogDescription>
         </DialogHeader>
         <div className="py-8">

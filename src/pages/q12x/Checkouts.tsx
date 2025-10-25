@@ -7,8 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { showError, showSuccess } from '@/utils/toast';
 import { PlusCircle, Copy, Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Checkouts = () => {
+  const { t } = useTranslation('q12x');
   const [checkouts, setCheckouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -34,8 +36,8 @@ const Checkouts = () => {
   const copyLink = (checkoutId: string) => {
     const url = `${window.location.origin}/pay/${checkoutId}`;
     navigator.clipboard.writeText(url);
+    showSuccess(t('checkouts.linkCopied'));
     setCopiedId(checkoutId);
-    showSuccess("Lien copié !");
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -43,43 +45,43 @@ const Checkouts = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Checkouts</h1>
-          <p className="text-muted-foreground">Créez et gérez vos liens de paiement.</p>
+          <h1 className="text-3xl font-bold">{t('checkouts.title')}</h1>
+          <p className="text-muted-foreground">{t('checkouts.subtitle')}</p>
         </div>
         <Button asChild>
           <Link to="/dashboard/checkouts/new">
             <PlusCircle className="mr-2 h-4 w-4" />
-            Créer un Checkout
+            {t('checkouts.create')}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Vos Liens de Paiement</CardTitle>
-          <CardDescription>Partagez ces liens pour recevoir des paiements.</CardDescription>
+          <CardTitle>{t('checkouts.listTitle')}</CardTitle>
+          <CardDescription>{t('checkouts.listDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Montant</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Date de création</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('checkouts.colName')}</TableHead>
+                <TableHead>{t('checkouts.colAmount')}</TableHead>
+                <TableHead>{t('checkouts.colStatus')}</TableHead>
+                <TableHead>{t('checkouts.colDate')}</TableHead>
+                <TableHead className="text-right">{t('checkouts.colActions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={5} className="text-center">Chargement...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center">{t('transactions.table.loading')}</TableCell></TableRow>
               ) : checkouts.length > 0 ? (
                 checkouts.map(checkout => (
                   <TableRow key={checkout.id}>
                     <TableCell className="font-medium">{checkout.name}</TableCell>
                     <TableCell>
                       {checkout.is_amount_variable 
-                        ? <Badge variant="outline">Variable</Badge> 
+                        ? <Badge variant="outline">{t('checkouts.amountVariable')}</Badge> 
                         : new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(checkout.amount)}
                     </TableCell>
                     <TableCell><Badge variant={checkout.status === 'active' ? 'default' : 'secondary'}>{checkout.status}</Badge></TableCell>
@@ -92,7 +94,7 @@ const Checkouts = () => {
                   </TableRow>
                 ))
               ) : (
-                <TableRow><TableCell colSpan={5} className="text-center h-24">Aucun checkout créé.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={5} className="text-center h-24">{t('checkouts.noCheckouts')}</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

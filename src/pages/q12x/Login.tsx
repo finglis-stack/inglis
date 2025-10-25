@@ -6,9 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { showError } from '@/utils/toast';
 import { AuthLayout } from './AuthLayout';
+import { useTranslation } from 'react-i18next';
 
 const Q12xLogin = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('q12x');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -31,28 +33,28 @@ const Q12xLogin = () => {
 
   return (
     <AuthLayout 
-      title="Connexion"
-      subtitle="Accédez à votre tableau de bord marchand."
+      title={t('login.title')}
+      subtitle={t('login.subtitle')}
     >
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
-          <Label htmlFor="email">Adresse e-mail</Label>
+          <Label htmlFor="email">{t('login.emailLabel')}</Label>
           <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1" />
         </div>
         <div>
-          <Label htmlFor="password">Mot de passe</Label>
+          <Label htmlFor="password">{t('login.passwordLabel')}</Label>
           <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1" />
         </div>
         <div>
           <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700" disabled={loading}>
-            {loading ? 'Connexion...' : 'Se connecter'}
+            {loading ? t('login.loading') : t('login.button')}
           </Button>
         </div>
       </form>
       <p className="text-center text-sm text-gray-500 mt-6">
-        Pas encore de compte ?{' '}
+        {t('login.noAccount')}{' '}
         <Link to="/" className="font-medium text-indigo-600 hover:underline">
-          Inscrivez-vous
+          {t('login.signUp')}
         </Link>
       </p>
     </AuthLayout>
