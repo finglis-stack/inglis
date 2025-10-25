@@ -51,44 +51,44 @@ serve(async (req) => {
       }).single();
 
     if (cardError || !cardData || !cardData.profiles) {
-      riskReasons.push('CARD_NOT_FOUND');
+      riskReasons.push('Carte non trouvée');
       throw new Error('Payment declined by issuer.');
     }
     card = cardData;
     profile = cardData.profiles;
 
     if (!isExpiryValid(expiry_date)) {
-      riskReasons.push('INVALID_EXPIRY_FORMAT');
+      riskReasons.push('Format d\'expiration invalide');
       confidenceScore -= 100;
     } else {
       const [month, year] = expiry_date.split('/');
       const cardExpiresAt = new Date(card.expires_at);
       if (parseInt(month, 10) !== cardExpiresAt.getUTCMonth() + 1 || (2000 + parseInt(year, 10)) !== cardExpiresAt.getUTCFullYear()) {
-        riskReasons.push('EXPIRY_MISMATCH');
+        riskReasons.push('Date d\'expiration ne correspond pas');
         confidenceScore -= 100;
       }
     }
 
     if (!bcrypt.compareSync(pin, card.pin)) {
-      riskReasons.push('INCORRECT_PIN');
+      riskReasons.push('NIP incorrect');
       confidenceScore -= 80;
     }
 
-    if (fraud_signals.pan_entry_duration_ms < 1000) { confidenceScore -= 25; riskReasons.push('PAN entry too fast'); }
-    if (fraud_signals.pan_entry_duration_ms > 20000) { confidenceScore -= 15; riskReasons.push('PAN entry too slow'); }
-    if (fraud_signals.expiry_entry_duration_ms > 7000) { confidenceScore -= 10; riskReasons.push('Expiry entry too slow'); }
-    if (fraud_signals.pin_entry_duration_ms < 500) { confidenceScore -= 20; riskReasons.push('PIN entry too fast'); }
-    if (fraud_signals.pin_inter_digit_avg_ms < 50) { confidenceScore -= 30; riskReasons.push('PIN inter-digit cadence too fast (script?)'); }
-    if (fraud_signals.pin_inter_digit_avg_ms > 2000) { confidenceScore -= 15; riskReasons.push('PIN inter-digit cadence too slow (hesitation?)'); }
-    if (fraud_signals.paste_events > 0) { confidenceScore -= 5; riskReasons.push('Paste events detected'); }
+    if (fraud_signals.pan_entry_duration_ms < 1000) { confidenceScore -= 25; riskReasons.push('Saisie du PAN trop rapide'); }
+    if (fraud_signals.pan_entry_duration_ms > 20000) { confidenceScore -= 15; riskReasons.push('Saisie du PAN trop lente'); }
+    if (fraud_signals.expiry_entry_duration_ms > 7000) { confidenceScore -= 10; riskReasons.push('Saisie de l\'expiration trop lente'); }
+    if (fraud_signals.pin_entry_duration_ms < 500) { confidenceScore -= 20; riskReasons.push('Saisie du NIP trop rapide'); }
+    if (fraud_signals.pin_inter_digit_avg_ms < 50) { confidenceScore -= 30; riskReasons.push('Cadence de saisie du NIP trop rapide (script ?)'); }
+    if (fraud_signals.pin_inter_digit_avg_ms > 2000) { confidenceScore -= 15; riskReasons.push('Cadence de saisie du NIP trop lente (hésitation ?)'); }
+    if (fraud_signals.paste_events > 0) { confidenceScore -= 5; riskReasons.push('Événements de collage détectés'); }
     
     if (profile.avg_transaction_amount > 0 && profile.transaction_amount_stddev > 0) {
       const deviation = Math.abs(amount - profile.avg_transaction_amount) / profile.transaction_amount_stddev;
-      if (deviation > 2.5) { confidenceScore -= 30; riskReasons.push('Amount deviation significant'); }
+      if (deviation > 2.5) { confidenceScore -= 30; riskReasons.push('Écart de montant significatif'); }
     }
     if (profile.last_transaction_at) {
       const timeSinceLast = (new Date() - new Date(profile.last_transaction_at)) / 1000;
-      if (timeSinceLast < 15) { confidenceScore -= 40; riskReasons.push('Transaction velocity too high'); }
+      if (timeSinceLast < 15) { confidenceScore -= 40; riskReasons.push('Vélocité des transactions trop élevée'); }
     }
     
     confidenceScore = Math.max(0, confidenceScore);
