@@ -58,11 +58,11 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
 
   // Refs for behavioral signals
   const panEntryStart = useRef<number | null>(null);
-  const [panEntryDuration, setPanEntryDuration] = useState<number | null>(null);
+  const panEntryDuration = useRef<number | null>(null);
   const expiryEntryStart = useRef<number | null>(null);
-  const [expiryEntryDuration, setExpiryEntryDuration] = useState<number | null>(null);
+  const expiryEntryDuration = useRef<number | null>(null);
   const pinEntryStart = useRef<number | null>(null);
-  const [pinEntryDuration, setPinEntryDuration] = useState<number | null>(null);
+  const pinEntryDuration = useRef<number | null>(null);
   const pinTimestamps = useRef<number[]>([]);
 
   useEffect(() => {
@@ -88,7 +88,9 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
     if (cleaned.length <= 18) {
       setCardNumber(cleaned);
       if (cleaned.length === 18 && panEntryStart.current) {
-        setPanEntryDuration(Date.now() - panEntryStart.current);
+        panEntryDuration.current = Date.now() - panEntryStart.current;
+      } else {
+        panEntryDuration.current = null;
       }
     }
   };
@@ -101,25 +103,27 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
     const formatted = formatExpiry(value);
     setExpiry(formatted);
     if (formatted.length === 5 && expiryEntryStart.current) {
-      setExpiryEntryDuration(Date.now() - expiryEntryStart.current);
+      expiryEntryDuration.current = Date.now() - expiryEntryStart.current;
+    } else {
+      expiryEntryDuration.current = null;
     }
   };
 
   const handlePinChange = (value: string) => {
-    if (value.length > pin.length) { // Only record timestamps on new digit entry
+    if (value.length > pin.length) {
       pinTimestamps.current.push(Date.now());
-    } else { // User is deleting
+    } else {
       pinTimestamps.current.pop();
     }
 
     if (value.length === 1 && !pinEntryStart.current) {
       pinEntryStart.current = Date.now();
     }
+    
     if (value.length === 4 && pinEntryStart.current) {
-      setPinEntryDuration(Date.now() - pinEntryStart.current);
-    }
-    if (value.length < 4) {
-      setPinEntryDuration(null);
+      pinEntryDuration.current = Date.now() - pinEntryStart.current;
+    } else {
+      pinEntryDuration.current = null;
     }
     setPin(value);
   };
@@ -146,12 +150,14 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
     }
 
     let pinInterDigitAvgMs = null;
-    if (pinTimestamps.current.length === 4) {
+    if (pinTimestamps.current.length >= 2) {
       const diffs = [];
       for (let i = 1; i < pinTimestamps.current.length; i++) {
         diffs.push(pinTimestamps.current[i] - pinTimestamps.current[i-1]);
       }
-      pinInterDigitAvgMs = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+      if (diffs.length > 0) {
+        pinInterDigitAvgMs = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+      }
     }
 
     onSubmit(
@@ -161,9 +167,9 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
         pin: pin,
       },
       {
-        pan_entry_duration_ms: panEntryDuration,
-        expiry_entry_duration_ms: expiryEntryDuration,
-        pin_entry_duration_ms: pinEntryDuration,
+        pan_entry_duration_ms: panEntryDuration.current,
+        expiry_entry_duration_ms: expiryEntryDuration.current,
+        pin_entry_duration_ms: pinEntryDuration.current,
         pin_inter_digit_avg_ms: pinInterDigitAvgMs,
       }
     );

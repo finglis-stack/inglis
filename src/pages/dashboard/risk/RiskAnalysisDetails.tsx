@@ -120,20 +120,22 @@ const RiskAnalysisDetails = () => {
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="md:col-span-2">
             <CardHeader><CardTitle className="text-base">Contexte de la Transaction</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-6">
               {renderDetailItem(<DollarSign className="h-5 w-5" />, "Montant", details?.transaction?.amount ? new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(details.transaction.amount) : 'N/A')}
               {renderDetailItem(<Building className="h-5 w-5" />, "Marchand", details?.transaction?.merchant_accounts?.name || 'N/A')}
               {renderDetailItem(<Globe className="h-5 w-5" />, "Localisation IP", `${details?.transaction?.location?.city || ''}, ${details?.transaction?.location?.country_name || ''}`)}
-              {renderDetailItem(<User className="h-5 w-5" />, "User Agent", <span className="text-xs">{assessment.signals?.user_agent}</span>)}
+              {renderDetailItem(<User className="h-5 w-5" />, "User Agent", <span className="text-xs">{assessment.signals?.user_agent || 'N/A'}</span>)}
+              {renderDetailItem(<Hash className="h-5 w-5" />, "ID Transaction", assessment.transaction_id || 'N/A')}
+              {renderDetailItem(<Hash className="h-5 w-5" />, "Code d'autorisation", details?.transaction?.authorization_code || 'N/A')}
             </CardContent>
           </Card>
           <Card>
             <CardHeader><CardTitle className="text-base">Analyse Comportementale</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              {renderDetailItem(<CreditCard className="h-5 w-5" />, "Saisie du PAN", `${assessment.signals?.pan_entry_duration_ms} ms`)}
-              {renderDetailItem(<Calendar className="h-5 w-5" />, "Saisie de l'expiration", `${assessment.signals?.expiry_entry_duration_ms} ms`)}
-              {renderDetailItem(<KeyRound className="h-5 w-5" />, "Saisie du NIP", `${assessment.signals?.pin_entry_duration_ms} ms`)}
-              {renderDetailItem(<Timer className="h-5 w-5" />, "Cadence NIP (moy/chiffre)", `${assessment.signals?.pin_inter_digit_avg_ms?.toFixed(0)} ms`)}
+              {renderDetailItem(<CreditCard className="h-5 w-5" />, "Saisie du PAN", `${assessment.signals?.pan_entry_duration_ms ?? 'N/A'} ms`)}
+              {renderDetailItem(<Calendar className="h-5 w-5" />, "Saisie de l'expiration", `${assessment.signals?.expiry_entry_duration_ms ?? 'N/A'} ms`)}
+              {renderDetailItem(<KeyRound className="h-5 w-5" />, "Saisie du NIP", `${assessment.signals?.pin_entry_duration_ms ?? 'N/A'} ms`)}
+              {renderDetailItem(<Timer className="h-5 w-5" />, "Cadence NIP (moy/chiffre)", `${assessment.signals?.pin_inter_digit_avg_ms?.toFixed(0) ?? 'N/A'} ms`)}
             </CardContent>
           </Card>
           <Card>
