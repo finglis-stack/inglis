@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { UploadCloud, DownloadCloud, Loader2, Info, AlertTriangle } from 'lucide-react';
 import CreditReportDisplay from '@/components/dashboard/users/CreditReportDisplay';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import RiskAnalysis from '@/components/dashboard/users/RiskAnalysis';
 
 const UserProfile = () => {
   const { id } = useParams();
@@ -34,6 +35,7 @@ const UserProfile = () => {
   const [isRequesting, setIsRequesting] = useState(false);
   const [pulledReport, setPulledReport] = useState(null);
   const [isReportExpired, setIsReportExpired] = useState(false);
+  const [riskAssessments, setRiskAssessments] = useState([]);
 
   const fetchLogs = useCallback(async () => {
     if (!id) return;
@@ -202,6 +204,15 @@ const UserProfile = () => {
           .insert({ profile_id: profile.id, visitor_user_id: user.id });
         fetchLogs(); // Refresh logs after inserting
       }
+
+      const { data: assessmentsData, error: assessmentsError } = await supabase
+        .from('transaction_risk_assessments')
+        .select('*')
+        .eq('profile_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (assessmentsError) throw assessmentsError;
+      setRiskAssessments(assessmentsData || []);
       
       return true;
     } catch (e) {
@@ -248,6 +259,12 @@ const UserProfile = () => {
           {profile.type === 'personal' && <PersonalProfile profile={profile} decryptedSin={decryptedSin} decryptedAddress={decryptedAddress} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} profileId={profile.id} />}
           {profile.type === 'corporate' && <CorporateProfile profile={profile} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} profileId={profile.id} />}
         </div>
+
+        {isUnlocked && (
+          <div className="mt-6">
+            <RiskAnalysis assessments={riskAssessments} />
+          </div>
+        )}
 
         {isUnlocked && pulledReport && !isReportExpired && (
           <>
