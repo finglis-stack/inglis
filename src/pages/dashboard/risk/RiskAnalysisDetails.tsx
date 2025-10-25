@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Shield, ShieldAlert, ShieldCheck, Timer, CreditCard, Calendar, KeyRound, DollarSign, Zap, Globe, Building, Hash, BarChart3, User } from 'lucide-react';
+import { ArrowLeft, Shield, ShieldAlert, ShieldCheck, Timer, CreditCard, Calendar, KeyRound, DollarSign, Globe, Building, Hash, BarChart3, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import RiskScoreGauge from '@/components/dashboard/users/RiskScoreGauge';
 import { showError } from '@/utils/toast';
+import RiskAnalysisLog from '@/components/dashboard/users/RiskAnalysisLog';
 
 const RiskAnalysisDetails = () => {
   const { assessmentId } = useParams();
@@ -117,8 +118,11 @@ const RiskAnalysisDetails = () => {
             </CardContent>
           </Card>
         </div>
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="md:col-span-2">
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          {assessment.signals?.analysis_log && (
+            <RiskAnalysisLog log={assessment.signals.analysis_log} />
+          )}
+          <Card>
             <CardHeader><CardTitle className="text-base">Contexte de la Transaction</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-6">
               {renderDetailItem(<DollarSign className="h-5 w-5" />, "Montant", details?.transaction?.amount ? new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(details.transaction.amount) : 'N/A')}
@@ -129,28 +133,30 @@ const RiskAnalysisDetails = () => {
               {renderDetailItem(<Hash className="h-5 w-5" />, "Code d'autorisation", details?.transaction?.authorization_code || 'N/A')}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader><CardTitle className="text-base">Analyse Comportementale</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              {renderDetailItem(<CreditCard className="h-5 w-5" />, "Saisie du PAN", `${assessment.signals?.pan_entry_duration_ms ?? 'N/A'} ms`)}
-              {renderDetailItem(<Calendar className="h-5 w-5" />, "Saisie de l'expiration", `${assessment.signals?.expiry_entry_duration_ms ?? 'N/A'} ms`)}
-              {renderDetailItem(<KeyRound className="h-5 w-5" />, "Saisie du NIP", `${assessment.signals?.pin_entry_duration_ms ?? 'N/A'} ms`)}
-              {renderDetailItem(<Timer className="h-5 w-5" />, "Cadence NIP (moy/chiffre)", `${assessment.signals?.pin_inter_digit_avg_ms?.toFixed(0) ?? 'N/A'} ms`)}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader><CardTitle className="text-base">Profil de Risque (Baseline)</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              {details?.profile?.avg_transaction_amount > 0 ? (
-                <>
-                  {renderDetailItem(<BarChart3 className="h-5 w-5" />, "Montant moyen", new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(details.profile.avg_transaction_amount))}
-                  {renderDetailItem(<BarChart3 className="h-5 w-5" />, "Écart-type", new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(details.profile.transaction_amount_stddev))}
-                </>
-              ) : (
-                <p className="text-sm text-muted-foreground">Aucun historique pour établir une baseline.</p>
-              )}
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader><CardTitle className="text-base">Analyse Comportementale</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                {renderDetailItem(<CreditCard className="h-5 w-5" />, "Saisie du PAN", `${assessment.signals?.pan_entry_duration_ms ?? 'N/A'} ms`)}
+                {renderDetailItem(<Calendar className="h-5 w-5" />, "Saisie de l'expiration", `${assessment.signals?.expiry_entry_duration_ms ?? 'N/A'} ms`)}
+                {renderDetailItem(<KeyRound className="h-5 w-5" />, "Saisie du NIP", `${assessment.signals?.pin_entry_duration_ms ?? 'N/A'} ms`)}
+                {renderDetailItem(<Timer className="h-5 w-5" />, "Cadence NIP (moy/chiffre)", `${assessment.signals?.pin_inter_digit_avg_ms?.toFixed(0) ?? 'N/A'} ms`)}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle className="text-base">Profil de Risque (Baseline)</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                {details?.profile?.avg_transaction_amount > 0 ? (
+                  <>
+                    {renderDetailItem(<BarChart3 className="h-5 w-5" />, "Montant moyen", new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(details.profile.avg_transaction_amount))}
+                    {renderDetailItem(<BarChart3 className="h-5 w-5" />, "Écart-type", new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(details.profile.transaction_amount_stddev))}
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Aucun historique pour établir une baseline.</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
