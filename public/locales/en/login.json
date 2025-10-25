@@ -6,5 +6,6 @@
   "button": "Sign In",
   "forgotPassword": "Forgot password?",
   "noAccount": "Not a partner yet?",
-  "signUp": "Sign up"
+  "signUp": "Sign up",
+  "accessDeniedInstitution": "Access denied. This is not an institution account."
 }

@@ -7,7 +7,8 @@
     "button": "Sign In",
     "loading": "Signing in...",
     "noAccount": "Don't have an account yet?",
-    "signUp": "Sign up"
+    "signUp": "Sign up",
+    "accessDeniedMerchant": "Access denied. This is not a merchant account."
   },
   "authLayout": {
     "bgTitle": "Manage your transactions. Simply.",

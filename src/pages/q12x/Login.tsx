@@ -18,16 +18,35 @@ const Q12xLogin = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
-      showError(error.message);
-    } else {
-      navigate('/dashboard');
+    if (signInError) {
+      showError(signInError.message);
+      setLoading(false);
+      return;
     }
+
+    // Check if the user is a merchant user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: merchant, error: merchantError } = await supabase
+        .from('merchant_accounts')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (merchantError || !merchant) {
+        showError(t('login.accessDeniedMerchant'));
+        await supabase.auth.signOut();
+        setLoading(false);
+        return;
+      }
+    }
+
+    navigate('/dashboard');
     setLoading(false);
   };
 

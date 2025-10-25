@@ -18,16 +18,35 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
-      showError(error.message);
-    } else {
-      navigate('/dashboard');
+    if (signInError) {
+      showError(signInError.message);
+      setLoading(false);
+      return;
     }
+
+    // Check if the user is an institution user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: institution, error: institutionError } = await supabase
+        .from('institutions')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (institutionError || !institution) {
+        showError(t('accessDeniedInstitution'));
+        await supabase.auth.signOut();
+        setLoading(false);
+        return;
+      }
+    }
+
+    navigate('/dashboard');
     setLoading(false);
   };
 
