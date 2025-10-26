@@ -85,7 +85,7 @@ const RiskAnalysisDetails = () => {
   const merchantName = details?.transaction?.merchant_accounts?.name ?? assessment.signals?.merchant_name;
   const locationDisplay = details?.transaction?.location ? `${details.transaction.location.city}, ${details.transaction.location.country_name}` : 'N/A';
   
-  const riskSignals = assessment.signals?.analysis_log?.filter(log => parseInt(log.impact) > 0) || [];
+  const riskSignals = assessment.signals?.analysis_log?.filter(log => parseInt(log.impact) < 0) || [];
 
   return (
     <div className="p-4 md:p-8">

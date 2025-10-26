@@ -34,7 +34,7 @@ serve(async (req) => {
   
   const startTime = Date.now();
   const analysisLog = [];
-  let riskScore = 0;
+  let riskScore = 100; // Score de confiance, commence à 100
 
   try {
     // --- VALIDATION & DATA FETCHING ---
@@ -91,18 +91,18 @@ serve(async (req) => {
     const profile = cardData.profiles;
     if (profile.avg_transaction_amount > 0 && profile.transaction_amount_stddev > 0) {
       const z_score = Math.abs((amountToCharge - profile.avg_transaction_amount) / profile.transaction_amount_stddev);
-      if (z_score > 2) { riskScore += 30; analysisLog.push({ step: "Analyse du montant", result: `Montant inhabituel (Z-score: ${z_score.toFixed(2)})`, impact: "+30", timestamp: Date.now() - startTime }); }
+      if (z_score > 2) { riskScore -= 30; analysisLog.push({ step: "Analyse du montant", result: `Montant inhabituel (Z-score: ${z_score.toFixed(2)})`, impact: "-30", timestamp: Date.now() - startTime }); }
       else { analysisLog.push({ step: "Analyse du montant", result: "Montant habituel", impact: "+0", timestamp: Date.now() - startTime }); }
     }
 
-    if (fraud_signals?.pan_entry_duration_ms < 1000) { riskScore += 15; analysisLog.push({ step: "Analyse comportementale", result: "Saisie du PAN très rapide", impact: "+15", timestamp: Date.now() - startTime }); }
+    if (fraud_signals?.pan_entry_duration_ms < 1000) { riskScore -= 15; analysisLog.push({ step: "Analyse comportementale", result: "Saisie du PAN très rapide", impact: "-15", timestamp: Date.now() - startTime }); }
     else { analysisLog.push({ step: "Analyse comportementale", result: "Saisie du PAN normale", impact: "+0", timestamp: Date.now() - startTime }); }
 
-    if (fraud_signals?.paste_events > 0) { riskScore += 20; analysisLog.push({ step: "Analyse comportementale", result: "Utilisation du copier-coller", impact: "+20", timestamp: Date.now() - startTime }); }
+    if (fraud_signals?.paste_events > 0) { riskScore -= 20; analysisLog.push({ step: "Analyse comportementale", result: "Utilisation du copier-coller", impact: "-20", timestamp: Date.now() - startTime }); }
     else { analysisLog.push({ step: "Analyse comportementale", result: "Aucun copier-coller détecté", impact: "+0", timestamp: Date.now() - startTime }); }
     
-    const decision = riskScore >= 60 ? 'BLOCK' : 'APPROVE';
-    analysisLog.push({ step: "Décision finale", result: `Score de risque: ${riskScore}`, impact: "+0", timestamp: Date.now() - startTime });
+    const decision = riskScore < 40 ? 'BLOCK' : 'APPROVE';
+    analysisLog.push({ step: "Décision finale", result: `Score de confiance: ${riskScore}`, impact: "+0", timestamp: Date.now() - startTime });
 
     const { error: assessmentError } = await supabaseAdmin.from('transaction_risk_assessments').insert({
       profile_id: profile.id,

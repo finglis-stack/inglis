@@ -2,9 +2,9 @@ import { RadialBarChart, RadialBar, PolarAngleAxis } from 'recharts';
 
 const RiskScoreGauge = ({ score }) => {
   const getColor = (s) => {
-    if (s >= 60) return '#ef4444'; // red-500
-    if (s >= 30) return '#f97316'; // orange-500
-    return '#22c55e'; // green-500
+    if (s >= 70) return '#22c55e'; // green-500
+    if (s >= 40) return '#f97316'; // orange-500
+    return '#ef4444'; // red-500
   };
 
   const data = [{ name: 'score', value: score, fill: getColor(score) }];
