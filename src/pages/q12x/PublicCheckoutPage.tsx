@@ -147,20 +147,23 @@ const PublicCheckoutPage = () => {
             {checkout.is_amount_variable ? (
               <div className="grid gap-2">
                 <Label htmlFor="amount">{t('publicCheckout.amountToPay')}</Label>
-                <Input 
-                  id="amount" 
-                  type="number" 
-                  value={variableAmount} 
-                  onChange={(e) => setVariableAmount(e.target.value)} 
-                  placeholder="0.00" 
-                  className="text-lg font-semibold"
-                />
+                <div className="relative">
+                  <Input 
+                    id="amount" 
+                    type="number" 
+                    value={variableAmount} 
+                    onChange={(e) => setVariableAmount(e.target.value)} 
+                    placeholder="0.00" 
+                    className="text-lg font-semibold pl-3 pr-12"
+                  />
+                  <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500">{checkout.currency}</span>
+                </div>
               </div>
             ) : (
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">{t('publicCheckout.total')}</span>
                 <span className="text-2xl font-semibold text-gray-900">
-                  {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(checkout.amount)}
+                  {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: checkout.currency }).format(checkout.amount)}
                 </span>
               </div>
             )}

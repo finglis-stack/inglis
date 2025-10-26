@@ -82,7 +82,7 @@ const Checkouts = () => {
                     <TableCell>
                       {checkout.is_amount_variable 
                         ? <Badge variant="outline">{t('checkouts.amountVariable')}</Badge> 
-                        : new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(checkout.amount)}
+                        : `${new Intl.NumberFormat('fr-CA', { style: 'currency', currency: checkout.currency }).format(checkout.amount)}`}
                     </TableCell>
                     <TableCell><Badge variant={checkout.status === 'active' ? 'default' : 'secondary'}>{checkout.status}</Badge></TableCell>
                     <TableCell>{new Date(checkout.created_at).toLocaleDateString()}</TableCell>

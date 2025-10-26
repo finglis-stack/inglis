@@ -86,7 +86,8 @@
     "availableBalance": "Available Balance for Payout",
     "availableBalanceDesc": "Total settled amount ready to be transferred.",
     "inTransitBalance": "In-transit Balance",
-    "inTransitBalanceDesc": "Total amount of captured transactions."
+    "inTransitBalanceDesc": "Total amount of captured transactions.",
+    "balancesByCurrency": "Balances by Currency"
   },
   "transactions": {
     "title": "Transaction History",
@@ -144,6 +145,7 @@
     "descriptionLabel": "Description (Optional)",
     "descriptionDesc": "Will be displayed to the customer on the payment page.",
     "amountLabel": "Amount",
+    "currencyLabel": "Currency",
     "variableAmountLabel": "Allow the customer to set the amount",
     "successUrlLabel": "Success URL (Optional)",
     "cancelUrlLabel": "Cancel URL (Optional)",

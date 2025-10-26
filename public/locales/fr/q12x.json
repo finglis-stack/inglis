@@ -86,7 +86,8 @@
     "availableBalance": "Solde disponible pour virement",
     "availableBalanceDesc": "Montant total réglé et prêt à être viré.",
     "inTransitBalance": "Solde en transit",
-    "inTransitBalanceDesc": "Montant total des transactions capturées."
+    "inTransitBalanceDesc": "Montant total des transactions capturées.",
+    "balancesByCurrency": "Soldes par devise"
   },
   "transactions": {
     "title": "Historique des Transactions",
@@ -144,6 +145,7 @@
     "descriptionLabel": "Description (Optionnel)",
     "descriptionDesc": "Sera affichée au client sur la page de paiement.",
     "amountLabel": "Montant",
+    "currencyLabel": "Devise",
     "variableAmountLabel": "Permettre au client de définir le montant",
     "successUrlLabel": "URL de succès (Optionnel)",
     "cancelUrlLabel": "URL d'annulation (Optionnel)",

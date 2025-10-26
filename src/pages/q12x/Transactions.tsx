@@ -101,7 +101,7 @@ const Q12xTransactions = () => {
                       <AvailabilityCell availableAt={tx.merchant_balance_ledgers[0]?.available_at} />
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(tx.amount)}
+                      {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: tx.currency }).format(tx.amount)}
                     </TableCell>
                   </TableRow>
                 ))

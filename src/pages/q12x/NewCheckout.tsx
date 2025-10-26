@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { showError, showSuccess } from '@/utils/toast';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const NewCheckout = () => {
   const { t } = useTranslation('q12x');
@@ -21,6 +22,7 @@ const NewCheckout = () => {
     is_amount_variable: false,
     success_url: '',
     cancel_url: '',
+    currency: 'CAD',
   });
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +33,10 @@ const NewCheckout = () => {
 
   const handleCheckboxChange = (checked: boolean) => {
     setFormData(prev => ({ ...prev, is_amount_variable: checked }));
+  };
+
+  const handleSelectChange = (value: string) => {
+    setFormData(prev => ({ ...prev, currency: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,9 +89,21 @@ const NewCheckout = () => {
               <Textarea id="description" value={formData.description} onChange={handleChange} />
               <p className="text-xs text-muted-foreground">{t('newCheckout.descriptionDesc')}</p>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="amount">{t('newCheckout.amountLabel')}</Label>
-              <Input id="amount" type="number" value={formData.amount} onChange={handleChange} disabled={formData.is_amount_variable} required={!formData.is_amount_variable} />
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2 col-span-2">
+                <Label htmlFor="amount">{t('newCheckout.amountLabel')}</Label>
+                <Input id="amount" type="number" value={formData.amount} onChange={handleChange} disabled={formData.is_amount_variable} required={!formData.is_amount_variable} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="currency">{t('newCheckout.currencyLabel')}</Label>
+                <Select value={formData.currency} onValueChange={handleSelectChange}>
+                  <SelectTrigger id="currency"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CAD">CAD</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox id="is_amount_variable" checked={formData.is_amount_variable} onCheckedChange={handleCheckboxChange} />

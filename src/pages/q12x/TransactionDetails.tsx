@@ -116,7 +116,7 @@ const Q12xTransactionDetails = () => {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-muted-foreground">{t('transactionDetails.amount')}</p>
-              <p className="text-3xl font-bold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(transaction.amount)}</p>
+              <p className="text-3xl font-bold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: transaction.currency }).format(transaction.amount)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{t('transactionDetails.description')}</p>
