@@ -74,6 +74,16 @@ const PublicCheckoutPage = () => {
         throw new Error(t('publicCheckout.form.invalidAmount'));
       }
 
+      // Étape 1: Tokenisation
+      const { data: tokenData, error: tokenError } = await supabase.functions.invoke('api-v1-tokenize-card', {
+        body: cardDetails
+      });
+
+      if (tokenError) {
+        const message = await getFunctionError(tokenError, t('publicCheckout.form.paymentRefused'));
+        throw new Error(message);
+      }
+
       const fraud_signals = {
         ...behavioralSignals,
         time_on_page_ms: Date.now() - formLoadTime.current,
@@ -84,12 +94,13 @@ const PublicCheckoutPage = () => {
         screen_resolution: `${window.screen.width}x${window.screen.height}`,
       };
 
+      // Étape 2: Paiement avec le jeton
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke('q12x-secure-checkout', {
         body: {
           checkoutId: checkout.id,
           amount: amount,
+          card_token: tokenData.token,
           fraud_signals,
-          ...cardDetails
         }
       });
 

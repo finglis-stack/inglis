@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
-import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,23 +12,12 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
-const isExpiryValid = (expiry: string) => {
-  if (!/^\d{2}\/\d{2}$/.test(expiry)) return false;
-  const [month, year] = expiry.split('/');
-  const expiryMonth = parseInt(month, 10);
-  const expiryYear = 2000 + parseInt(year, 10);
-  if (expiryMonth < 1 || expiryMonth > 12) return false;
-  const now = new Date();
-  const lastDayOfExpiryMonth = new Date(expiryYear, expiryMonth, 0);
-  return lastDayOfExpiryMonth >= now;
-};
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
-  const { checkoutId, card_number, expiry_date, pin, amount, fraud_signals } = await req.json();
+  const { checkoutId, card_token, amount, fraud_signals } = await req.json();
   const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? null;
   
   const startTime = Date.now();
@@ -40,9 +28,26 @@ serve(async (req) => {
     // --- VALIDATION & DATA FETCHING ---
     analysisLog.push({ step: "Début de la validation", result: "Initialisation", impact: "+0", timestamp: Date.now() - startTime });
 
-    if (!checkoutId || !card_number || !expiry_date || !pin || !amount) {
-      throw new Error('checkoutId, card_number, expiry_date, pin, and amount are required.');
+    if (!checkoutId || !card_token || !amount) {
+      throw new Error('checkoutId, card_token, and amount are required.');
     }
+
+    // 1. Valider le jeton et récupérer l'ID de la carte
+    const { data: tokenData, error: tokenError } = await supabaseAdmin
+      .from('card_tokens')
+      .select('card_id, expires_at, used_at')
+      .eq('token', card_token)
+      .single();
+
+    if (tokenError || !tokenData) throw new Error('Jeton de paiement invalide ou expiré.');
+    if (tokenData.used_at) throw new Error('Ce jeton a déjà été utilisé.');
+    if (new Date(tokenData.expires_at) < new Date()) throw new Error('Ce jeton a expiré.');
+    
+    const cardId = tokenData.card_id;
+    // Marquer le jeton comme utilisé pour empêcher sa réutilisation
+    await supabaseAdmin.from('card_tokens').update({ used_at: new Date().toISOString() }).eq('token', card_token);
+    analysisLog.push({ step: "Validation du jeton", result: `Jeton valide pour la carte ${cardId}`, impact: "+0", timestamp: Date.now() - startTime });
+
 
     const { data: checkout, error: checkoutError } = await supabaseAdmin
       .from('checkouts')
@@ -58,19 +63,12 @@ serve(async (req) => {
     const checkoutCurrency = checkout.currency;
 
     const { data: cardData, error: cardError } = await supabaseAdmin
-      .from('cards').select('id, pin, expires_at, profile_id, profiles(*, debit_accounts(currency), credit_accounts(currency))').match({
-        user_initials: card_number.initials, issuer_id: card_number.issuer_id,
-        random_letters: card_number.random_letters, unique_identifier: card_number.unique_identifier,
-        check_digit: card_number.check_digit,
-      }).single();
+      .from('cards').select('id, profile_id, profiles(*, debit_accounts(currency), credit_accounts(currency))')
+      .eq('id', cardId)
+      .single();
     
     if (cardError || !cardData) throw new Error('Payment declined by issuer.');
-    analysisLog.push({ step: "Validation de la carte", result: `Carte ${cardData.id} trouvée`, impact: "+0", timestamp: Date.now() - startTime });
-
-    if (!isExpiryValid(expiry_date)) throw new Error("La carte est expirée ou la date est invalide.");
-    if (!bcrypt.compareSync(pin, cardData.pin)) throw new Error('Le NIP est incorrect.');
-    analysisLog.push({ step: "Validation NIP & Expiration", result: "NIP et date valides", impact: "+0", timestamp: Date.now() - startTime });
-
+    
     const cardCurrency = cardData.profiles.debit_accounts[0]?.currency || cardData.profiles.credit_accounts[0]?.currency;
     if (!cardCurrency) throw new Error("Could not determine card's currency.");
 
