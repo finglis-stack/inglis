@@ -109,6 +109,10 @@ const DebitAccountDetails = () => {
     };
   }, [accountId, t, refetchBalance]);
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('fr-CA', { style: 'currency', currency: account.currency || 'CAD' }).format(amount);
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -147,6 +151,7 @@ const DebitAccountDetails = () => {
           <p className="text-xs text-muted-foreground font-mono mt-1">ID: {account.id}</p>
         </div>
         <div className="flex items-center gap-2">
+          <Badge variant="outline">{account.currency}</Badge>
           <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
           <Button 
             variant="ghost" 
@@ -172,14 +177,14 @@ const DebitAccountDetails = () => {
                 <div>
                   <p className="text-sm text-muted-foreground">Solde disponible <span className="text-xs">({secondsUntilRefresh}s)</span></p>
                   <p className="text-3xl font-bold text-green-600">
-                    {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(availableBalance ?? 0)}
+                    {formatCurrency(availableBalance ?? 0)}
                   </p>
                 </div>
                 <Separator />
                 <div>
                   <p className="text-sm text-muted-foreground">Solde comptable</p>
                   <p className="text-xl font-semibold">
-                    {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(currentBalance ?? 0)}
+                    {formatCurrency(currentBalance ?? 0)}
                   </p>
                 </div>
               </>
@@ -247,7 +252,7 @@ const DebitAccountDetails = () => {
                     </TableCell>
                     <TableCell className={`text-right font-medium ${tx.type === 'payment' ? 'text-green-600' : 'text-red-600'}`}>
                       {tx.type === 'payment' ? '+' : '-'}
-                      {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(tx.amount)}
+                      {formatCurrency(tx.amount)}
                     </TableCell>
                   </TableRow>
                 ))

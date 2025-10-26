@@ -13,11 +13,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface FormData {
   programName: string;
   programId: string;
   cardType: 'credit' | 'debit';
+  currency: 'CAD' | 'USD';
   gracePeriod: string;
   default_interest_rate: string;
   min_interest_rate: string;
@@ -42,6 +44,7 @@ const NewCardProgram = () => {
     programName: '',
     programId: '',
     cardType: 'credit',
+    currency: 'CAD',
     gracePeriod: '21',
     default_interest_rate: '19.99',
     min_interest_rate: '12.99',
@@ -74,6 +77,10 @@ const NewCardProgram = () => {
   };
 
   const handleRadioChange = (key: keyof FormData, value: any) => {
+    setFormData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleSelectChange = (key: keyof FormData, value: any) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
 
@@ -117,6 +124,7 @@ const NewCardProgram = () => {
         program_name: formData.programName,
         program_id: formData.programId,
         card_type: formData.cardType,
+        currency: formData.currency,
         grace_period: formData.cardType === 'credit' ? parseInt(formData.gracePeriod) : null,
         default_interest_rate: formData.cardType === 'credit' ? parseFloat(formData.default_interest_rate) : null,
         min_interest_rate: formData.cardType === 'credit' ? parseFloat(formData.min_interest_rate) : null,
@@ -202,16 +210,31 @@ const NewCardProgram = () => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">{t('newCardProgram.step2_title')}</h3>
               <p className="text-sm text-muted-foreground">{t('newCardProgram.step2_desc')}</p>
-              <RadioGroup value={formData.cardType} onValueChange={(value) => handleRadioChange('cardType', value)}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="debit" id="debit" />
-                  <Label htmlFor="debit">{t('newCardProgram.debit')}</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Type de carte</Label>
+                  <RadioGroup value={formData.cardType} onValueChange={(value) => handleRadioChange('cardType', value)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="debit" id="debit" />
+                      <Label htmlFor="debit">{t('newCardProgram.debit')}</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="credit" id="credit" />
+                      <Label htmlFor="credit">{t('newCardProgram.credit')}</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="credit" id="credit" />
-                  <Label htmlFor="credit">{t('newCardProgram.credit')}</Label>
+                <div className="grid gap-2">
+                  <Label>Devise</Label>
+                  <Select value={formData.currency} onValueChange={(value) => handleSelectChange('currency', value)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CAD">CAD (Dollar Canadien)</SelectItem>
+                      <SelectItem value="USD">USD (Dollar Américain)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              </RadioGroup>
+              </div>
               {formData.cardType === 'credit' && (
                 <div className="space-y-6 pt-4">
                   <div className="grid gap-2">
@@ -307,6 +330,7 @@ const NewCardProgram = () => {
                 <p><strong>{t('newCardProgram.programNameLabel')}:</strong> {formData.programName}</p>
                 <p><strong>{t('newCardProgram.programIdLabel')}:</strong> {formData.programId}</p>
                 <p><strong>{t('newCardProgram.cardTypeLabel')}:</strong> {formData.cardType === 'credit' ? t('newCardProgram.credit') : t('newCardProgram.debit')}</p>
+                <p><strong>Devise:</strong> {formData.currency}</p>
                 {formData.cardType === 'credit' && <p><strong>{t('newCardProgram.gracePeriodLabel')}:</strong> {formData.gracePeriod} jours</p>}
                 <p><strong>{t('newCardProgram.reviewFeeModel')}:</strong> {getFeeModelDescription()}</p>
                 {formData.feeModel === 'custom' && (<>

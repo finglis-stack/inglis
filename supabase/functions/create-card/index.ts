@@ -158,7 +158,7 @@ serve(async (req) => {
     const { data: profile, error: profileError } = await supabaseAdmin.from('profiles').select('id, full_name, legal_name, type, email').eq('id', profile_id).eq('institution_id', institution.id).single();
     if (profileError || !profile) throw new Error("Profile not found or access denied.");
 
-    const { data: program, error: programError } = await supabaseAdmin.from('card_programs').select('id, bin, card_type, program_name, card_color').eq('id', card_program_id).eq('institution_id', institution.id).single();
+    const { data: program, error: programError } = await supabaseAdmin.from('card_programs').select('id, bin, card_type, program_name, card_color, currency').eq('id', card_program_id).eq('institution_id', institution.id).single();
     if (programError || !program) throw new Error("Card program not found or access denied.");
 
     const user_initials = getInitials(profile.type === 'personal' ? profile.full_name : profile.legal_name);
@@ -201,11 +201,16 @@ serve(async (req) => {
           credit_limit, 
           cash_advance_limit: cash_advance_limit || null,
           interest_rate,
-          cash_advance_rate
+          cash_advance_rate,
+          currency: program.currency,
         });
         if (accountError) throw accountError;
     } else if (program.card_type === 'debit') {
-        const { error: accountError } = await supabaseAdmin.from('debit_accounts').insert({ profile_id, card_id: newCard.id, current_balance: 0 });
+        const { error: accountError } = await supabaseAdmin.from('debit_accounts').insert({ 
+          profile_id, 
+          card_id: newCard.id, 
+          currency: program.currency 
+        });
         if (accountError) throw accountError;
     }
 

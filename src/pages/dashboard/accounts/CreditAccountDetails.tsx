@@ -147,6 +147,10 @@ const CreditAccountDetails = () => {
     }
   };
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('fr-CA', { style: 'currency', currency: account.currency || 'CAD' }).format(amount);
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -184,15 +188,16 @@ const CreditAccountDetails = () => {
           <p className="text-muted-foreground">{t('accounts.accountOf', { name: profileName })}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => refetchBalance()}
-            disabled={balanceLoading}
-          >
-            <RefreshCw className={`h-4 w-4 ${balanceLoading ? 'animate-spin' : ''}`} />
-          </Button>
+            <Badge variant="outline">{account.currency}</Badge>
+            <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => refetchBalance()}
+                disabled={balanceLoading}
+            >
+                <RefreshCw className={`h-4 w-4 ${balanceLoading ? 'animate-spin' : ''}`} />
+            </Button>
         </div>
       </div>
 
@@ -213,10 +218,10 @@ const CreditAccountDetails = () => {
                     {t('accounts.currentBalance')} <span className="text-xs">({secondsUntilRefresh}s)</span>
                   </p>
                   <p className="text-2xl font-bold">
-                    {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(currentBalance ?? 0)}
+                    {formatCurrency(currentBalance ?? 0)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {t('accounts.on')} {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(account.credit_limit)}
+                    {t('accounts.on')} {formatCurrency(account.credit_limit)}
                   </p>
                 </div>
                 <div>
@@ -225,7 +230,7 @@ const CreditAccountDetails = () => {
                     <Badge variant="destructive">Solde zéro de disponible</Badge>
                   ) : (
                     <p className="text-lg font-semibold text-green-600">
-                      {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(availableCredit ?? 0)}
+                      {formatCurrency(availableCredit ?? 0)}
                     </p>
                   )}
                 </div>
@@ -234,7 +239,7 @@ const CreditAccountDetails = () => {
             <Separator />
             <div>
               <p className="text-sm text-muted-foreground">{t('accounts.minimumPayment')}</p>
-              <p className="text-lg font-semibold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(statement?.minimum_payment || 0)}</p>
+              <p className="text-lg font-semibold">{formatCurrency(statement?.minimum_payment || 0)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{t('accounts.dueDate')}</p>
@@ -315,7 +320,7 @@ const CreditAccountDetails = () => {
                     </TableCell>
                     <TableCell className={`text-right font-medium ${tx.type === 'payment' ? 'text-green-600' : 'text-red-600'}`}>
                       {tx.type === 'payment' ? '-' : '+'}
-                      {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(tx.amount)}
+                      {formatCurrency(tx.amount)}
                     </TableCell>
                   </TableRow>
                 ))
