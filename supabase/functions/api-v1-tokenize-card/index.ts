@@ -61,14 +61,12 @@ serve(async (req) => {
     const cardExpiresAt = new Date(card.expires_at);
     const lastDayOfExpiryMonth = new Date(expiryYear, expiryMonth, 0);
 
-    if (lastDayOfExpiryMonth < cardExpiresAt) {
-       // This logic is a bit tricky. A simpler check is to compare year and month.
-       const cardExpiryYear = cardExpiresAt.getFullYear();
-       const cardExpiryMonth = cardExpiresAt.getMonth() + 1; // getMonth is 0-indexed
+    // Compare year and month for expiry check
+    const cardExpiryYear = cardExpiresAt.getFullYear();
+    const cardExpiryMonth = cardExpiresAt.getMonth() + 1; // getMonth is 0-indexed
 
-       if (expiryYear < cardExpiryYear || (expiryYear === cardExpiryYear && expiryMonth < cardExpiryMonth)) {
-         throw new Error("La date d'expiration ne correspond pas.");
-       }
+    if (expiryYear !== cardExpiryYear || expiryMonth !== cardExpiryMonth) {
+        throw new Error("La date d'expiration ne correspond pas.");
     }
     
     const now = new Date();
@@ -101,7 +99,9 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    // Log the specific error for debugging, but return a generic message to the client.
+    console.error("Tokenization Error:", error.message);
+    return new Response(JSON.stringify({ error: "Les informations de paiement sont invalides ou la transaction a été refusée." }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     });
