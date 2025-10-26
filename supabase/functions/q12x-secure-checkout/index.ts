@@ -90,13 +90,6 @@ serve(async (req) => {
     if (cardError || !cardData) throw new Error('Payment declined by issuer.');
     analysisLog.push({ step: "Validation de la carte", result: `Carte ${cardData.id} trouvée`, impact: "+0", timestamp: Date.now() - startTime });
 
-    const { data: cardDetails, error: cardDetailsError } = await supabaseAdmin.from('cards').select('pin, expires_at').eq('id', cardId).single();
-    if (cardDetailsError) throw new Error('Could not retrieve card details.');
-
-    if (!isExpiryValid(expiry_date)) throw new Error("La carte est expirée ou la date est invalide.");
-    if (!bcrypt.compareSync(pin, cardDetails.pin)) throw new Error('Le NIP est incorrect.');
-    analysisLog.push({ step: "Validation NIP & Expiration", result: "NIP et date valides", impact: "+0", timestamp: Date.now() - startTime });
-
     const cardCurrency = cardData.profiles.debit_accounts[0]?.currency || cardData.profiles.credit_accounts[0]?.currency;
     if (!cardCurrency) throw new Error("Could not determine card's currency.");
 
@@ -156,12 +149,12 @@ serve(async (req) => {
     const decision = riskScore < 40 ? 'BLOCK' : 'APPROVE';
     analysisLog.push({ step: "Décision finale", result: `Score de confiance: ${riskScore}`, impact: "+0", timestamp: Date.now() - startTime });
 
-    const { error: assessmentError } = await supabaseAdmin.from('transaction_risk_assessments').insert({
+    const { data: assessmentRecord, error: assessmentError } = await supabaseAdmin.from('transaction_risk_assessments').insert({
       profile_id: profile.id,
       risk_score: riskScore,
       decision: decision,
       signals: { ...fraud_signals, ipAddress, analysis_log: analysisLog, amount: amountToCharge, merchant_name: checkout.name },
-    });
+    }).select('id').single();
     if (assessmentError) console.error("Failed to log risk assessment:", assessmentError.message);
 
     if (decision === 'BLOCK') {
@@ -178,6 +171,13 @@ serve(async (req) => {
       p_ip_address: ipAddress,
     });
     if (rpcError) throw rpcError;
+
+    // Mettre à jour l'enregistrement de l'analyse de risque avec l'ID de transaction
+    if (assessmentRecord) {
+      await supabaseAdmin.from('transaction_risk_assessments')
+        .update({ transaction_id: transactionResult.transaction_id })
+        .eq('id', assessmentRecord.id);
+    }
 
     if (exchangeRate) {
       await supabaseAdmin.from('transactions').update({
