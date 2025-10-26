@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +12,30 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
+
+const isExpiryValid = (expiry: string) => {
+  if (!/^\d{2}\/\d{2}$/.test(expiry)) return false;
+  const [month, year] = expiry.split('/');
+  const expiryMonth = parseInt(month, 10);
+  const expiryYear = 2000 + parseInt(year, 10);
+  if (expiryMonth < 1 || expiryMonth > 12) return false;
+  const now = new Date();
+  const lastDayOfExpiryMonth = new Date(expiryYear, expiryMonth, 0);
+  return lastDayOfExpiryMonth >= now;
+};
+
+// Fonction pour calculer la distance de Haversine entre deux points
+const haversineDistance = (coords1, coords2) => {
+  const R = 6371; // Rayon de la Terre en km
+  const dLat = (coords2.lat - coords1.lat) * Math.PI / 180;
+  const dLon = (coords2.lon - coords1.lon) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(coords1.lat * Math.PI / 180) * Math.cos(coords2.lat * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -32,7 +57,6 @@ serve(async (req) => {
       throw new Error('checkoutId, card_token, and amount are required.');
     }
 
-    // 1. Valider le jeton et récupérer l'ID de la carte
     const { data: tokenData, error: tokenError } = await supabaseAdmin
       .from('card_tokens')
       .select('card_id, expires_at, used_at')
@@ -44,10 +68,8 @@ serve(async (req) => {
     if (new Date(tokenData.expires_at) < new Date()) throw new Error('Ce jeton a expiré.');
     
     const cardId = tokenData.card_id;
-    // Marquer le jeton comme utilisé pour empêcher sa réutilisation
     await supabaseAdmin.from('card_tokens').update({ used_at: new Date().toISOString() }).eq('token', card_token);
     analysisLog.push({ step: "Validation du jeton", result: `Jeton valide pour la carte ${cardId}`, impact: "+0", timestamp: Date.now() - startTime });
-
 
     const { data: checkout, error: checkoutError } = await supabaseAdmin
       .from('checkouts')
@@ -63,12 +85,18 @@ serve(async (req) => {
     const checkoutCurrency = checkout.currency;
 
     const { data: cardData, error: cardError } = await supabaseAdmin
-      .from('cards').select('id, profile_id, profiles(*, debit_accounts(currency), credit_accounts(currency))')
-      .eq('id', cardId)
-      .single();
+      .from('cards').select('id, pin, expires_at, profile_id, profiles(*, debit_accounts(currency), credit_accounts(currency))').match({ id: cardId }).single();
     
     if (cardError || !cardData) throw new Error('Payment declined by issuer.');
-    
+    analysisLog.push({ step: "Validation de la carte", result: `Carte ${cardData.id} trouvée`, impact: "+0", timestamp: Date.now() - startTime });
+
+    const { data: cardDetails, error: cardDetailsError } = await supabaseAdmin.from('cards').select('pin, expires_at').eq('id', cardId).single();
+    if (cardDetailsError) throw new Error('Could not retrieve card details.');
+
+    if (!isExpiryValid(expiry_date)) throw new Error("La carte est expirée ou la date est invalide.");
+    if (!bcrypt.compareSync(pin, cardDetails.pin)) throw new Error('Le NIP est incorrect.');
+    analysisLog.push({ step: "Validation NIP & Expiration", result: "NIP et date valides", impact: "+0", timestamp: Date.now() - startTime });
+
     const cardCurrency = cardData.profiles.debit_accounts[0]?.currency || cardData.profiles.credit_accounts[0]?.currency;
     if (!cardCurrency) throw new Error("Could not determine card's currency.");
 
@@ -99,6 +127,32 @@ serve(async (req) => {
     if (fraud_signals?.paste_events > 0) { riskScore -= 20; analysisLog.push({ step: "Analyse comportementale", result: "Utilisation du copier-coller", impact: "-20", timestamp: Date.now() - startTime }); }
     else { analysisLog.push({ step: "Analyse comportementale", result: "Aucun copier-coller détecté", impact: "+0", timestamp: Date.now() - startTime }); }
     
+    // Velocity Check
+    const { data: lastTransaction } = await supabaseAdmin.from('transactions').select('ip_address, created_at').eq('profile_id', profile.id).order('created_at', { ascending: false }).limit(1).single();
+    if (lastTransaction && lastTransaction.ip_address && ipAddress && lastTransaction.ip_address !== ipAddress) {
+      try {
+        const [currentGeo, lastGeo] = await Promise.all([
+          fetch(`https://ipapi.co/${ipAddress}/json/`).then(res => res.json()),
+          fetch(`https://ipapi.co/${lastTransaction.ip_address}/json/`).then(res => res.json())
+        ]);
+        if (currentGeo.latitude && lastGeo.latitude) {
+          const distanceKm = haversineDistance({ lat: currentGeo.latitude, lon: currentGeo.longitude }, { lat: lastGeo.latitude, lon: lastGeo.longitude });
+          const timeDiffHours = (new Date().getTime() - new Date(lastTransaction.created_at).getTime()) / (1000 * 60 * 60);
+          if (timeDiffHours > 0) {
+            const speedKmh = distanceKm / timeDiffHours;
+            if (speedKmh > 900) { // Vitesse d'un avion de ligne
+              riskScore -= 50;
+              analysisLog.push({ step: "Analyse de vélocité", result: `Déplacement impossible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km)`, impact: "-50", timestamp: Date.now() - startTime });
+            } else {
+              analysisLog.push({ step: "Analyse de vélocité", result: `Déplacement plausible (${Math.round(speedKmh)} km/h)`, impact: "+0", timestamp: Date.now() - startTime });
+            }
+          }
+        }
+      } catch (e) { console.error("Velocity check failed:", e.message); }
+    } else {
+      analysisLog.push({ step: "Analyse de vélocité", result: "Non applicable (première transaction ou même IP)", impact: "+0", timestamp: Date.now() - startTime });
+    }
+
     const decision = riskScore < 40 ? 'BLOCK' : 'APPROVE';
     analysisLog.push({ step: "Décision finale", result: `Score de confiance: ${riskScore}`, impact: "+0", timestamp: Date.now() - startTime });
 
