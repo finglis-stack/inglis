@@ -109,10 +109,6 @@ const DebitAccountDetails = () => {
     };
   }, [accountId, t, refetchBalance]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-CA', { style: 'currency', currency: account.currency || 'CAD' }).format(amount);
-  };
-
   if (loading) {
     return (
       <div className="space-y-4">
@@ -176,16 +172,22 @@ const DebitAccountDetails = () => {
               <>
                 <div>
                   <p className="text-sm text-muted-foreground">Solde disponible <span className="text-xs">({secondsUntilRefresh}s)</span></p>
-                  <p className="text-3xl font-bold text-green-600">
-                    {formatCurrency(availableBalance ?? 0)}
-                  </p>
+                  <div className="flex items-baseline">
+                    <p className="text-3xl font-bold text-green-600">
+                      {new Intl.NumberFormat('fr-CA', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(availableBalance ?? 0)}
+                    </p>
+                    <span className="ml-2 font-semibold text-muted-foreground">{account.currency}</span>
+                  </div>
                 </div>
                 <Separator />
                 <div>
                   <p className="text-sm text-muted-foreground">Solde comptable</p>
-                  <p className="text-xl font-semibold">
-                    {formatCurrency(currentBalance ?? 0)}
-                  </p>
+                  <div className="flex items-baseline">
+                    <p className="text-xl font-semibold">
+                      {new Intl.NumberFormat('fr-CA', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(currentBalance ?? 0)}
+                    </p>
+                    <span className="ml-2 text-sm font-semibold text-muted-foreground">{account.currency}</span>
+                  </div>
                 </div>
               </>
             )}
@@ -252,7 +254,7 @@ const DebitAccountDetails = () => {
                     </TableCell>
                     <TableCell className={`text-right font-medium ${tx.type === 'payment' ? 'text-green-600' : 'text-red-600'}`}>
                       {tx.type === 'payment' ? '+' : '-'}
-                      {formatCurrency(tx.amount)}
+                      {new Intl.NumberFormat('fr-CA', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(tx.amount)} {tx.currency}
                     </TableCell>
                   </TableRow>
                 ))

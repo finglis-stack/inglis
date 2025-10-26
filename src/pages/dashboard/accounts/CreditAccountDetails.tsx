@@ -147,10 +147,6 @@ const CreditAccountDetails = () => {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-CA', { style: 'currency', currency: account.currency || 'CAD' }).format(amount);
-  };
-
   if (loading) {
     return (
       <div className="space-y-4">
@@ -210,18 +206,21 @@ const CreditAccountDetails = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {balanceLoading ? (
-              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-24 w-full" />
             ) : (
               <>
                 <div>
                   <p className="text-sm text-muted-foreground">
                     {t('accounts.currentBalance')} <span className="text-xs">({secondsUntilRefresh}s)</span>
                   </p>
-                  <p className="text-2xl font-bold">
-                    {formatCurrency(currentBalance ?? 0)}
-                  </p>
+                  <div className="flex items-baseline">
+                    <p className="text-2xl font-bold">
+                      {new Intl.NumberFormat('fr-CA', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(currentBalance ?? 0)}
+                    </p>
+                    <span className="ml-2 font-semibold text-muted-foreground">{account.currency}</span>
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    {t('accounts.on')} {formatCurrency(account.credit_limit)}
+                    {t('accounts.on')} {new Intl.NumberFormat('fr-CA', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(account.credit_limit)} {account.currency}
                   </p>
                 </div>
                 <div>
@@ -229,9 +228,12 @@ const CreditAccountDetails = () => {
                   {typeof availableCredit === 'number' && availableCredit <= 0 ? (
                     <Badge variant="destructive">Solde zéro de disponible</Badge>
                   ) : (
-                    <p className="text-lg font-semibold text-green-600">
-                      {formatCurrency(availableCredit ?? 0)}
-                    </p>
+                    <div className="flex items-baseline text-green-600">
+                      <p className="text-lg font-semibold">
+                        {new Intl.NumberFormat('fr-CA', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(availableCredit ?? 0)}
+                      </p>
+                      <span className="ml-2 text-sm font-semibold">{account.currency}</span>
+                    </div>
                   )}
                 </div>
               </>
@@ -239,7 +241,10 @@ const CreditAccountDetails = () => {
             <Separator />
             <div>
               <p className="text-sm text-muted-foreground">{t('accounts.minimumPayment')}</p>
-              <p className="text-lg font-semibold">{formatCurrency(statement?.minimum_payment || 0)}</p>
+              <div className="flex items-baseline">
+                <p className="text-lg font-semibold">{new Intl.NumberFormat('fr-CA', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(statement?.minimum_payment || 0)}</p>
+                <span className="ml-2 text-sm font-semibold text-muted-foreground">{account.currency}</span>
+              </div>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{t('accounts.dueDate')}</p>
@@ -320,7 +325,7 @@ const CreditAccountDetails = () => {
                     </TableCell>
                     <TableCell className={`text-right font-medium ${tx.type === 'payment' ? 'text-green-600' : 'text-red-600'}`}>
                       {tx.type === 'payment' ? '-' : '+'}
-                      {formatCurrency(tx.amount)}
+                      {new Intl.NumberFormat('fr-CA', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(tx.amount)} {tx.currency}
                     </TableCell>
                   </TableRow>
                 ))
