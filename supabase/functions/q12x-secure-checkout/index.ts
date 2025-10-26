@@ -13,17 +13,6 @@ const supabaseAdmin = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 )
 
-const isExpiryValid = (expiry: string) => {
-  if (!/^\d{2}\/\d{2}$/.test(expiry)) return false;
-  const [month, year] = expiry.split('/');
-  const expiryMonth = parseInt(month, 10);
-  const expiryYear = 2000 + parseInt(year, 10);
-  if (expiryMonth < 1 || expiryMonth > 12) return false;
-  const now = new Date();
-  const lastDayOfExpiryMonth = new Date(expiryYear, expiryMonth, 0);
-  return lastDayOfExpiryMonth >= now;
-};
-
 // Fonction pour calculer la distance de Haversine entre deux points
 const haversineDistance = (coords1, coords2) => {
   const R = 6371; // Rayon de la Terre en km
@@ -85,7 +74,7 @@ serve(async (req) => {
     const checkoutCurrency = checkout.currency;
 
     const { data: cardData, error: cardError } = await supabaseAdmin
-      .from('cards').select('id, pin, expires_at, profile_id, profiles(*, debit_accounts(currency), credit_accounts(currency))').match({ id: cardId }).single();
+      .from('cards').select('id, pin, expires_at, profile_id, profiles(*, debit_accounts(id, currency), credit_accounts(id, currency))').match({ id: cardId }).single();
     
     if (cardError || !cardData) throw new Error('Payment declined by issuer.');
     analysisLog.push({ step: "Validation de la carte", result: `Carte ${cardData.id} trouvée`, impact: "+0", timestamp: Date.now() - startTime });
@@ -121,7 +110,25 @@ serve(async (req) => {
     else { analysisLog.push({ step: "Analyse comportementale", result: "Aucun copier-coller détecté", impact: "+0", timestamp: Date.now() - startTime }); }
     
     // Velocity Check
-    const { data: lastTransaction } = await supabaseAdmin.from('transactions').select('ip_address, created_at').eq('profile_id', profile.id).order('created_at', { ascending: false }).limit(1).single();
+    const debitAccountIds = profile.debit_accounts.map(a => a.id);
+    const creditAccountIds = profile.credit_accounts.map(a => a.id);
+
+    const orConditions = [];
+    if (debitAccountIds.length > 0) orConditions.push(`debit_account_id.in.(${debitAccountIds.join(',')})`);
+    if (creditAccountIds.length > 0) orConditions.push(`credit_account_id.in.(${creditAccountIds.join(',')})`);
+
+    let lastTransaction = null;
+    if (orConditions.length > 0) {
+      const { data } = await supabaseAdmin
+        .from('transactions')
+        .select('ip_address, created_at')
+        .or(orConditions.join(','))
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      lastTransaction = data;
+    }
+
     if (lastTransaction && lastTransaction.ip_address && ipAddress && lastTransaction.ip_address !== ipAddress) {
       try {
         const [currentGeo, lastGeo] = await Promise.all([
