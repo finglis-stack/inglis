@@ -84,6 +84,8 @@ const RiskAnalysisDetails = () => {
   const transactionAmount = details?.transaction?.amount ?? assessment.signals?.amount;
   const merchantName = details?.transaction?.merchant_accounts?.name ?? assessment.signals?.merchant_name;
   const locationDisplay = details?.transaction?.location ? `${details.transaction.location.city}, ${details.transaction.location.country_name}` : 'N/A';
+  
+  const riskSignals = assessment.signals?.analysis_log?.filter(log => parseInt(log.impact) > 0) || [];
 
   return (
     <div className="p-4 md:p-8">
@@ -107,12 +109,12 @@ const RiskAnalysisDetails = () => {
           <Card>
             <CardHeader><CardTitle className="text-base">Signaux de Risque Détectés</CardTitle></CardHeader>
             <CardContent>
-              {assessment.signals?.riskReasons && assessment.signals.riskReasons.length > 0 ? (
+              {riskSignals.length > 0 ? (
                 <ul className="space-y-2 text-sm">
-                  {assessment.signals.riskReasons.map((reason, i) => (
+                  {riskSignals.map((signal, i) => (
                     <li key={i} className="flex items-start gap-2 text-destructive">
                       <ShieldAlert className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                      <span>{reason}</span>
+                      <span>{signal.result} ({signal.impact})</span>
                     </li>
                   ))}
                 </ul>
