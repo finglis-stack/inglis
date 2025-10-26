@@ -24,17 +24,24 @@ const isExpiryValid = (expiry: string) => {
   return lastDayOfExpiryMonth >= now;
 };
 
-// ... (le reste des fonctions helpers reste identique)
-
 serve(async (req) => {
-  // ... (le début de la fonction reste identique)
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
   const { checkoutId, card_number, expiry_date, pin, amount, fraud_signals } = await req.json();
   const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? null;
   
-  // ... (logique d'analyse de risque)
+  const analysisLog = [];
+  let riskScore = 0;
 
   try {
-    // ... (logique de validation du checkout, etc.)
+    // --- VALIDATION & DATA FETCHING ---
+    analysisLog.push({ step: "Début de la validation", result: "Initialisation", impact: "+0", timestamp: Date.now() });
+
+    if (!checkoutId || !card_number || !expiry_date || !pin || !amount) {
+      throw new Error('checkoutId, card_number, expiry_date, pin, and amount are required.');
+    }
 
     const { data: checkout, error: checkoutError } = await supabaseAdmin
       .from('checkouts')
@@ -42,11 +49,13 @@ serve(async (req) => {
       .eq('id', checkoutId)
       .single();
     if (checkoutError || !checkout) throw new Error('Checkout not found.');
-    
+    if (checkout.status !== 'active') throw new Error('This checkout is not active.');
+    analysisLog.push({ step: "Validation du checkout", result: `Checkout ${checkout.id} trouvé`, impact: "+0", timestamp: Date.now() });
+
     const finalAmount = checkout.is_amount_variable ? parseFloat(amount) : checkout.amount;
+    if (isNaN(finalAmount) || finalAmount <= 0) throw new Error('Invalid amount.');
     const checkoutCurrency = checkout.currency;
 
-    // ... (logique de validation du token de carte)
     const { data: cardData, error: cardError } = await supabaseAdmin
       .from('cards').select('id, pin, expires_at, profile_id, profiles(*, debit_accounts(currency), credit_accounts(currency))').match({
         user_initials: card_number.initials, issuer_id: card_number.issuer_id,
@@ -55,7 +64,12 @@ serve(async (req) => {
       }).single();
     
     if (cardError || !cardData) throw new Error('Payment declined by issuer.');
-    
+    analysisLog.push({ step: "Validation de la carte", result: `Carte ${cardData.id} trouvée`, impact: "+0", timestamp: Date.now() });
+
+    if (!isExpiryValid(expiry_date)) throw new Error("La carte est expirée ou la date est invalide.");
+    if (!bcrypt.compareSync(pin, cardData.pin)) throw new Error('Le NIP est incorrect.');
+    analysisLog.push({ step: "Validation NIP & Expiration", result: "NIP et date valides", impact: "+0", timestamp: Date.now() });
+
     const cardCurrency = cardData.profiles.debit_accounts[0]?.currency || cardData.profiles.credit_accounts[0]?.currency;
     if (!cardCurrency) throw new Error("Could not determine card's currency.");
 
@@ -69,17 +83,39 @@ serve(async (req) => {
       if (rateError) throw new Error("Could not retrieve exchange rate.");
       exchangeRate = rateData.rate;
       amountToCharge = finalAmount * exchangeRate;
+      analysisLog.push({ step: "Conversion de devise", result: `Taux de ${checkoutCurrency} à ${cardCurrency}: ${exchangeRate}`, impact: "+0", timestamp: Date.now() });
     }
 
-    // ... (logique de validation du PIN, expiration, etc.)
-    if (!bcrypt.compareSync(pin, cardData.pin)) {
-      throw new Error('Le NIP est incorrect.');
+    // --- RISK ANALYSIS ---
+    const profile = cardData.profiles;
+    if (profile.avg_transaction_amount > 0 && profile.transaction_amount_stddev > 0) {
+      const z_score = Math.abs((amountToCharge - profile.avg_transaction_amount) / profile.transaction_amount_stddev);
+      if (z_score > 2) { riskScore += 30; analysisLog.push({ step: "Analyse du montant", result: `Montant inhabituel (Z-score: ${z_score.toFixed(2)})`, impact: "+30", timestamp: Date.now() }); }
+      else { analysisLog.push({ step: "Analyse du montant", result: "Montant habituel", impact: "+0", timestamp: Date.now() }); }
     }
 
-    // Exécuter la transaction
+    if (fraud_signals?.pan_entry_duration_ms < 1000) { riskScore += 15; analysisLog.push({ step: "Analyse comportementale", result: "Saisie du PAN très rapide", impact: "+15", timestamp: Date.now() }); }
+    if (fraud_signals?.paste_events > 0) { riskScore += 20; analysisLog.push({ step: "Analyse comportementale", result: "Utilisation du copier-coller", impact: "+20", timestamp: Date.now() }); }
+    
+    const decision = riskScore >= 60 ? 'BLOCK' : 'APPROVE';
+    analysisLog.push({ step: "Décision finale", result: `Score de risque: ${riskScore}`, impact: "+0", timestamp: Date.now() });
+
+    const { error: assessmentError } = await supabaseAdmin.from('transaction_risk_assessments').insert({
+      profile_id: profile.id,
+      risk_score: riskScore,
+      decision: decision,
+      signals: { ...fraud_signals, ipAddress, analysis_log: analysisLog, amount: amountToCharge, merchant_name: checkout.name },
+    });
+    if (assessmentError) console.error("Failed to log risk assessment:", assessmentError.message);
+
+    if (decision === 'BLOCK') {
+      throw new Error("Transaction bloquée en raison d'un risque de fraude élevé.");
+    }
+
+    // --- TRANSACTION PROCESSING ---
     const { data: transactionResult, error: rpcError } = await supabaseAdmin.rpc('process_transaction', {
       p_card_id: cardData.id, 
-      p_amount: amountToCharge, // On charge le montant converti
+      p_amount: amountToCharge,
       p_type: 'purchase',
       p_description: `Paiement: ${checkout.name} (${checkout.id})`,
       p_merchant_account_id: checkout.merchant_account_id,
@@ -87,7 +123,6 @@ serve(async (req) => {
     });
     if (rpcError) throw rpcError;
 
-    // Mettre à jour la transaction avec les détails de conversion
     if (exchangeRate) {
       await supabaseAdmin.from('transactions').update({
         original_amount: finalAmount,
@@ -96,14 +131,14 @@ serve(async (req) => {
       }).eq('id', transactionResult.transaction_id);
     }
 
-    // ... (logique de mise à jour du profil, etc.)
+    await supabaseAdmin.rpc('update_profile_transaction_stats', { profile_id_to_update: profile.id });
 
     return new Response(JSON.stringify({ success: true, transaction: transactionResult }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200,
     });
 
   } catch (error) {
-    // ... (logique de gestion d'erreur)
+    console.error("Q12x Checkout Error:", error.message);
     return new Response(JSON.stringify({ error: "Le paiement a été refusé par l'institution émettrice de la carte." }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400,
     });
