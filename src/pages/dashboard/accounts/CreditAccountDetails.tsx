@@ -116,14 +116,23 @@ const CreditAccountDetails = () => {
     }
   };
 
-  const unbilledPayments = transactions
-    .filter(tx => tx.type === 'payment')
-    .reduce((sum, tx) => sum + tx.amount, 0);
-
   const getStatementStatus = (statement: any) => {
-    const totalPaymentsMade = statement.id === account.current_statement_id
-      ? statement.total_payments + unbilledPayments
-      : statement.total_payments;
+    const unbilledPayments = transactions
+      .filter(tx => tx.type === 'payment')
+      .reduce((sum, tx) => sum + tx.amount, 0);
+
+    let totalPaymentsMade = statement.total_payments;
+
+    // Si ce n'est pas le relevé le plus récent, il faut aussi regarder les paiements du relevé suivant
+    if (statement.id !== account.current_statement_id) {
+      const nextStatement = statements.find(s => s.id === statement.carried_over_to_statement_id);
+      if (nextStatement) {
+        totalPaymentsMade += nextStatement.total_payments;
+      }
+    } else {
+      // Si c'est le relevé actuel, on ajoute les paiements non encore facturés
+      totalPaymentsMade += unbilledPayments;
+    }
 
     if (statement.is_paid_in_full || (statement.closing_balance > 0 && totalPaymentsMade >= statement.closing_balance)) {
       return { text: t('accounts.statementPaid'), variant: 'default' as 'default', className: '' };
