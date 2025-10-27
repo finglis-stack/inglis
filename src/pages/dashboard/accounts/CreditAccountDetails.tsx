@@ -16,7 +16,7 @@ import { useCreditAccountBalance } from '@/hooks/useCreditAccountBalance';
 import { useTranslation } from 'react-i18next';
 
 const CreditAccountDetails = () => {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation(['dashboard', 'common']);
   const { accountId } = useParams();
   const navigate = useNavigate();
   const [account, setAccount] = useState<any>(null);
@@ -105,11 +105,11 @@ const CreditAccountDetails = () => {
     try {
       const { error } = await supabase.rpc('generate_statement_for_account', { p_account_id: accountId });
       if (error) throw error;
-      showSuccess("Nouveau relevé généré avec succès !");
+      showSuccess(t('accounts.generateStatementSuccess'));
       await fetchAllDetails();
       await refetchBalance();
     } catch (error) {
-      showError(`Erreur lors de la génération du relevé : ${error.message}`);
+      showError(`${t('accounts.generateStatementError')}: ${error.message}`);
     } finally {
       setIsGeneratingStatement(false);
     }
@@ -190,7 +190,7 @@ const CreditAccountDetails = () => {
               <div className="flex flex-wrap gap-4 mt-2">
                 <Button asChild><Link to={`/dashboard/accounts/credit/${accountId}/new-transaction`}><PlusCircle className="mr-2 h-4 w-4" />{t('accounts.addDebit')}</Link></Button>
                 <Button asChild variant="outline"><Link to={`/dashboard/accounts/credit/${accountId}/pending-authorizations`}><Clock className="mr-2 h-4 w-4" />{t('accounts.pendingAuthorizations')}{pendingAuthCount > 0 && <Badge variant="secondary" className="ml-2">{pendingAuthCount}</Badge>}</Link></Button>
-                <Button variant="secondary" onClick={handleGenerateStatement} disabled={isGeneratingStatement}>{isGeneratingStatement ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}Générer un relevé</Button>
+                <Button variant="secondary" onClick={handleGenerateStatement} disabled={isGeneratingStatement}>{isGeneratingStatement ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}{t('accounts.generateStatement')}</Button>
                 <Button variant="destructive">{t('accounts.blockAccount')}</Button>
               </div>
             </div>
@@ -198,10 +198,10 @@ const CreditAccountDetails = () => {
         </Card>
       </div>
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Historique des relevés</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> {t('accounts.statementsHistory')}</CardTitle></CardHeader>
         <CardContent>
           <Table>
-            <TableHeader><TableRow><TableHead>Période</TableHead><TableHead>Date d'échéance</TableHead><TableHead>Solde de clôture</TableHead><TableHead>Paiement minimum</TableHead><TableHead>Statut</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>{t('accounts.statementPeriod')}</TableHead><TableHead>{t('accounts.statementDueDate')}</TableHead><TableHead>{t('accounts.statementClosingBalance')}</TableHead><TableHead>{t('accounts.statementMinimumPayment')}</TableHead><TableHead>{t('accounts.statementStatus')}</TableHead></TableRow></TableHeader>
             <TableBody>
               {statements.length > 0 ? statements.map(s => (
                 <TableRow key={s.id} onClick={() => navigate(`/dashboard/accounts/credit/${accountId}/statements/${s.id}`)} className="cursor-pointer hover:bg-muted/50">
@@ -209,18 +209,18 @@ const CreditAccountDetails = () => {
                   <TableCell>{new Date(s.payment_due_date).toLocaleDateString()}</TableCell>
                   <TableCell>{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(s.closing_balance)}</TableCell>
                   <TableCell>{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(s.minimum_payment)}</TableCell>
-                  <TableCell><Badge variant={s.is_paid_in_full ? 'default' : 'secondary'}>{s.is_paid_in_full ? 'Payé' : 'Non payé'}</Badge></TableCell>
+                  <TableCell><Badge variant={s.is_paid_in_full ? 'default' : 'secondary'}>{s.is_paid_in_full ? t('accounts.statementPaid') : t('accounts.statementUnpaid')}</Badge></TableCell>
                 </TableRow>
-              )) : <TableRow><TableCell colSpan={5} className="text-center h-24">Aucun relevé généré.</TableCell></TableRow>}
+              )) : <TableRow><TableCell colSpan={5} className="text-center h-24">{t('accounts.noStatements')}</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" /> Transactions non facturées</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5" /> {t('accounts.unbilledTransactions')}</CardTitle></CardHeader>
         <CardContent>
           <Table>
-            <TableHeader><TableRow><TableHead>{t('userProfile.date')}</TableHead><TableHead>{t('accounts.description')}</TableHead><TableHead>{t('userProfile.type')}</TableHead><TableHead>{t('userProfile.status')}</TableHead><TableHead className="text-right">{t('newTransaction.amount')}</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>{t('date', { ns: 'common' })}</TableHead><TableHead>{t('description', { ns: 'common' })}</TableHead><TableHead>{t('type', { ns: 'common' })}</TableHead><TableHead>{t('status', { ns: 'common' })}</TableHead><TableHead className="text-right">{t('amount', { ns: 'common' })}</TableHead></TableRow></TableHeader>
             <TableBody>
               {transactions.length > 0 ? transactions.map(tx => (
                 <TableRow key={tx.id} onClick={() => navigate(`/dashboard/transactions/${tx.id}`)} className="cursor-pointer hover:bg-muted/50">

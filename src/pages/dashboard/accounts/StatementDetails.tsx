@@ -7,9 +7,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft } from 'lucide-react';
 import { showError } from '@/utils/toast';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 
 const StatementDetails = () => {
   const { accountId, statementId } = useParams();
+  const { t } = useTranslation(['dashboard', 'common']);
   const [statement, setStatement] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,7 +28,7 @@ const StatementDetails = () => {
         .single();
       
       if (statementError) {
-        showError("Relevé non trouvé.");
+        showError(t('accounts.statementNotFound'));
         setLoading(false);
         return;
       }
@@ -39,7 +41,7 @@ const StatementDetails = () => {
         .order('created_at', { ascending: true });
       
       if (transactionsError) {
-        showError("Erreur lors de la récupération des transactions.");
+        showError(t('accounts.transactionError'));
       } else {
         setTransactions(transactionsData);
       }
@@ -47,14 +49,14 @@ const StatementDetails = () => {
       setLoading(false);
     };
     fetchDetails();
-  }, [statementId]);
+  }, [statementId, t]);
 
   if (loading) {
     return <Skeleton className="h-96 w-full" />;
   }
 
   if (!statement) {
-    return <p>Relevé non trouvé.</p>;
+    return <p>{t('accounts.statementNotFound')}</p>;
   }
 
   const formatCurrency = (amount: number) => new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(amount);
@@ -63,43 +65,46 @@ const StatementDetails = () => {
     <div className="space-y-6">
       <Link to={`/dashboard/accounts/credit/${accountId}`} className="flex items-center text-sm text-muted-foreground hover:text-primary">
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Retour au compte
+        {t('newTransaction.backToAccount')}
       </Link>
       <Card>
         <CardHeader>
-          <CardTitle>Relevé de Compte</CardTitle>
+          <CardTitle>{t('accounts.statementDetailsTitle')}</CardTitle>
           <CardDescription>
-            Période du {new Date(statement.statement_period_start).toLocaleDateString('fr-CA')} au {new Date(statement.statement_period_end).toLocaleDateString('fr-CA')}
+            {t('accounts.statementDetailsPeriod', { 
+              start: new Date(statement.statement_period_start).toLocaleDateString('fr-CA'), 
+              end: new Date(statement.statement_period_end).toLocaleDateString('fr-CA') 
+            })}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-center">
             <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-muted-foreground">Solde Précédent</p>
+              <p className="text-sm text-muted-foreground">{t('accounts.statementOpeningBalance')}</p>
               <p className="text-lg font-bold">{formatCurrency(statement.opening_balance)}</p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-muted-foreground">Nouveau Solde</p>
+              <p className="text-sm text-muted-foreground">{t('accounts.statementNewBalance')}</p>
               <p className="text-lg font-bold">{formatCurrency(statement.closing_balance)}</p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-muted-foreground">Paiement Minimum</p>
+              <p className="text-sm text-muted-foreground">{t('accounts.statementMinimumPayment')}</p>
               <p className="text-lg font-bold">{formatCurrency(statement.minimum_payment)}</p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-muted-foreground">Date d'Échéance</p>
+              <p className="text-sm text-muted-foreground">{t('accounts.statementDueDate')}</p>
               <p className="text-lg font-bold">{new Date(statement.payment_due_date).toLocaleDateString('fr-CA')}</p>
             </div>
           </div>
 
-          <h3 className="font-semibold mb-2">Transactions</h3>
+          <h3 className="font-semibold mb-2">{t('transactions.title')}</h3>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Montant</TableHead>
+                <TableHead>{t('date', { ns: 'common' })}</TableHead>
+                <TableHead>{t('description', { ns: 'common' })}</TableHead>
+                <TableHead>{t('type', { ns: 'common' })}</TableHead>
+                <TableHead className="text-right">{t('amount', { ns: 'common' })}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -116,7 +121,7 @@ const StatementDetails = () => {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={3} className="text-right font-bold">Nouveau Solde</TableCell>
+                <TableCell colSpan={3} className="text-right font-bold">{t('accounts.statementNewBalance')}</TableCell>
                 <TableCell className="text-right font-bold">{formatCurrency(statement.closing_balance)}</TableCell>
               </TableRow>
             </TableFooter>
