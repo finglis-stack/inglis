@@ -115,6 +115,16 @@ const CreditAccountDetails = () => {
     }
   };
 
+  const getStatementStatus = (statement: any) => {
+    if (statement.is_paid_in_full) {
+      return { text: t('accounts.statementPaid'), variant: 'default' as 'default' };
+    }
+    if (new Date() > new Date(statement.payment_due_date) && statement.total_payments < statement.minimum_payment) {
+      return { text: 'Impayé (Retard)', variant: 'destructive' as 'destructive' };
+    }
+    return { text: t('accounts.statementUnpaid'), variant: 'secondary' as 'secondary' };
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -204,15 +214,18 @@ const CreditAccountDetails = () => {
           <Table>
             <TableHeader><TableRow><TableHead>{t('accounts.statementPeriod')}</TableHead><TableHead>{t('accounts.statementDueDate')}</TableHead><TableHead>{t('accounts.statementClosingBalance')}</TableHead><TableHead>{t('accounts.statementMinimumPayment')}</TableHead><TableHead>{t('accounts.statementStatus')}</TableHead></TableRow></TableHeader>
             <TableBody>
-              {statements.length > 0 ? statements.map(s => (
-                <TableRow key={s.id} onClick={() => navigate(`/dashboard/accounts/credit/${accountId}/statements/${s.id}`)} className="cursor-pointer hover:bg-muted/50">
-                  <TableCell>{new Date(s.statement_period_start).toLocaleDateString()} - {new Date(s.statement_period_end).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Date(s.payment_due_date).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(s.closing_balance)}</TableCell>
-                  <TableCell>{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(s.minimum_payment)}</TableCell>
-                  <TableCell><Badge variant={s.is_paid_in_full ? 'default' : 'secondary'}>{s.is_paid_in_full ? t('accounts.statementPaid') : t('accounts.statementUnpaid')}</Badge></TableCell>
-                </TableRow>
-              )) : <TableRow><TableCell colSpan={5} className="text-center h-24">{t('accounts.noStatements')}</TableCell></TableRow>}
+              {statements.length > 0 ? statements.map(s => {
+                const status = getStatementStatus(s);
+                return (
+                  <TableRow key={s.id} onClick={() => navigate(`/dashboard/accounts/credit/${accountId}/statements/${s.id}`)} className="cursor-pointer hover:bg-muted/50">
+                    <TableCell>{new Date(s.statement_period_start).toLocaleDateString()} - {new Date(s.statement_period_end).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Date(s.payment_due_date).toLocaleDateString()}</TableCell>
+                    <TableCell>{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(s.closing_balance)}</TableCell>
+                    <TableCell>{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(s.minimum_payment)}</TableCell>
+                    <TableCell><Badge variant={status.variant}>{status.text}</Badge></TableCell>
+                  </TableRow>
+                );
+              }) : <TableRow><TableCell colSpan={5} className="text-center h-24">{t('accounts.noStatements')}</TableCell></TableRow>}
             </TableBody>
           </Table>
         </CardContent>

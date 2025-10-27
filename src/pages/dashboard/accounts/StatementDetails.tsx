@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, PlusCircle } from 'lucide-react';
+import { ArrowLeft, PlusCircle, AlertTriangle } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const RecordPaymentDialog = ({ cardId, onPaymentSuccess }) => {
   const { t } = useTranslation('dashboard');
@@ -148,8 +149,26 @@ const StatementDetails = () => {
           </div>
           {cardId && <RecordPaymentDialog cardId={cardId} onPaymentSuccess={fetchDetails} />}
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-center">
+        <CardContent className="space-y-6">
+          {statement.carried_over_to_statement_id && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Paiement en Retard</AlertTitle>
+              <AlertDescription>
+                Le paiement minimum n'a pas été reçu à temps. Le montant dû a été reporté sur le <Link to={`/dashboard/accounts/credit/${accountId}/statements/${statement.carried_over_to_statement_id}`} className="underline font-semibold">relevé suivant</Link>.
+              </AlertDescription>
+            </Alert>
+          )}
+          {statement.minimum_payment_carried_over > 0 && (
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Montant Reporté</AlertTitle>
+              <AlertDescription>
+                Ce relevé inclut un montant de {formatCurrency(statement.minimum_payment_carried_over)} reporté du relevé précédent pour paiement minimum non effectué.
+              </AlertDescription>
+            </Alert>
+          )}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm text-muted-foreground">{t('accounts.statementOpeningBalance')}</p>
               <p className="text-lg font-bold">{formatCurrency(statement.opening_balance)}</p>
