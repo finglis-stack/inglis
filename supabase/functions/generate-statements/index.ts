@@ -21,108 +21,35 @@ serve(async (req) => {
     const today = new Date();
     const dayOfMonth = today.getDate();
 
-    // 1. Sélectionner les comptes dont le cycle de facturation se termine aujourd'hui
+    // 1. Sélectionner les comptes dont le cycle de facturation correspond à aujourd'hui
     const { data: accounts, error: accountsError } = await supabaseAdmin
       .from('credit_accounts')
-      .select('*, cards(card_programs(grace_period))')
-      .eq('billing_cycle_anchor_day', dayOfMonth);
+      .select('id')
+      .eq('billing_cycle_anchor_day', dayOfMonth)
+      .eq('status', 'active');
 
     if (accountsError) throw accountsError;
 
+    let generatedCount = 0;
+    let errorCount = 0;
+
+    // 2. Pour chaque compte, appeler la fonction RPC pour générer le relevé
     for (const account of accounts) {
-      const { data: previousStatement, error: prevStatementError } = await supabaseAdmin
-        .from('statements')
-        .select('*')
-        .eq('id', account.current_statement_id)
-        .single();
+      const { error: rpcError } = await supabaseAdmin.rpc('generate_statement_for_account', {
+        p_account_id: account.id,
+      });
 
-      if (prevStatementError && prevStatementError.code !== 'PGRST116') throw prevStatementError;
-
-      let totalInterest = 0;
-      let openingBalance = account.current_balance;
-
-      // 2. Calculer les intérêts sur le relevé précédent s'il n'est pas payé en totalité
-      if (previousStatement && !previousStatement.is_paid_in_full) {
-        const { data: transactions, error: transError } = await supabaseAdmin
-          .from('transactions')
-          .select('*')
-          .eq('statement_id', previousStatement.id);
-        if (transError) throw transError;
-
-        const dailyInterestRate = (account.interest_rate / 100) / 365;
-        const dailyCashAdvanceRate = (account.cash_advance_rate / 100) / 365;
-
-        for (const tx of transactions) {
-          const txDate = new Date(tx.created_at);
-          const daysSinceTx = Math.floor((today - txDate) / (1000 * 60 * 60 * 24));
-
-          if (tx.type === 'cash_advance') {
-            // Les avances de fonds accumulent des intérêts dès le premier jour
-            totalInterest += tx.amount * dailyCashAdvanceRate * daysSinceTx;
-          } else if (tx.type === 'purchase') {
-            // Les achats accumulent des intérêts si le délai de grâce est passé
-            const gracePeriodEnds = new Date(previousStatement.payment_due_date);
-            if (today > gracePeriodEnds) {
-              totalInterest += tx.amount * dailyInterestRate * daysSinceTx;
-            }
-          }
-        }
+      if (rpcError) {
+        console.error(`Failed to generate statement for account ${account.id}:`, rpcError.message);
+        errorCount++;
+      } else {
+        generatedCount++;
       }
-
-      // 3. Appliquer les frais d'intérêt s'il y en a
-      if (totalInterest > 0) {
-        openingBalance += totalInterest;
-        await supabaseAdmin.from('transactions').insert({
-          credit_account_id: account.id,
-          amount: totalInterest,
-          type: 'interest_charge',
-          description: 'Frais d\'intérêt mensuels'
-        });
-        await supabaseAdmin.from('credit_accounts').update({ current_balance: openingBalance }).eq('id', account.id);
-      }
-
-      // 4. Créer le nouveau relevé
-      const gracePeriod = account.cards.card_programs.grace_period || 21;
-      const statementStartDate = new Date(today);
-      const statementEndDate = new Date(today);
-      statementEndDate.setMonth(statementEndDate.getMonth() + 1);
-      statementEndDate.setDate(statementEndDate.getDate() - 1);
-      const paymentDueDate = new Date(statementEndDate);
-      paymentDueDate.setDate(paymentDueDate.getDate() + gracePeriod);
-
-      const minimumPayment = Math.max(25, openingBalance * 0.01 + totalInterest);
-
-      const { data: newStatement, error: newStatementError } = await supabaseAdmin
-        .from('statements')
-        .insert({
-          credit_account_id: account.id,
-          statement_period_start: statementStartDate.toISOString().split('T')[0],
-          statement_period_end: statementEndDate.toISOString().split('T')[0],
-          payment_due_date: paymentDueDate.toISOString().split('T')[0],
-          opening_balance: previousStatement ? previousStatement.closing_balance : 0,
-          closing_balance: openingBalance,
-          minimum_payment: minimumPayment
-        })
-        .select('id')
-        .single();
-
-      if (newStatementError) throw newStatementError;
-
-      // 5. Mettre à jour le compte de crédit avec le nouvel ID de relevé
-      await supabaseAdmin
-        .from('credit_accounts')
-        .update({ current_statement_id: newStatement.id })
-        .eq('id', account.id);
-        
-      // 6. Lier les transactions non facturées au nouveau relevé
-      await supabaseAdmin
-        .from('transactions')
-        .update({ statement_id: newStatement.id })
-        .eq('credit_account_id', account.id)
-        .is('statement_id', null);
     }
 
-    return new Response(JSON.stringify({ message: `Generated statements for ${accounts.length} accounts.` }), {
+    return new Response(JSON.stringify({ 
+      message: `Statement generation complete. Generated: ${generatedCount}, Failed: ${errorCount}.` 
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

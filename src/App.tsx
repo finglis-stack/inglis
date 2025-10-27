@@ -50,6 +50,7 @@ import CreateCardStep3SetLimits from "@/pages/dashboard/cards/CreateCardStep3Set
 import CreateCardStep4 from "@/pages/dashboard/cards/CreateCardStep4";
 import DebitAccountDetails from "@/pages/dashboard/accounts/DebitAccountDetails";
 import CreditAccountDetails from "@/pages/dashboard/accounts/CreditAccountDetails";
+import StatementDetails from "@/pages/dashboard/accounts/StatementDetails";
 import SetCardPin from "@/pages/SetCardPin";
 import SetProfilePin from "@/pages/SetProfilePin";
 import ConfirmCreditConsent from "@/pages/ConfirmCreditConsent";
@@ -116,6 +117,7 @@ const MainAppRoutes = () => (
       <Route path="risk-analysis/:assessmentId" element={<RiskAnalysisDetails />} />
       <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
       <Route path="accounts/credit/:accountId" element={<CreditAccountDetails />} />
+      <Route path="accounts/credit/:accountId/statements/:statementId" element={<StatementDetails />} />
       <Route path="accounts/debit/:accountId/pending-authorizations" element={<PendingAuthorizations />} />
       <Route path="accounts/credit/:accountId/pending-authorizations" element={<PendingAuthorizations />} />
     </Route>
