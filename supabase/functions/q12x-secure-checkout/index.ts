@@ -97,10 +97,30 @@ serve(async (req) => {
 
     // --- RISK ANALYSIS ---
     const profile = cardData.profiles;
-    if (profile.avg_transaction_amount > 0 && profile.transaction_amount_stddev > 0) {
-      const z_score = Math.abs((amountToCharge - profile.avg_transaction_amount) / profile.transaction_amount_stddev);
-      if (z_score > 2) { riskScore -= 30; analysisLog.push({ step: "Analyse du montant", result: `Montant inhabituel (Z-score: ${z_score.toFixed(2)})`, impact: "-30", timestamp: Date.now() - startTime }); }
-      else { analysisLog.push({ step: "Analyse du montant", result: "Montant habituel", impact: "+0", timestamp: Date.now() - startTime }); }
+
+    // **NOUVELLE LOGIQUE D'ANALYSE DE MONTANT**
+    const LOW_VALUE_THRESHOLD = 25.00;
+    if (amountToCharge <= LOW_VALUE_THRESHOLD) {
+      riskScore += 5; // Bonus de confiance pour les petits montants
+      analysisLog.push({ step: "Analyse du montant", result: "Transaction de faible valeur, tolérée", impact: "+5", timestamp: Date.now() - startTime });
+    } else if (profile.avg_transaction_amount > 0 && profile.transaction_amount_stddev > 0) {
+      if (amountToCharge > profile.avg_transaction_amount) {
+        const z_score = (amountToCharge - profile.avg_transaction_amount) / profile.transaction_amount_stddev;
+        if (z_score > 2.5) {
+          riskScore -= 40;
+          analysisLog.push({ step: "Analyse du montant", result: `Montant très élevé par rapport à la moyenne (Z-score: ${z_score.toFixed(2)})`, impact: "-40", timestamp: Date.now() - startTime });
+        } else if (z_score > 1.5) {
+          riskScore -= 20;
+          analysisLog.push({ step: "Analyse du montant", result: `Montant plus élevé que la normale (Z-score: ${z_score.toFixed(2)})`, impact: "-20", timestamp: Date.now() - startTime });
+        } else {
+          analysisLog.push({ step: "Analyse du montant", result: "Montant dans la plage normale supérieure", impact: "+0", timestamp: Date.now() - startTime });
+        }
+      } else {
+        riskScore += 5; // Bonus de confiance pour les montants inférieurs à la moyenne
+        analysisLog.push({ step: "Analyse du montant", result: "Montant inférieur à la moyenne, non suspect", impact: "+5", timestamp: Date.now() - startTime });
+      }
+    } else {
+      analysisLog.push({ step: "Analyse du montant", result: "Pas d'historique pour l'analyse du montant", impact: "+0", timestamp: Date.now() - startTime });
     }
 
     if (fraud_signals?.pan_entry_duration_ms < 1000) { riskScore -= 15; analysisLog.push({ step: "Analyse comportementale", result: "Saisie du PAN très rapide", impact: "-15", timestamp: Date.now() - startTime }); }
