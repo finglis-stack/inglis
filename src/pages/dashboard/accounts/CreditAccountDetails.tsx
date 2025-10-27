@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useCreditAccountBalance } from '@/hooks/useCreditAccountBalance';
 import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
 
 const CreditAccountDetails = () => {
   const { t } = useTranslation(['dashboard', 'common']);
@@ -115,14 +116,25 @@ const CreditAccountDetails = () => {
     }
   };
 
+  const unbilledPayments = transactions
+    .filter(tx => tx.type === 'payment')
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
   const getStatementStatus = (statement: any) => {
-    if (statement.is_paid_in_full) {
-      return { text: t('accounts.statementPaid'), variant: 'default' as 'default' };
+    const totalPaymentsMade = statement.id === account.current_statement_id
+      ? statement.total_payments + unbilledPayments
+      : statement.total_payments;
+
+    if (statement.is_paid_in_full || (statement.closing_balance > 0 && totalPaymentsMade >= statement.closing_balance)) {
+      return { text: t('accounts.statementPaid'), variant: 'default' as 'default', className: '' };
     }
-    if (new Date() > new Date(statement.payment_due_date) && statement.total_payments < statement.minimum_payment) {
-      return { text: 'Impayé (Retard)', variant: 'destructive' as 'destructive' };
+    if (new Date() > new Date(statement.payment_due_date) && totalPaymentsMade < statement.minimum_payment) {
+      return { text: 'Impayé (Retard)', variant: 'destructive' as 'destructive', className: '' };
     }
-    return { text: t('accounts.statementUnpaid'), variant: 'secondary' as 'secondary' };
+    if (totalPaymentsMade >= statement.minimum_payment && statement.closing_balance > 0) {
+      return { text: t('accounts.minimumPaid'), variant: 'default' as 'default', className: 'bg-green-600 hover:bg-green-700' };
+    }
+    return { text: t('accounts.statementUnpaid'), variant: 'secondary' as 'secondary', className: '' };
   };
 
   if (loading) {
@@ -222,7 +234,7 @@ const CreditAccountDetails = () => {
                     <TableCell>{new Date(s.payment_due_date).toLocaleDateString()}</TableCell>
                     <TableCell>{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(s.closing_balance)}</TableCell>
                     <TableCell>{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(s.minimum_payment)}</TableCell>
-                    <TableCell><Badge variant={status.variant}>{status.text}</Badge></TableCell>
+                    <TableCell><Badge variant={status.variant} className={cn(status.className)}>{status.text}</Badge></TableCell>
                   </TableRow>
                 );
               }) : <TableRow><TableCell colSpan={5} className="text-center h-24">{t('accounts.noStatements')}</TableCell></TableRow>}
