@@ -182,6 +182,7 @@ const CreditAccountDetails = () => {
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="payment" className="font-semibold">{t('accounts.makePayment')}</Label>
+              <p className="text-xs text-muted-foreground">Enregistrez un paiement reçu par un moyen externe (ex: Interac, virement bancaire).</p>
               <div className="flex gap-2 mt-2"><Input id="payment" type="number" placeholder="0.00" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} /><Button onClick={handlePayment}>{t('accounts.pay')}</Button></div>
             </div>
             <Separator />
