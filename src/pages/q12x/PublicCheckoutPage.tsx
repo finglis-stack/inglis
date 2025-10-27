@@ -60,7 +60,10 @@ const PublicCheckoutPage = () => {
         console.error("Could not parse Edge Function error response:", e);
       }
     }
-    return error.message || fallbackMessage;
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return fallbackMessage;
   };
 
   const handlePaymentSubmit = async (cardDetails: any, behavioralSignals: any) => {
@@ -113,7 +116,11 @@ const PublicCheckoutPage = () => {
 
     } catch (err) {
       setShowProcessingModal(false);
-      setPaymentError(err.message);
+      if (err instanceof Error) {
+        setPaymentError(err.message);
+      } else {
+        setPaymentError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setProcessing(false);
     }

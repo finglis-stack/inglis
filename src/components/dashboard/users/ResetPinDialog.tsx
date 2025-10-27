@@ -34,7 +34,11 @@ const ResetPinDialog = ({ profileId, cardId = null, children }) => {
       showSuccess("L'e-mail de réinitialisation a été envoyé.");
       setOpen(false);
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setLoading(false);
     }

@@ -74,7 +74,11 @@ const PendingAuthorizations = () => {
       showSuccess(t('accounts.captureSuccess'));
       setAuthorizations(authorizations.filter(a => a.id !== transactionId));
     } catch (err) {
-      showError(`${t('accounts.error')}: ${err.message}`);
+      if (err instanceof Error) {
+        showError(`${t('accounts.error')}: ${err.message}`);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setProcessingId(null);
     }
@@ -92,7 +96,11 @@ const PendingAuthorizations = () => {
       showSuccess(t('accounts.cancelSuccess'));
       setAuthorizations(authorizations.filter(a => a.id !== transactionId));
     } catch (err) {
-      showError(`${t('accounts.error')}: ${err.message}`);
+      if (err instanceof Error) {
+        showError(`${t('accounts.error')}: ${err.message}`);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setProcessingId(null);
     }

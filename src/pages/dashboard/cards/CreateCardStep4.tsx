@@ -91,7 +91,11 @@ const CreateCardStep4 = () => {
       resetCard();
       navigate('/dashboard/cards');
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setSubmitting(false);
     }

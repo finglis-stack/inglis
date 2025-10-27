@@ -63,7 +63,11 @@ const CardPrograms = () => {
       setPrograms(programs.filter((p) => p.id !== programId));
       showSuccess("Programme supprimé avec succès !");
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setDeletingId(null);
     }

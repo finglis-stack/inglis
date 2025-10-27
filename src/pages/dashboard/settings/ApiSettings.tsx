@@ -63,7 +63,11 @@ const ApiSettings = () => {
       setNewKey(data.apiKey);
       fetchKeys(); // Refresh the list
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setGenerating(false);
     }
@@ -82,7 +86,11 @@ const ApiSettings = () => {
       showSuccess("Clé API supprimée avec succès.");
       setKeys(keys.filter(k => k.id !== keyId));
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setDeletingId(null);
     }
@@ -108,7 +116,11 @@ const ApiSettings = () => {
       setTestAmount('');
       setTestDescription('');
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setIsTesting(false);
     }

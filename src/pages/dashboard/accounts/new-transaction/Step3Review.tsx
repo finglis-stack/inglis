@@ -62,7 +62,11 @@ const Step3Review = () => {
       resetTransaction();
       navigate(finalBackUrl);
     } catch (err) {
-      showError(`${t('accounts.error')}: ${err.message}`);
+      if (err instanceof Error) {
+        showError(`${t('accounts.error')}: ${err.message}`);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setLoading(false);
     }

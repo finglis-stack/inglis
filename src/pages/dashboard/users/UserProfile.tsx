@@ -50,7 +50,11 @@ const UserProfile = () => {
       }
       setAccessLogs(data || []);
     } catch (e) {
-      showError(`Erreur lors de la récupération de l'historique d'accès: ${e.message}`);
+      if (e instanceof Error) {
+        showError(`Erreur lors de la récupération de l'historique d'accès: ${e.message}`);
+      } else {
+        showError("Erreur inconnue lors de la récupération de l'historique d'accès.");
+      }
     }
   }, [id]);
 
@@ -66,7 +70,11 @@ const UserProfile = () => {
       }
       showSuccess("L'e-mail de demande de consentement a été envoyé à l'utilisateur.");
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setIsPushing(false);
     }
@@ -84,7 +92,11 @@ const UserProfile = () => {
       }
       showSuccess("L'e-mail de demande de consultation a été envoyé à l'utilisateur.");
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setIsRequesting(false);
     }
@@ -217,7 +229,11 @@ const UserProfile = () => {
       
       return true;
     } catch (e) {
-      showError(`Une erreur est survenue: ${e.message}`);
+      if (e instanceof Error) {
+        showError(`Une erreur est survenue: ${e.message}`);
+      } else {
+        showError(`Une erreur inconnue est survenue.`);
+      }
       return false;
     }
   };

@@ -30,8 +30,12 @@ const Step5Review = () => {
       showSuccess('Nouvel utilisateur corporatif créé avec succès !');
       resetUser();
       navigate('/dashboard/users');
-    } catch (error) {
-      showError(`Erreur lors de la création de l'utilisateur : ${error.message}`);
+    } catch (err) {
+      if (err instanceof Error) {
+        showError(`Erreur lors de la création de l'utilisateur : ${err.message}`);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setLoading(false);
     }
