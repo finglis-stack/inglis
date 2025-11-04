@@ -101,19 +101,49 @@ serve(async (req) => {
     // 1. DEVICE FINGERPRINTING ANALYSIS
     if (fraud_signals?.device_fingerprint) {
       const deviceId = fraud_signals.device_fingerprint.visitorId;
-      const knownDevices = profile.known_device_fingerprints || [];
       
-      if (!knownDevices.includes(deviceId)) {
+      // Check if device exists in database
+      const { data: existingDevice } = await supabaseAdmin
+        .from('device_fingerprints')
+        .select('*')
+        .eq('visitor_id', deviceId)
+        .eq('profile_id', profile.id)
+        .single();
+
+      if (existingDevice) {
+        // Update existing device
+        await supabaseAdmin
+          .from('device_fingerprints')
+          .update({
+            last_seen_at: new Date().toISOString(),
+            times_used: existingDevice.times_used + 1,
+            device_data: fraud_signals.device_fingerprint.components
+          })
+          .eq('id', existingDevice.id);
+
+        if (existingDevice.is_blocked) {
+          riskScore -= 100;
+          analysisLog.push({ step: "Analyse du dispositif", result: "Dispositif bloqué", impact: "-100", timestamp: Date.now() - startTime });
+        } else if (existingDevice.is_trusted) {
+          riskScore += 15;
+          analysisLog.push({ step: "Analyse du dispositif", result: "Dispositif de confiance", impact: "+15", timestamp: Date.now() - startTime });
+        } else {
+          riskScore += 10;
+          analysisLog.push({ step: "Analyse du dispositif", result: "Dispositif reconnu", impact: "+10", timestamp: Date.now() - startTime });
+        }
+      } else {
+        // New device - insert into database
+        await supabaseAdmin
+          .from('device_fingerprints')
+          .insert({
+            profile_id: profile.id,
+            visitor_id: deviceId,
+            confidence_score: fraud_signals.device_fingerprint.confidence,
+            device_data: fraud_signals.device_fingerprint.components
+          });
+
         riskScore -= 15;
         analysisLog.push({ step: "Analyse du dispositif", result: "Nouveau dispositif jamais vu", impact: "-15", timestamp: Date.now() - startTime });
-        
-        // Update profile with new device
-        await supabaseAdmin.from('profiles').update({
-          known_device_fingerprints: [...knownDevices, deviceId]
-        }).eq('id', profile.id);
-      } else {
-        riskScore += 10;
-        analysisLog.push({ step: "Analyse du dispositif", result: "Dispositif reconnu", impact: "+10", timestamp: Date.now() - startTime });
       }
 
       // Check device confidence score
@@ -121,11 +151,44 @@ serve(async (req) => {
         riskScore -= 10;
         analysisLog.push({ step: "Analyse du dispositif", result: `Confiance faible du fingerprint (${fraud_signals.device_fingerprint.confidence})`, impact: "-10", timestamp: Date.now() - startTime });
       }
+
+      // Store device-card relationship in fraud network
+      await supabaseAdmin
+        .from('fraud_network_edges')
+        .upsert({
+          source_type: 'device',
+          source_id: deviceId,
+          target_type: 'card',
+          target_id: cardId,
+          relationship_type: 'used_by',
+          last_seen_at: new Date().toISOString()
+        }, {
+          onConflict: 'source_type,source_id,target_type,target_id,relationship_type',
+          ignoreDuplicates: false
+        });
     }
 
     // 2. BEHAVIORAL ANALYSIS
     if (fraud_signals?.behavioral_signals) {
       const behavioral = fraud_signals.behavioral_signals;
+      
+      // Store behavioral pattern in database
+      await supabaseAdmin
+        .from('behavioral_patterns')
+        .insert({
+          profile_id: profile.id,
+          session_id: fraud_signals.device_fingerprint?.visitorId || 'unknown',
+          mouse_velocity_avg: behavioral.mouseVelocity,
+          mouse_acceleration_avg: behavioral.mouseAcceleration,
+          scroll_velocity_avg: behavioral.scrollVelocity,
+          typing_speed_avg: fraud_signals.pin_entry_duration_ms ? 4000 / fraud_signals.pin_entry_duration_ms : null,
+          click_count: behavioral.clickEvents,
+          keypress_count: behavioral.keypressEvents,
+          time_on_page_ms: behavioral.totalTimeOnPage,
+          idle_time_ms: behavioral.idleTime,
+          is_bot_suspected: behavioral.isLikelyBot,
+          suspicious_patterns: behavioral.suspiciousPatterns
+        });
       
       // Bot detection
       if (behavioral.isLikelyBot) {
@@ -167,7 +230,107 @@ serve(async (req) => {
       analysisLog.push({ step: "Analyse de frappe", result: "Aucun copier-coller détecté", impact: "+0", timestamp: Date.now() - startTime }); 
     }
 
-    // 4. AMOUNT ANALYSIS
+    // 4. IP ADDRESS ANALYSIS & STORAGE
+    if (ipAddress) {
+      // Get IP geolocation data
+      let ipGeoData = null;
+      let isVpn = false;
+      try {
+        const ipCheckResponse = await fetch(`https://ipapi.co/${ipAddress}/json/`);
+        ipGeoData = await ipCheckResponse.json();
+        
+        if (ipGeoData && !ipGeoData.error) {
+          isVpn = ipGeoData.org && (
+            ipGeoData.org.toLowerCase().includes('vpn') || 
+            ipGeoData.org.toLowerCase().includes('proxy') || 
+            ipGeoData.org.toLowerCase().includes('hosting')
+          );
+        }
+      } catch (e) {
+        console.error("IP geolocation failed:", e);
+      }
+
+      // Check if IP exists in database
+      const { data: existingIp } = await supabaseAdmin
+        .from('ip_addresses')
+        .select('*')
+        .eq('ip_address', ipAddress)
+        .eq('profile_id', profile.id)
+        .single();
+
+      if (existingIp) {
+        // Update existing IP
+        await supabaseAdmin
+          .from('ip_addresses')
+          .update({
+            last_seen_at: new Date().toISOString(),
+            times_used: existingIp.times_used + 1,
+            geolocation: ipGeoData,
+            is_vpn: isVpn
+          })
+          .eq('id', existingIp.id);
+
+        if (existingIp.is_blocked) {
+          riskScore -= 100;
+          analysisLog.push({ step: "Analyse de l'IP", result: "IP bloquée", impact: "-100", timestamp: Date.now() - startTime });
+        }
+      } else {
+        // New IP - insert into database
+        await supabaseAdmin
+          .from('ip_addresses')
+          .insert({
+            ip_address: ipAddress,
+            profile_id: profile.id,
+            is_vpn: isVpn,
+            country: ipGeoData?.country_name,
+            city: ipGeoData?.city,
+            organization: ipGeoData?.org,
+            geolocation: ipGeoData
+          });
+      }
+
+      // VPN/Proxy detection
+      if (isVpn) {
+        riskScore -= 30;
+        analysisLog.push({ step: "Détection VPN/Proxy", result: `VPN/Proxy détecté: ${ipGeoData?.org}`, impact: "-30", timestamp: Date.now() - startTime });
+      } else {
+        analysisLog.push({ step: "Détection VPN/Proxy", result: "IP résidentielle normale", impact: "+0", timestamp: Date.now() - startTime });
+      }
+
+      // Store IP-card relationship in fraud network
+      await supabaseAdmin
+        .from('fraud_network_edges')
+        .upsert({
+          source_type: 'ip',
+          source_id: ipAddress,
+          target_type: 'card',
+          target_id: cardId,
+          relationship_type: 'used_by',
+          last_seen_at: new Date().toISOString()
+        }, {
+          onConflict: 'source_type,source_id,target_type,target_id,relationship_type',
+          ignoreDuplicates: false
+        });
+
+      // Store device-IP relationship
+      if (fraud_signals?.device_fingerprint) {
+        await supabaseAdmin
+          .from('fraud_network_edges')
+          .upsert({
+            source_type: 'device',
+            source_id: fraud_signals.device_fingerprint.visitorId,
+            target_type: 'ip',
+            target_id: ipAddress,
+            relationship_type: 'connected_to',
+            last_seen_at: new Date().toISOString()
+          }, {
+            onConflict: 'source_type,source_id,target_type,target_id,relationship_type',
+            ignoreDuplicates: false
+          });
+      }
+    }
+
+    // 5. AMOUNT ANALYSIS
     const LOW_VALUE_THRESHOLD = 25.00;
     if (amountToCharge <= LOW_VALUE_THRESHOLD) {
       riskScore += 5;
@@ -192,7 +355,7 @@ serve(async (req) => {
       analysisLog.push({ step: "Analyse du montant", result: "Pas d'historique pour l'analyse du montant", impact: "+0", timestamp: Date.now() - startTime });
     }
 
-    // 5. MULTI-DIMENSIONAL VELOCITY CHECKS
+    // 6. MULTI-DIMENSIONAL VELOCITY CHECKS
     const debitAccountIds = profile.debit_accounts.map(a => a.id);
     const creditAccountIds = profile.credit_accounts.map(a => a.id);
 
@@ -353,7 +516,7 @@ serve(async (req) => {
       }
     }
 
-    // 6. VELOCITY BY IP (check if this IP has been used by multiple cards)
+    // 7. VELOCITY BY IP (check if this IP has been used by multiple cards)
     if (ipAddress) {
       const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
       const { data: ipTransactions } = await supabaseAdmin
@@ -378,23 +541,6 @@ serve(async (req) => {
         } else {
           analysisLog.push({ step: "Vélocité par IP", result: `${uniqueAccounts.size} carte(s) depuis cette IP - normal`, impact: "+0", timestamp: Date.now() - startTime });
         }
-      }
-    }
-
-    // 7. PROXY/VPN DETECTION (using IP quality check)
-    if (ipAddress) {
-      try {
-        const ipCheckResponse = await fetch(`https://ipapi.co/${ipAddress}/json/`);
-        const ipData = await ipCheckResponse.json();
-        
-        if (ipData.org && (ipData.org.toLowerCase().includes('vpn') || ipData.org.toLowerCase().includes('proxy') || ipData.org.toLowerCase().includes('hosting'))) {
-          riskScore -= 30;
-          analysisLog.push({ step: "Détection VPN/Proxy", result: `VPN/Proxy détecté: ${ipData.org}`, impact: "-30", timestamp: Date.now() - startTime });
-        } else {
-          analysisLog.push({ step: "Détection VPN/Proxy", result: "IP résidentielle normale", impact: "+0", timestamp: Date.now() - startTime });
-        }
-      } catch (e) {
-        analysisLog.push({ step: "Détection VPN/Proxy", result: "Vérification impossible", impact: "+0", timestamp: Date.now() - startTime });
       }
     }
 

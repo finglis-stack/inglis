@@ -71,7 +71,7 @@ export const getDeviceFingerprint = async (): Promise<DeviceFingerprint> => {
 
   // WebGL fingerprinting
   const webglCanvas = document.createElement('canvas');
-  const gl = webglCanvas.getContext('webgl') || webglCanvas.getContext('experimental-webgl');
+  const gl = webglCanvas.getContext('webgl') || webglCanvas.getContext('experimental-webgl') as WebGLRenderingContext | null;
   let webglFingerprint = '';
   let webglVendor = '';
   if (gl) {
@@ -164,7 +164,7 @@ export const getDeviceFingerprint = async (): Promise<DeviceFingerprint> => {
       localStorage: !!window.localStorage,
       indexedDb: !!window.indexedDB,
       addBehavior: !!(document.body as any).addBehavior,
-      openDatabase: !!window.openDatabase,
+      openDatabase: !!(window as any).openDatabase,
       cpuClass: (navigator as any).cpuClass,
       platform: navigator.platform,
       plugins: Array.from(navigator.plugins).map(p => p.name),

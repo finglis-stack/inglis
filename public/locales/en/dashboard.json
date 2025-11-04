@@ -15,6 +15,9 @@
     "next": "Next",
     "previous": "Previous"
   },
+  "dashboardLayout": {
+    "navFraudAnalytics": "Fraud Analytics"
+  },
   "cards": {
     "title": "Card List",
     "subtitle": "Manage your users' cards here.",

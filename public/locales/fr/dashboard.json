@@ -513,5 +513,8 @@
     "incorrectSecurityCode": "Le code de sécurité est incorrect.",
     "invalidAmount": "Veuillez entrer un montant valide.",
     "invalidDescription": "Veuillez entrer une description valide."
+  },
+  "dashboardLayout": {
+    "navFraudAnalytics": "Analyse Anti-Fraude"
   }
 }

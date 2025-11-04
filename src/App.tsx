@@ -66,6 +66,7 @@ import ApiSettings from "@/pages/dashboard/settings/ApiSettings";
 import HostedPaymentForm from "@/pages/HostedPaymentForm";
 import HostedFormLayout from '@/pages/HostedFormLayout';
 import RiskAnalysisDetails from '@/pages/dashboard/risk/RiskAnalysisDetails';
+import FraudAnalytics from './pages/dashboard/FraudAnalytics';
 
 // --- Q12xApp Imports ---
 import Q12xLogin from "@/pages/q12x/Login";
@@ -114,6 +115,7 @@ const MainAppRoutes = () => (
       <Route path="settings/api" element={<ApiSettings />} />
       <Route path="users" element={<Users />} />
       <Route path="users/profile/:id" element={<UserProfile />} />
+      <Route path="fraud-analytics" element={<FraudAnalytics />} />
       <Route path="risk-analysis/:assessmentId" element={<RiskAnalysisDetails />} />
       <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
       <Route path="accounts/credit/:accountId" element={<CreditAccountDetails />} />
