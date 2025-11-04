@@ -149,28 +149,107 @@ serve(async (req) => {
       lastTransaction = data;
     }
 
-    if (lastTransaction && lastTransaction.ip_address && ipAddress && lastTransaction.ip_address !== ipAddress) {
+    // CORRECTION: Vérifier la vélocité même si l'IP est la même
+    if (lastTransaction && ipAddress) {
       try {
-        const [currentGeo, lastGeo] = await Promise.all([
-          fetch(`https://ipapi.co/${ipAddress}/json/`).then(res => res.json()),
-          fetch(`https://ipapi.co/${lastTransaction.ip_address}/json/`).then(res => res.json())
-        ]);
-        if (currentGeo.latitude && lastGeo.latitude) {
-          const distanceKm = haversineDistance({ lat: currentGeo.latitude, lon: currentGeo.longitude }, { lat: lastGeo.latitude, lon: lastGeo.longitude });
-          const timeDiffHours = (new Date().getTime() - new Date(lastTransaction.created_at).getTime()) / (1000 * 60 * 60);
-          if (timeDiffHours > 0) {
-            const speedKmh = distanceKm / timeDiffHours;
-            if (speedKmh > 900) { // Vitesse d'un avion de ligne
-              riskScore -= 50;
-              analysisLog.push({ step: "Analyse de vélocité", result: `Déplacement impossible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km)`, impact: "-50", timestamp: Date.now() - startTime });
-            } else {
-              analysisLog.push({ step: "Analyse de vélocité", result: `Déplacement plausible (${Math.round(speedKmh)} km/h)`, impact: "+0", timestamp: Date.now() - startTime });
-            }
-          }
+        const timeDiffMinutes = (new Date().getTime() - new Date(lastTransaction.created_at).getTime()) / (1000 * 60);
+        
+        // Si moins de 1 minute entre deux transactions, c'est suspect
+        if (timeDiffMinutes < 1) {
+          riskScore -= 30;
+          analysisLog.push({ 
+            step: "Analyse de vélocité temporelle", 
+            result: `Transactions trop rapprochées (${Math.round(timeDiffMinutes * 60)} secondes)`, 
+            impact: "-30", 
+            timestamp: Date.now() - startTime 
+          });
         }
-      } catch (e) { console.error("Velocity check failed:", e.message); }
+
+        // Vérifier la géolocalisation si on a une IP différente OU si assez de temps s'est écoulé
+        if (lastTransaction.ip_address && (lastTransaction.ip_address !== ipAddress || timeDiffMinutes > 5)) {
+          const [currentGeo, lastGeo] = await Promise.all([
+            fetch(`https://ipapi.co/${ipAddress}/json/`).then(res => res.json()),
+            fetch(`https://ipapi.co/${lastTransaction.ip_address}/json/`).then(res => res.json())
+          ]);
+          
+          if (currentGeo.latitude && lastGeo.latitude) {
+            const distanceKm = haversineDistance(
+              { lat: currentGeo.latitude, lon: currentGeo.longitude }, 
+              { lat: lastGeo.latitude, lon: lastGeo.longitude }
+            );
+            
+            const timeDiffHours = timeDiffMinutes / 60;
+            
+            if (timeDiffHours > 0 && distanceKm > 1) { // Plus de 1km de distance
+              const speedKmh = distanceKm / timeDiffHours;
+              
+              if (speedKmh > 900) { // Vitesse d'un avion de ligne
+                riskScore -= 50;
+                analysisLog.push({ 
+                  step: "Analyse de vélocité géographique", 
+                  result: `Déplacement impossible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km en ${Math.round(timeDiffMinutes)} min)`, 
+                  impact: "-50", 
+                  timestamp: Date.now() - startTime 
+                });
+              } else if (speedKmh > 500) { // Vitesse très élevée mais techniquement possible
+                riskScore -= 25;
+                analysisLog.push({ 
+                  step: "Analyse de vélocité géographique", 
+                  result: `Déplacement très rapide (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km)`, 
+                  impact: "-25", 
+                  timestamp: Date.now() - startTime 
+                });
+              } else if (speedKmh > 200) { // Vitesse élevée
+                riskScore -= 10;
+                analysisLog.push({ 
+                  step: "Analyse de vélocité géographique", 
+                  result: `Déplacement rapide (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km)`, 
+                  impact: "-10", 
+                  timestamp: Date.now() - startTime 
+                });
+              } else {
+                analysisLog.push({ 
+                  step: "Analyse de vélocité géographique", 
+                  result: `Déplacement plausible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km)`, 
+                  impact: "+0", 
+                  timestamp: Date.now() - startTime 
+                });
+              }
+            } else if (distanceKm <= 1) {
+              analysisLog.push({ 
+                step: "Analyse de vélocité géographique", 
+                result: `Même localisation (${Math.round(distanceKm * 1000)} mètres)`, 
+                impact: "+0", 
+                timestamp: Date.now() - startTime 
+              });
+            }
+          } else {
+            analysisLog.push({ 
+              step: "Analyse de vélocité géographique", 
+              result: "Données de géolocalisation incomplètes", 
+              impact: "+0", 
+              timestamp: Date.now() - startTime 
+            });
+          }
+        } else if (lastTransaction.ip_address === ipAddress && timeDiffMinutes <= 5) {
+          analysisLog.push({ 
+            step: "Analyse de vélocité", 
+            result: "Même IP, intervalle court - pas de vérification géographique", 
+            impact: "+0", 
+            timestamp: Date.now() - startTime 
+          });
+        }
+      } catch (e) { 
+        console.error("Velocity check failed:", e.message);
+        analysisLog.push({ 
+          step: "Analyse de vélocité", 
+          result: `Erreur: ${e.message}`, 
+          impact: "+0", 
+          timestamp: Date.now() - startTime 
+        });
+      }
     } else {
-      analysisLog.push({ step: "Analyse de vélocité", result: "Non applicable (première transaction ou même IP)", impact: "+0", timestamp: Date.now() - startTime });
+      analysisLog.push({ step: "Analyse de vélocité", result: "Première transaction ou pas d'IP", impact: "+0", timestamp: Date.now() - startTime });
     }
 
     const decision = riskScore < 40 ? 'BLOCK' : 'APPROVE';
