@@ -95,13 +95,82 @@ serve(async (req) => {
       analysisLog.push({ step: "Conversion de devise", result: `Taux de ${checkoutCurrency} à ${cardCurrency}: ${exchangeRate}`, impact: "+0", timestamp: Date.now() - startTime });
     }
 
-    // --- RISK ANALYSIS ---
+    // --- ADVANCED RISK ANALYSIS ---
     const profile = cardData.profiles;
 
-    // **NOUVELLE LOGIQUE D'ANALYSE DE MONTANT**
+    // 1. DEVICE FINGERPRINTING ANALYSIS
+    if (fraud_signals?.device_fingerprint) {
+      const deviceId = fraud_signals.device_fingerprint.visitorId;
+      const knownDevices = profile.known_device_fingerprints || [];
+      
+      if (!knownDevices.includes(deviceId)) {
+        riskScore -= 15;
+        analysisLog.push({ step: "Analyse du dispositif", result: "Nouveau dispositif jamais vu", impact: "-15", timestamp: Date.now() - startTime });
+        
+        // Update profile with new device
+        await supabaseAdmin.from('profiles').update({
+          known_device_fingerprints: [...knownDevices, deviceId]
+        }).eq('id', profile.id);
+      } else {
+        riskScore += 10;
+        analysisLog.push({ step: "Analyse du dispositif", result: "Dispositif reconnu", impact: "+10", timestamp: Date.now() - startTime });
+      }
+
+      // Check device confidence score
+      if (fraud_signals.device_fingerprint.confidence < 0.5) {
+        riskScore -= 10;
+        analysisLog.push({ step: "Analyse du dispositif", result: `Confiance faible du fingerprint (${fraud_signals.device_fingerprint.confidence})`, impact: "-10", timestamp: Date.now() - startTime });
+      }
+    }
+
+    // 2. BEHAVIORAL ANALYSIS
+    if (fraud_signals?.behavioral_signals) {
+      const behavioral = fraud_signals.behavioral_signals;
+      
+      // Bot detection
+      if (behavioral.isLikelyBot) {
+        riskScore -= 60;
+        analysisLog.push({ step: "Détection de bot", result: `Bot détecté: ${behavioral.suspiciousPatterns.join(', ')}`, impact: "-60", timestamp: Date.now() - startTime });
+      }
+      
+      // Mouse movement analysis
+      if (behavioral.mouseMovements && behavioral.mouseMovements.length === 0 && behavioral.totalTimeOnPage > 5000) {
+        riskScore -= 25;
+        analysisLog.push({ step: "Analyse comportementale", result: "Aucun mouvement de souris", impact: "-25", timestamp: Date.now() - startTime });
+      }
+      
+      // Time on page too short
+      if (behavioral.totalTimeOnPage < 3000) {
+        riskScore -= 20;
+        analysisLog.push({ step: "Analyse comportementale", result: `Temps sur la page trop court (${Math.round(behavioral.totalTimeOnPage / 1000)}s)`, impact: "-20", timestamp: Date.now() - startTime });
+      }
+      
+      // Suspicious patterns
+      if (behavioral.suspiciousPatterns && behavioral.suspiciousPatterns.length > 0) {
+        riskScore -= behavioral.suspiciousPatterns.length * 5;
+        analysisLog.push({ step: "Analyse comportementale", result: `Patterns suspects: ${behavioral.suspiciousPatterns.join(', ')}`, impact: `-${behavioral.suspiciousPatterns.length * 5}`, timestamp: Date.now() - startTime });
+      }
+    }
+
+    // 3. TYPING PATTERN ANALYSIS
+    if (fraud_signals?.pan_entry_duration_ms < 1000) { 
+      riskScore -= 15; 
+      analysisLog.push({ step: "Analyse de frappe", result: "Saisie du PAN très rapide", impact: "-15", timestamp: Date.now() - startTime }); 
+    } else { 
+      analysisLog.push({ step: "Analyse de frappe", result: "Saisie du PAN normale", impact: "+0", timestamp: Date.now() - startTime }); 
+    }
+
+    if (fraud_signals?.paste_events > 0) { 
+      riskScore -= 20; 
+      analysisLog.push({ step: "Analyse de frappe", result: "Utilisation du copier-coller", impact: "-20", timestamp: Date.now() - startTime }); 
+    } else { 
+      analysisLog.push({ step: "Analyse de frappe", result: "Aucun copier-coller détecté", impact: "+0", timestamp: Date.now() - startTime }); 
+    }
+
+    // 4. AMOUNT ANALYSIS
     const LOW_VALUE_THRESHOLD = 25.00;
     if (amountToCharge <= LOW_VALUE_THRESHOLD) {
-      riskScore += 5; // Bonus de confiance pour les petits montants
+      riskScore += 5;
       analysisLog.push({ step: "Analyse du montant", result: "Transaction de faible valeur, tolérée", impact: "+5", timestamp: Date.now() - startTime });
     } else if (profile.avg_transaction_amount > 0 && profile.transaction_amount_stddev > 0) {
       if (amountToCharge > profile.avg_transaction_amount) {
@@ -116,20 +185,14 @@ serve(async (req) => {
           analysisLog.push({ step: "Analyse du montant", result: "Montant dans la plage normale supérieure", impact: "+0", timestamp: Date.now() - startTime });
         }
       } else {
-        riskScore += 5; // Bonus de confiance pour les montants inférieurs à la moyenne
+        riskScore += 5;
         analysisLog.push({ step: "Analyse du montant", result: "Montant inférieur à la moyenne, non suspect", impact: "+5", timestamp: Date.now() - startTime });
       }
     } else {
       analysisLog.push({ step: "Analyse du montant", result: "Pas d'historique pour l'analyse du montant", impact: "+0", timestamp: Date.now() - startTime });
     }
 
-    if (fraud_signals?.pan_entry_duration_ms < 1000) { riskScore -= 15; analysisLog.push({ step: "Analyse comportementale", result: "Saisie du PAN très rapide", impact: "-15", timestamp: Date.now() - startTime }); }
-    else { analysisLog.push({ step: "Analyse comportementale", result: "Saisie du PAN normale", impact: "+0", timestamp: Date.now() - startTime }); }
-
-    if (fraud_signals?.paste_events > 0) { riskScore -= 20; analysisLog.push({ step: "Analyse comportementale", result: "Utilisation du copier-coller", impact: "-20", timestamp: Date.now() - startTime }); }
-    else { analysisLog.push({ step: "Analyse comportementale", result: "Aucun copier-coller détecté", impact: "+0", timestamp: Date.now() - startTime }); }
-    
-    // Velocity Check
+    // 5. MULTI-DIMENSIONAL VELOCITY CHECKS
     const debitAccountIds = profile.debit_accounts.map(a => a.id);
     const creditAccountIds = profile.credit_accounts.map(a => a.id);
 
@@ -137,145 +200,202 @@ serve(async (req) => {
     if (debitAccountIds.length > 0) orConditions.push(`debit_account_id.in.(${debitAccountIds.join(',')})`);
     if (creditAccountIds.length > 0) orConditions.push(`credit_account_id.in.(${creditAccountIds.join(',')})`);
 
-    let lastTransaction = null;
+    // Velocity by card (last 10 minutes)
     if (orConditions.length > 0) {
-      const { data } = await supabaseAdmin
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const { data: recentTransactions, error: velocityError } = await supabaseAdmin
         .from('transactions')
-        .select('ip_address, created_at')
+        .select('id, created_at, ip_address')
         .or(orConditions.join(','))
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-      lastTransaction = data;
-    }
+        .gte('created_at', tenMinutesAgo)
+        .order('created_at', { ascending: false });
 
-    // CORRECTION: Vérifier la vélocité même si l'IP est la même
-    if (lastTransaction && ipAddress) {
-      try {
-        const timeDiffMinutes = (new Date().getTime() - new Date(lastTransaction.created_at).getTime()) / (1000 * 60);
+      if (!velocityError && recentTransactions && recentTransactions.length > 0) {
+        const transactionCount = recentTransactions.length;
         
-        // Si moins de 1 minute entre deux transactions, c'est suspect
-        if (timeDiffMinutes < 1) {
-          riskScore -= 30;
-          analysisLog.push({ 
-            step: "Analyse de vélocité temporelle", 
-            result: `Transactions trop rapprochées (${Math.round(timeDiffMinutes * 60)} secondes)`, 
-            impact: "-30", 
-            timestamp: Date.now() - startTime 
-          });
+        if (transactionCount >= 5) {
+          riskScore -= 40;
+          analysisLog.push({ step: "Vélocité par carte", result: `${transactionCount} transactions en 10 minutes`, impact: "-40", timestamp: Date.now() - startTime });
+        } else if (transactionCount >= 3) {
+          riskScore -= 20;
+          analysisLog.push({ step: "Vélocité par carte", result: `${transactionCount} transactions en 10 minutes`, impact: "-20", timestamp: Date.now() - startTime });
+        } else {
+          analysisLog.push({ step: "Vélocité par carte", result: `${transactionCount} transaction(s) en 10 minutes - normal`, impact: "+0", timestamp: Date.now() - startTime });
         }
 
-        // Vérifier la géolocalisation si on a une IP différente OU si assez de temps s'est écoulé
-        if (lastTransaction.ip_address && (lastTransaction.ip_address !== ipAddress || timeDiffMinutes > 5)) {
+        // Geographic velocity check with last transaction
+        const lastTransaction = recentTransactions[0];
+        
+        if (lastTransaction && ipAddress) {
           try {
-            console.log(`Fetching geolocation for current IP: ${ipAddress} and last IP: ${lastTransaction.ip_address}`);
+            const timeDiffMinutes = (new Date().getTime() - new Date(lastTransaction.created_at).getTime()) / (1000 * 60);
             
-            const [currentGeoResponse, lastGeoResponse] = await Promise.all([
-              fetch(`https://ipapi.co/${ipAddress}/json/`),
-              fetch(`https://ipapi.co/${lastTransaction.ip_address}/json/`)
-            ]);
-            
-            const currentGeo = await currentGeoResponse.json();
-            const lastGeo = await lastGeoResponse.json();
-            
-            console.log('Current geo data:', JSON.stringify(currentGeo));
-            console.log('Last geo data:', JSON.stringify(lastGeo));
-            
-            // Vérifier si on a des erreurs de l'API
-            if (currentGeo.error || lastGeo.error) {
+            if (timeDiffMinutes < 1) {
+              riskScore -= 30;
               analysisLog.push({ 
-                step: "Analyse de vélocité géographique", 
-                result: `Erreur API géolocalisation: ${currentGeo.reason || lastGeo.reason || 'Unknown'}`, 
-                impact: "+0", 
+                step: "Vélocité temporelle", 
+                result: `Transactions trop rapprochées (${Math.round(timeDiffMinutes * 60)} secondes)`, 
+                impact: "-30", 
                 timestamp: Date.now() - startTime 
               });
-            } else if (currentGeo.latitude && lastGeo.latitude) {
-              const distanceKm = haversineDistance(
-                { lat: currentGeo.latitude, lon: currentGeo.longitude }, 
-                { lat: lastGeo.latitude, lon: lastGeo.longitude }
-              );
-              
-              const timeDiffHours = timeDiffMinutes / 60;
-              
-              if (timeDiffHours > 0 && distanceKm > 1) { // Plus de 1km de distance
-                const speedKmh = distanceKm / timeDiffHours;
+            }
+
+            if (lastTransaction.ip_address && (lastTransaction.ip_address !== ipAddress || timeDiffMinutes > 5)) {
+              try {
+                console.log(`Fetching geolocation for current IP: ${ipAddress} and last IP: ${lastTransaction.ip_address}`);
                 
-                if (speedKmh > 900) { // Vitesse d'un avion de ligne
-                  riskScore -= 50;
+                const [currentGeoResponse, lastGeoResponse] = await Promise.all([
+                  fetch(`https://ipapi.co/${ipAddress}/json/`),
+                  fetch(`https://ipapi.co/${lastTransaction.ip_address}/json/`)
+                ]);
+                
+                const currentGeo = await currentGeoResponse.json();
+                const lastGeo = await lastGeoResponse.json();
+                
+                console.log('Current geo data:', JSON.stringify(currentGeo));
+                console.log('Last geo data:', JSON.stringify(lastGeo));
+                
+                if (currentGeo.error || lastGeo.error) {
                   analysisLog.push({ 
-                    step: "Analyse de vélocité géographique", 
-                    result: `Déplacement impossible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km en ${Math.round(timeDiffMinutes)} min) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
-                    impact: "-50", 
+                    step: "Vélocité géographique", 
+                    result: `Erreur API géolocalisation: ${currentGeo.reason || lastGeo.reason || 'Unknown'}`, 
+                    impact: "+0", 
                     timestamp: Date.now() - startTime 
                   });
-                } else if (speedKmh > 500) { // Vitesse très élevée mais techniquement possible
-                  riskScore -= 25;
-                  analysisLog.push({ 
-                    step: "Analyse de vélocité géographique", 
-                    result: `Déplacement très rapide (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
-                    impact: "-25", 
-                    timestamp: Date.now() - startTime 
-                  });
-                } else if (speedKmh > 200) { // Vitesse élevée
-                  riskScore -= 10;
-                  analysisLog.push({ 
-                    step: "Analyse de vélocité géographique", 
-                    result: `Déplacement rapide (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
-                    impact: "-10", 
-                    timestamp: Date.now() - startTime 
-                  });
+                } else if (currentGeo.latitude && lastGeo.latitude) {
+                  const distanceKm = haversineDistance(
+                    { lat: currentGeo.latitude, lon: currentGeo.longitude }, 
+                    { lat: lastGeo.latitude, lon: lastGeo.longitude }
+                  );
+                  
+                  const timeDiffHours = timeDiffMinutes / 60;
+                  
+                  if (timeDiffHours > 0 && distanceKm > 1) {
+                    const speedKmh = distanceKm / timeDiffHours;
+                    
+                    if (speedKmh > 900) {
+                      riskScore -= 50;
+                      analysisLog.push({ 
+                        step: "Vélocité géographique", 
+                        result: `Déplacement impossible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km en ${Math.round(timeDiffMinutes)} min) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
+                        impact: "-50", 
+                        timestamp: Date.now() - startTime 
+                      });
+                    } else if (speedKmh > 500) {
+                      riskScore -= 25;
+                      analysisLog.push({ 
+                        step: "Vélocité géographique", 
+                        result: `Déplacement très rapide (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
+                        impact: "-25", 
+                        timestamp: Date.now() - startTime 
+                      });
+                    } else if (speedKmh > 200) {
+                      riskScore -= 10;
+                      analysisLog.push({ 
+                        step: "Vélocité géographique", 
+                        result: `Déplacement rapide (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
+                        impact: "-10", 
+                        timestamp: Date.now() - startTime 
+                      });
+                    } else {
+                      analysisLog.push({ 
+                        step: "Vélocité géographique", 
+                        result: `Déplacement plausible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
+                        impact: "+0", 
+                        timestamp: Date.now() - startTime 
+                      });
+                    }
+                  } else if (distanceKm <= 1) {
+                    analysisLog.push({ 
+                      step: "Vélocité géographique", 
+                      result: `Même localisation (${Math.round(distanceKm * 1000)} mètres) - ${currentGeo.city || 'Unknown'}`, 
+                      impact: "+0", 
+                      timestamp: Date.now() - startTime 
+                    });
+                  }
                 } else {
                   analysisLog.push({ 
-                    step: "Analyse de vélocité géographique", 
-                    result: `Déplacement plausible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
+                    step: "Vélocité géographique", 
+                    result: `Données de géolocalisation incomplètes (current: ${currentGeo.latitude ? 'OK' : 'MISSING'}, last: ${lastGeo.latitude ? 'OK' : 'MISSING'})`, 
                     impact: "+0", 
                     timestamp: Date.now() - startTime 
                   });
                 }
-              } else if (distanceKm <= 1) {
+              } catch (geoError) {
+                console.error("Geolocation API error:", geoError);
                 analysisLog.push({ 
-                  step: "Analyse de vélocité géographique", 
-                  result: `Même localisation (${Math.round(distanceKm * 1000)} mètres) - ${currentGeo.city || 'Unknown'}`, 
+                  step: "Vélocité géographique", 
+                  result: `Erreur lors de la récupération des données de géolocalisation: ${geoError.message}`, 
                   impact: "+0", 
                   timestamp: Date.now() - startTime 
                 });
               }
-            } else {
+            } else if (lastTransaction.ip_address === ipAddress && timeDiffMinutes <= 5) {
               analysisLog.push({ 
-                step: "Analyse de vélocité géographique", 
-                result: `Données de géolocalisation incomplètes (current: ${currentGeo.latitude ? 'OK' : 'MISSING'}, last: ${lastGeo.latitude ? 'OK' : 'MISSING'})`, 
+                step: "Vélocité", 
+                result: "Même IP, intervalle court - pas de vérification géographique", 
                 impact: "+0", 
                 timestamp: Date.now() - startTime 
               });
             }
-          } catch (geoError) {
-            console.error("Geolocation API error:", geoError);
+          } catch (e) { 
+            console.error("Velocity check failed:", e.message);
             analysisLog.push({ 
-              step: "Analyse de vélocité géographique", 
-              result: `Erreur lors de la récupération des données de géolocalisation: ${geoError.message}`, 
+              step: "Vélocité", 
+              result: `Erreur: ${e.message}`, 
               impact: "+0", 
               timestamp: Date.now() - startTime 
             });
           }
-        } else if (lastTransaction.ip_address === ipAddress && timeDiffMinutes <= 5) {
-          analysisLog.push({ 
-            step: "Analyse de vélocité", 
-            result: "Même IP, intervalle court - pas de vérification géographique", 
-            impact: "+0", 
-            timestamp: Date.now() - startTime 
-          });
         }
-      } catch (e) { 
-        console.error("Velocity check failed:", e.message);
-        analysisLog.push({ 
-          step: "Analyse de vélocité", 
-          result: `Erreur: ${e.message}`, 
-          impact: "+0", 
-          timestamp: Date.now() - startTime 
-        });
+      } else {
+        analysisLog.push({ step: "Vélocité par carte", result: "Première transaction récente", impact: "+0", timestamp: Date.now() - startTime });
       }
-    } else {
-      analysisLog.push({ step: "Analyse de vélocité", result: "Première transaction ou pas d'IP", impact: "+0", timestamp: Date.now() - startTime });
+    }
+
+    // 6. VELOCITY BY IP (check if this IP has been used by multiple cards)
+    if (ipAddress) {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { data: ipTransactions } = await supabaseAdmin
+        .from('transactions')
+        .select('debit_account_id, credit_account_id')
+        .eq('ip_address', ipAddress)
+        .gte('created_at', oneHourAgo);
+
+      if (ipTransactions && ipTransactions.length > 0) {
+        const uniqueAccounts = new Set();
+        ipTransactions.forEach(t => {
+          if (t.debit_account_id) uniqueAccounts.add(t.debit_account_id);
+          if (t.credit_account_id) uniqueAccounts.add(t.credit_account_id);
+        });
+
+        if (uniqueAccounts.size >= 5) {
+          riskScore -= 50;
+          analysisLog.push({ step: "Vélocité par IP", result: `${uniqueAccounts.size} cartes différentes depuis cette IP en 1h`, impact: "-50", timestamp: Date.now() - startTime });
+        } else if (uniqueAccounts.size >= 3) {
+          riskScore -= 25;
+          analysisLog.push({ step: "Vélocité par IP", result: `${uniqueAccounts.size} cartes différentes depuis cette IP en 1h`, impact: "-25", timestamp: Date.now() - startTime });
+        } else {
+          analysisLog.push({ step: "Vélocité par IP", result: `${uniqueAccounts.size} carte(s) depuis cette IP - normal`, impact: "+0", timestamp: Date.now() - startTime });
+        }
+      }
+    }
+
+    // 7. PROXY/VPN DETECTION (using IP quality check)
+    if (ipAddress) {
+      try {
+        const ipCheckResponse = await fetch(`https://ipapi.co/${ipAddress}/json/`);
+        const ipData = await ipCheckResponse.json();
+        
+        if (ipData.org && (ipData.org.toLowerCase().includes('vpn') || ipData.org.toLowerCase().includes('proxy') || ipData.org.toLowerCase().includes('hosting'))) {
+          riskScore -= 30;
+          analysisLog.push({ step: "Détection VPN/Proxy", result: `VPN/Proxy détecté: ${ipData.org}`, impact: "-30", timestamp: Date.now() - startTime });
+        } else {
+          analysisLog.push({ step: "Détection VPN/Proxy", result: "IP résidentielle normale", impact: "+0", timestamp: Date.now() - startTime });
+        }
+      } catch (e) {
+        analysisLog.push({ step: "Détection VPN/Proxy", result: "Vérification impossible", impact: "+0", timestamp: Date.now() - startTime });
+      }
     }
 
     const decision = riskScore < 40 ? 'BLOCK' : 'APPROVE';
@@ -304,7 +424,6 @@ serve(async (req) => {
     });
     if (rpcError) throw rpcError;
 
-    // Mettre à jour l'enregistrement de l'analyse de risque avec l'ID de transaction
     if (assessmentRecord) {
       await supabaseAdmin.from('transaction_risk_assessments')
         .update({ transaction_id: transactionResult.transaction_id })

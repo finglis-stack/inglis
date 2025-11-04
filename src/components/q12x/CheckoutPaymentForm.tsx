@@ -8,6 +8,8 @@ import { InputOTP, InputOTPGroup } from '@/components/ui/input-otp';
 import { cn, validateLuhnAlphanumeric } from '@/lib/utils';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useTranslation } from 'react-i18next';
+import { getDeviceFingerprint } from '@/utils/deviceFingerprint';
+import { behavioralAnalyzer } from '@/utils/behavioralAnalysis';
 
 interface CheckoutPaymentFormProps {
   onSubmit: (cardDetails: any, behavioralSignals: any) => void;
@@ -64,6 +66,9 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
   const pinEntryStart = useRef<number | null>(null);
   const pinEntryDuration = useRef<number | null>(null);
   const pinTimestamps = useRef<number[]>([]);
+
+  // Honeypot field (hidden from users, only bots will fill it)
+  const [honeypot, setHoneypot] = useState('');
 
   useEffect(() => {
     if (cardNumber.length === 18) {
@@ -133,8 +138,15 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
     setTimeout(() => cardNumberInputRef.current?.focus(), 100);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Honeypot check
+    if (honeypot !== '') {
+      showError('Suspicious activity detected.');
+      return;
+    }
+
     const parsedCard = parseCardNumber(cardNumber);
     if (!parsedCard || !validateLuhnAlphanumeric(cardNumber)) {
       showError(t('publicCheckout.form.invalidCard'));
@@ -160,6 +172,12 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
       }
     }
 
+    // Get device fingerprint
+    const deviceFingerprint = await getDeviceFingerprint();
+
+    // Get behavioral signals
+    const behavioralSignals = behavioralAnalyzer.getSignals();
+
     onSubmit(
       {
         card_number: parsedCard,
@@ -171,6 +189,8 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
         expiry_entry_duration_ms: expiryEntryDuration.current,
         pin_entry_duration_ms: pinEntryDuration.current,
         pin_inter_digit_avg_ms: pinInterDigitAvgMs,
+        device_fingerprint: deviceFingerprint,
+        behavioral_signals: behavioralSignals,
       }
     );
   };
@@ -188,6 +208,18 @@ export const CheckoutPaymentForm = ({ onSubmit, processing, amount, error }: Che
           </AlertDescription>
         </Alert>
       )}
+
+      {/* Honeypot field - hidden from real users */}
+      <input
+        type="text"
+        name="website"
+        value={honeypot}
+        onChange={(e) => setHoneypot(e.target.value)}
+        style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px' }}
+        tabIndex={-1}
+        autoComplete="off"
+      />
+
       <div className="space-y-4">
         <div className="grid gap-2">
           <Label htmlFor="card-number">{t('publicCheckout.form.cardNumber')}</Label>

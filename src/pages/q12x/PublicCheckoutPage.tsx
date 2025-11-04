@@ -9,6 +9,8 @@ import { CheckoutPaymentForm } from '@/components/q12x/CheckoutPaymentForm';
 import ProcessingPaymentModal from '@/components/q12x/ProcessingPaymentModal';
 import { useTranslation, Trans } from 'react-i18next';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { getDeviceFingerprint } from '@/utils/deviceFingerprint';
+import { behavioralAnalyzer } from '@/utils/behavioralAnalysis';
 
 const PublicCheckoutPage = () => {
   const { checkoutId } = useParams();
@@ -24,7 +26,6 @@ const PublicCheckoutPage = () => {
   // State for fraud signals
   const formLoadTime = useRef(Date.now());
   const [pasteEvents, setPasteEvents] = useState(0);
-  const [mouseMovements, setMouseMovements] = useState(0);
 
   useEffect(() => {
     const fetchCheckout = async () => {
@@ -46,9 +47,8 @@ const PublicCheckoutPage = () => {
     };
     fetchCheckout();
 
-    const handleMouseMove = () => setMouseMovements(prev => prev + 1);
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    // Initialize device fingerprint on page load
+    getDeviceFingerprint().catch(console.error);
   }, [checkoutId]);
 
   const getFunctionError = async (error: any, fallbackMessage: string): Promise<string> => {
@@ -91,10 +91,6 @@ const PublicCheckoutPage = () => {
         ...behavioralSignals,
         time_on_page_ms: Date.now() - formLoadTime.current,
         paste_events: pasteEvents,
-        mouse_movements: mouseMovements,
-        user_agent: navigator.userAgent,
-        language: navigator.language,
-        screen_resolution: `${window.screen.width}x${window.screen.height}`,
       };
 
       // Étape 2: Paiement avec le jeton
