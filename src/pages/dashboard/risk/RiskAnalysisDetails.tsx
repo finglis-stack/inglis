@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import RiskScoreGauge from '@/components/dashboard/users/RiskScoreGauge';
 import { showError } from '@/utils/toast';
 import RiskAnalysisLog from '@/components/dashboard/risk/RiskAnalysisLog';
+import { getIpCoordinates } from '@/utils/ipGeolocation';
 
 const RiskAnalysisDetails = () => {
   const { assessmentId } = useParams();
@@ -45,11 +46,7 @@ const RiskAnalysisDetails = () => {
       let locationData = null;
       const ip = txRes.data?.ip_address || assessmentData.signals?.ipAddress;
       if (ip) {
-        try {
-          const response = await fetch(`https://ipapi.co/${ip}/json/`);
-          const data = await response.json();
-          if (!data.error) locationData = data;
-        } catch (e) { console.error("Erreur de géolocalisation:", e); }
+        locationData = await getIpCoordinates(ip);
       }
 
       setDetails({
@@ -83,7 +80,7 @@ const RiskAnalysisDetails = () => {
   const decisionInfo = getDecisionInfo(assessment.decision);
   const transactionAmount = details?.transaction?.amount ?? assessment.signals?.amount;
   const merchantName = details?.transaction?.merchant_accounts?.name ?? assessment.signals?.merchant_name;
-  const locationDisplay = details?.transaction?.location ? `${details.transaction.location.city}, ${details.transaction.location.country_name}` : 'N/A';
+  const locationDisplay = details?.transaction?.location ? `${details.transaction.location.city}, ${details.transaction.location.country}` : 'N/A';
   
   const riskSignals = assessment.signals?.analysis_log?.filter(log => parseInt(log.impact) < 0) || [];
 

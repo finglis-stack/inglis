@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import TransactionMap from '@/components/dashboard/transactions/TransactionMap';
+import { getIpCoordinates } from '@/utils/ipGeolocation';
 
 const TransactionDetails = () => {
   const { id } = useParams();
@@ -33,7 +34,7 @@ const TransactionDetails = () => {
 
       if (error) {
         showError(t('transactions.notFound'));
-        navigate(-1); // Go back to previous page
+        navigate(-1);
       } else {
         setTransaction(data);
       }
@@ -47,20 +48,13 @@ const TransactionDetails = () => {
       const fetchLocation = async () => {
         setLocationLoading(true);
         setLocationError(null);
-        try {
-          const response = await fetch(`https://ipapi.co/${transaction.ip_address}/json/`);
-          const data = await response.json();
-          if (data.error) {
-            setLocationError('Erreur de géolocalisation');
-          } else {
-            setLocation(data);
-          }
-        } catch (e) {
-          console.error("Erreur de géolocalisation:", e);
+        const coords = await getIpCoordinates(transaction.ip_address);
+        if (coords) {
+          setLocation(coords);
+        } else {
           setLocationError('Erreur de géolocalisation');
-        } finally {
-          setLocationLoading(false);
         }
+        setLocationLoading(false);
       };
       fetchLocation();
     }
@@ -138,8 +132,8 @@ const TransactionDetails = () => {
                 <h4 className="font-semibold flex items-center gap-2 mb-2"><MapPin className="h-4 w-4" /> Géolocalisation (approximative)</h4>
                 {locationLoading ? (
                   <Skeleton className="h-[250px] w-full rounded-lg" />
-                ) : location && location.latitude && location.longitude ? (
-                  <TransactionMap latitude={location.latitude} longitude={location.longitude} />
+                ) : location && location.lat && location.lon ? (
+                  <TransactionMap latitude={location.lat} longitude={location.lon} />
                 ) : (
                   <div className="h-[250px] w-full rounded-lg bg-gray-100 flex items-center justify-center text-center p-4">
                     <p className="text-sm text-muted-foreground">{locationError || 'Données de localisation non disponibles.'}</p>

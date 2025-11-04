@@ -4,10 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Info, MapPin, Repeat } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
 import AvailabilityCell from '@/components/q12x/AvailabilityCell';
 import TransactionMap from '@/components/q12x/TransactionMap';
 import { useTranslation } from 'react-i18next';
+import { getIpCoordinates } from '@/utils/ipGeolocation';
 
 const Q12xTransactionDetails = () => {
   const { t } = useTranslation('q12x');
@@ -19,14 +21,98 @@ const Q12xTransactionDetails = () => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
 
-  // ... (useEffect pour fetchTransaction et fetchLocation reste identique)
+  useEffect(() => {
+    const fetchTransaction = async () => {
+      if (!id) return;
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('transactions')
+        .select(`
+          *,
+          debit_accounts(
+            id,
+            cards(
+              id,
+              user_initials,
+              issuer_id,
+              random_letters,
+              unique_identifier,
+              check_digit,
+              card_programs(
+                id,
+                program_name,
+                institutions(
+                  id,
+                  name
+                )
+              )
+            )
+          ),
+          credit_accounts(
+            id,
+            cards(
+              id,
+              user_initials,
+              issuer_id,
+              random_letters,
+              unique_identifier,
+              check_digit,
+              card_programs(
+                id,
+                program_name,
+                institutions(
+                  id,
+                  name
+                )
+              )
+            )
+          ),
+          merchant_accounts(
+            id,
+            name
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        showError(t('transactionDetails.notFound'));
+        navigate(-1);
+      } else {
+        setTransaction(data);
+      }
+      setLoading(false);
+    };
+    fetchTransaction();
+  }, [id, navigate, t]);
+
+  useEffect(() => {
+    if (transaction?.ip_address) {
+      const fetchLocation = async () => {
+        setLocationLoading(true);
+        setLocationError(null);
+        const coords = await getIpCoordinates(transaction.ip_address);
+        if (coords) {
+          setLocation(coords);
+        } else {
+          setLocationError('Erreur de géolocalisation');
+        }
+        setLocationLoading(false);
+      };
+      fetchLocation();
+    }
+  }, [transaction]);
 
   if (loading) {
     return <Skeleton className="h-64 w-full" />;
   }
 
   if (!transaction) {
-    // ...
+    return (
+      <div className="p-8">
+        <p>{t('transactionDetails.notFound')}</p>
+      </div>
+    );
   }
 
   const card = transaction.debit_accounts?.cards || transaction.credit_accounts?.cards;
@@ -52,10 +138,43 @@ const Q12xTransactionDetails = () => {
               <p className="text-sm text-muted-foreground">{t('transactionDetails.amount')}</p>
               <p className="text-3xl font-bold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: displayCurrency }).format(displayAmount)}</p>
             </div>
-            {/* ... autres détails ... */}
+            <div>
+              <p className="text-sm text-muted-foreground">{t('transactionDetails.description')}</p>
+              <p className="text-lg">{transaction.description}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{t('transactionDetails.status')}</p>
+              <Badge variant={
+                transaction.status === 'completed' || transaction.status === 'captured' ? 'default' :
+                transaction.status === 'authorized' ? 'secondary' :
+                transaction.status === 'cancelled' || transaction.status === 'expired' ? 'destructive' :
+                'outline'
+              } className="capitalize">
+                {transaction.status.replace('_', ' ')}
+              </Badge>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{t('transactionDetails.type')}</p>
+              <p className="capitalize">{transaction.type.replace('_', ' ')}</p>
+            </div>
           </div>
           <div className="space-y-4">
-            {/* ... autres détails ... */}
+            <div>
+              <p className="text-sm text-muted-foreground">{t('transactionDetails.card')}</p>
+              <p className="font-mono">{cardNumber}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{t('transactionDetails.issuer')}</p>
+              <p>{issuerName}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{t('transactionDetails.merchant')}</p>
+              <p>{transaction.merchant_accounts?.name || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">{t('transactionDetails.date')}</p>
+              <p>{new Date(transaction.created_at).toLocaleString('fr-CA')}</p>
+            </div>
             {transaction.exchange_rate && (
               <div className="bg-gray-50 border p-4 rounded-lg">
                 <h4 className="font-semibold text-sm flex items-center gap-2"><Repeat className="h-4 w-4" /> Conversion de devise</h4>
@@ -64,7 +183,20 @@ const Q12xTransactionDetails = () => {
               </div>
             )}
           </div>
-          {/* ... reste du composant ... */}
+          {transaction.ip_address && (
+            <div className="md:col-span-2">
+              <h4 className="font-semibold flex items-center gap-2 mb-2"><MapPin className="h-4 w-4" /> Géolocalisation (approximative)</h4>
+              {locationLoading ? (
+                <Skeleton className="h-[250px] w-full rounded-lg" />
+              ) : location && location.lat && location.lon ? (
+                <TransactionMap latitude={location.lat} longitude={location.lon} />
+              ) : (
+                <div className="h-[250px] w-full rounded-lg bg-gray-100 flex items-center justify-center text-center p-4">
+                  <p className="text-sm text-muted-foreground">{locationError || 'Données de localisation non disponibles.'}</p>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

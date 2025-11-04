@@ -232,19 +232,40 @@ serve(async (req) => {
 
     // 4. IP ADDRESS ANALYSIS & STORAGE
     if (ipAddress) {
-      // Get IP geolocation data
+      // Get IP geolocation data using ip-api.com (45 req/min free)
       let ipGeoData = null;
       let isVpn = false;
       try {
-        const ipCheckResponse = await fetch(`https://ipapi.co/${ipAddress}/json/`);
-        ipGeoData = await ipCheckResponse.json();
+        const ipCheckResponse = await fetch(`http://ip-api.com/json/${ipAddress}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,mobile,proxy,hosting,query`);
+        const rawData = await ipCheckResponse.json();
         
-        if (ipGeoData && !ipGeoData.error) {
-          isVpn = ipGeoData.org && (
-            ipGeoData.org.toLowerCase().includes('vpn') || 
-            ipGeoData.org.toLowerCase().includes('proxy') || 
-            ipGeoData.org.toLowerCase().includes('hosting')
-          );
+        if (rawData.status === 'success') {
+          // Transform ip-api.com format to match our expected format
+          ipGeoData = {
+            ip: rawData.query,
+            city: rawData.city,
+            region: rawData.regionName,
+            country: rawData.country,
+            country_code: rawData.countryCode,
+            latitude: rawData.lat,
+            longitude: rawData.lon,
+            timezone: rawData.timezone,
+            isp: rawData.isp,
+            org: rawData.org,
+            as: rawData.as,
+            is_mobile: rawData.mobile,
+            is_proxy: rawData.proxy,
+            is_hosting: rawData.hosting
+          };
+          
+          // Detect VPN/Proxy/Hosting
+          isVpn = rawData.proxy || rawData.hosting || (rawData.org && (
+            rawData.org.toLowerCase().includes('vpn') || 
+            rawData.org.toLowerCase().includes('proxy') || 
+            rawData.org.toLowerCase().includes('hosting')
+          ));
+        } else {
+          console.error("IP geolocation failed:", rawData.message);
         }
       } catch (e) {
         console.error("IP geolocation failed:", e);
@@ -266,7 +287,9 @@ serve(async (req) => {
             last_seen_at: new Date().toISOString(),
             times_used: existingIp.times_used + 1,
             geolocation: ipGeoData,
-            is_vpn: isVpn
+            is_vpn: isVpn,
+            is_proxy: ipGeoData?.is_proxy || false,
+            is_tor: false // ip-api.com doesn't detect Tor directly
           })
           .eq('id', existingIp.id);
 
@@ -282,7 +305,8 @@ serve(async (req) => {
             ip_address: ipAddress,
             profile_id: profile.id,
             is_vpn: isVpn,
-            country: ipGeoData?.country_name,
+            is_proxy: ipGeoData?.is_proxy || false,
+            country: ipGeoData?.country,
             city: ipGeoData?.city,
             organization: ipGeoData?.org,
             geolocation: ipGeoData
@@ -292,7 +316,7 @@ serve(async (req) => {
       // VPN/Proxy detection
       if (isVpn) {
         riskScore -= 30;
-        analysisLog.push({ step: "Détection VPN/Proxy", result: `VPN/Proxy détecté: ${ipGeoData?.org}`, impact: "-30", timestamp: Date.now() - startTime });
+        analysisLog.push({ step: "Détection VPN/Proxy", result: `VPN/Proxy/Hosting détecté: ${ipGeoData?.org}`, impact: "-30", timestamp: Date.now() - startTime });
       } else {
         analysisLog.push({ step: "Détection VPN/Proxy", result: "IP résidentielle normale", impact: "+0", timestamp: Date.now() - startTime });
       }
@@ -408,8 +432,8 @@ serve(async (req) => {
                 console.log(`Fetching geolocation for current IP: ${ipAddress} and last IP: ${lastTransaction.ip_address}`);
                 
                 const [currentGeoResponse, lastGeoResponse] = await Promise.all([
-                  fetch(`https://ipapi.co/${ipAddress}/json/`),
-                  fetch(`https://ipapi.co/${lastTransaction.ip_address}/json/`)
+                  fetch(`http://ip-api.com/json/${ipAddress}?fields=status,message,city,country,lat,lon`),
+                  fetch(`http://ip-api.com/json/${lastTransaction.ip_address}?fields=status,message,city,country,lat,lon`)
                 ]);
                 
                 const currentGeo = await currentGeoResponse.json();
@@ -418,17 +442,17 @@ serve(async (req) => {
                 console.log('Current geo data:', JSON.stringify(currentGeo));
                 console.log('Last geo data:', JSON.stringify(lastGeo));
                 
-                if (currentGeo.error || lastGeo.error) {
+                if (currentGeo.status !== 'success' || lastGeo.status !== 'success') {
                   analysisLog.push({ 
                     step: "Vélocité géographique", 
-                    result: `Erreur API géolocalisation: ${currentGeo.reason || lastGeo.reason || 'Unknown'}`, 
+                    result: `Erreur API géolocalisation: ${currentGeo.message || lastGeo.message || 'Unknown'}`, 
                     impact: "+0", 
                     timestamp: Date.now() - startTime 
                   });
-                } else if (currentGeo.latitude && lastGeo.latitude) {
+                } else if (currentGeo.lat && lastGeo.lat) {
                   const distanceKm = haversineDistance(
-                    { lat: currentGeo.latitude, lon: currentGeo.longitude }, 
-                    { lat: lastGeo.latitude, lon: lastGeo.longitude }
+                    { lat: currentGeo.lat, lon: currentGeo.lon }, 
+                    { lat: lastGeo.lat, lon: lastGeo.lon }
                   );
                   
                   const timeDiffHours = timeDiffMinutes / 60;
@@ -479,7 +503,7 @@ serve(async (req) => {
                 } else {
                   analysisLog.push({ 
                     step: "Vélocité géographique", 
-                    result: `Données de géolocalisation incomplètes (current: ${currentGeo.latitude ? 'OK' : 'MISSING'}, last: ${lastGeo.latitude ? 'OK' : 'MISSING'})`, 
+                    result: `Données de géolocalisation incomplètes (current: ${currentGeo.lat ? 'OK' : 'MISSING'}, last: ${lastGeo.lat ? 'OK' : 'MISSING'})`, 
                     impact: "+0", 
                     timestamp: Date.now() - startTime 
                   });
