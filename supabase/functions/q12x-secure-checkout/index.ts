@@ -167,66 +167,92 @@ serve(async (req) => {
 
         // Vérifier la géolocalisation si on a une IP différente OU si assez de temps s'est écoulé
         if (lastTransaction.ip_address && (lastTransaction.ip_address !== ipAddress || timeDiffMinutes > 5)) {
-          const [currentGeo, lastGeo] = await Promise.all([
-            fetch(`https://ipapi.co/${ipAddress}/json/`).then(res => res.json()),
-            fetch(`https://ipapi.co/${lastTransaction.ip_address}/json/`).then(res => res.json())
-          ]);
-          
-          if (currentGeo.latitude && lastGeo.latitude) {
-            const distanceKm = haversineDistance(
-              { lat: currentGeo.latitude, lon: currentGeo.longitude }, 
-              { lat: lastGeo.latitude, lon: lastGeo.longitude }
-            );
+          try {
+            console.log(`Fetching geolocation for current IP: ${ipAddress} and last IP: ${lastTransaction.ip_address}`);
             
-            const timeDiffHours = timeDiffMinutes / 60;
+            const [currentGeoResponse, lastGeoResponse] = await Promise.all([
+              fetch(`https://ipapi.co/${ipAddress}/json/`),
+              fetch(`https://ipapi.co/${lastTransaction.ip_address}/json/`)
+            ]);
             
-            if (timeDiffHours > 0 && distanceKm > 1) { // Plus de 1km de distance
-              const speedKmh = distanceKm / timeDiffHours;
+            const currentGeo = await currentGeoResponse.json();
+            const lastGeo = await lastGeoResponse.json();
+            
+            console.log('Current geo data:', JSON.stringify(currentGeo));
+            console.log('Last geo data:', JSON.stringify(lastGeo));
+            
+            // Vérifier si on a des erreurs de l'API
+            if (currentGeo.error || lastGeo.error) {
+              analysisLog.push({ 
+                step: "Analyse de vélocité géographique", 
+                result: `Erreur API géolocalisation: ${currentGeo.reason || lastGeo.reason || 'Unknown'}`, 
+                impact: "+0", 
+                timestamp: Date.now() - startTime 
+              });
+            } else if (currentGeo.latitude && lastGeo.latitude) {
+              const distanceKm = haversineDistance(
+                { lat: currentGeo.latitude, lon: currentGeo.longitude }, 
+                { lat: lastGeo.latitude, lon: lastGeo.longitude }
+              );
               
-              if (speedKmh > 900) { // Vitesse d'un avion de ligne
-                riskScore -= 50;
+              const timeDiffHours = timeDiffMinutes / 60;
+              
+              if (timeDiffHours > 0 && distanceKm > 1) { // Plus de 1km de distance
+                const speedKmh = distanceKm / timeDiffHours;
+                
+                if (speedKmh > 900) { // Vitesse d'un avion de ligne
+                  riskScore -= 50;
+                  analysisLog.push({ 
+                    step: "Analyse de vélocité géographique", 
+                    result: `Déplacement impossible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km en ${Math.round(timeDiffMinutes)} min) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
+                    impact: "-50", 
+                    timestamp: Date.now() - startTime 
+                  });
+                } else if (speedKmh > 500) { // Vitesse très élevée mais techniquement possible
+                  riskScore -= 25;
+                  analysisLog.push({ 
+                    step: "Analyse de vélocité géographique", 
+                    result: `Déplacement très rapide (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
+                    impact: "-25", 
+                    timestamp: Date.now() - startTime 
+                  });
+                } else if (speedKmh > 200) { // Vitesse élevée
+                  riskScore -= 10;
+                  analysisLog.push({ 
+                    step: "Analyse de vélocité géographique", 
+                    result: `Déplacement rapide (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
+                    impact: "-10", 
+                    timestamp: Date.now() - startTime 
+                  });
+                } else {
+                  analysisLog.push({ 
+                    step: "Analyse de vélocité géographique", 
+                    result: `Déplacement plausible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
+                    impact: "+0", 
+                    timestamp: Date.now() - startTime 
+                  });
+                }
+              } else if (distanceKm <= 1) {
                 analysisLog.push({ 
                   step: "Analyse de vélocité géographique", 
-                  result: `Déplacement impossible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km en ${Math.round(timeDiffMinutes)} min)`, 
-                  impact: "-50", 
-                  timestamp: Date.now() - startTime 
-                });
-              } else if (speedKmh > 500) { // Vitesse très élevée mais techniquement possible
-                riskScore -= 25;
-                analysisLog.push({ 
-                  step: "Analyse de vélocité géographique", 
-                  result: `Déplacement très rapide (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km)`, 
-                  impact: "-25", 
-                  timestamp: Date.now() - startTime 
-                });
-              } else if (speedKmh > 200) { // Vitesse élevée
-                riskScore -= 10;
-                analysisLog.push({ 
-                  step: "Analyse de vélocité géographique", 
-                  result: `Déplacement rapide (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km)`, 
-                  impact: "-10", 
-                  timestamp: Date.now() - startTime 
-                });
-              } else {
-                analysisLog.push({ 
-                  step: "Analyse de vélocité géographique", 
-                  result: `Déplacement plausible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km)`, 
+                  result: `Même localisation (${Math.round(distanceKm * 1000)} mètres) - ${currentGeo.city || 'Unknown'}`, 
                   impact: "+0", 
                   timestamp: Date.now() - startTime 
                 });
               }
-            } else if (distanceKm <= 1) {
+            } else {
               analysisLog.push({ 
                 step: "Analyse de vélocité géographique", 
-                result: `Même localisation (${Math.round(distanceKm * 1000)} mètres)`, 
+                result: `Données de géolocalisation incomplètes (current: ${currentGeo.latitude ? 'OK' : 'MISSING'}, last: ${lastGeo.latitude ? 'OK' : 'MISSING'})`, 
                 impact: "+0", 
                 timestamp: Date.now() - startTime 
               });
             }
-          } else {
+          } catch (geoError) {
+            console.error("Geolocation API error:", geoError);
             analysisLog.push({ 
               step: "Analyse de vélocité géographique", 
-              result: "Données de géolocalisation incomplètes", 
+              result: `Erreur lors de la récupération des données de géolocalisation: ${geoError.message}`, 
               impact: "+0", 
               timestamp: Date.now() - startTime 
             });
