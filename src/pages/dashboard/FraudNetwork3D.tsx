@@ -48,6 +48,16 @@ const containerStyle = {
   borderRadius: '0.5rem',
 };
 
+const monochromeMapStyle = [
+  {
+    "featureType": "all",
+    "elementType": "all",
+    "stylers": [
+      { "saturation": -100 }
+    ]
+  }
+];
+
 const NetworkMap = ({ apiKey, nodes, edges, center, onNodeClick, selectedNode, onInfoWindowClose }) => {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'fraud-network-map-script',
@@ -64,7 +74,13 @@ const NetworkMap = ({ apiKey, nodes, edges, center, onNodeClick, selectedNode, o
       center={center}
       zoom={8}
       mapTypeId="satellite"
-      options={{ mapTypeControl: false, streetViewControl: false, fullscreenControl: false, tilt: 45 }}
+      options={{ 
+        mapTypeControl: false, 
+        streetViewControl: false, 
+        fullscreenControl: false, 
+        tilt: 45,
+        styles: monochromeMapStyle 
+      }}
     >
       {nodes.map(node => (
         <Marker
