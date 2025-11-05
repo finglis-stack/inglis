@@ -52,6 +52,7 @@ const TransactionDetails = () => {
         if (coords) {
           setLocation(coords);
         } else {
+          console.error('Failed to get IP coordinates for:', transaction.ip_address);
           setLocationError('Erreur de géolocalisation');
         }
         setLocationLoading(false);

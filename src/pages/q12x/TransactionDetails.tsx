@@ -107,10 +107,13 @@ const Q12xTransactionDetails = () => {
         setLocationLoading(true);
         setLocationError(null);
         try {
+          console.log('Fetching geolocation for IP:', transaction.ip_address);
           const coords = await getIpCoordinates(transaction.ip_address);
+          console.log('Geolocation result:', coords);
           if (coords) {
             setLocation(coords);
           } else {
+            console.error('No coordinates returned from geolocation service');
             setLocationError(t('transactionDetails.geolocationUnavailable'));
           }
         } catch (error) {
