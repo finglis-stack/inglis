@@ -236,7 +236,7 @@ serve(async (req) => {
       let ipGeoData = null;
       let isVpn = false;
       try {
-        const ipCheckResponse = await fetch(`http://ip-api.com/json/${ipAddress}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,mobile,proxy,hosting,query`);
+        const ipCheckResponse = await fetch(`https://ip-api.com/json/${ipAddress}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,mobile,proxy,hosting,query`);
         const rawData = await ipCheckResponse.json();
         
         if (rawData.status === 'success') {
@@ -432,8 +432,8 @@ serve(async (req) => {
                 console.log(`Fetching geolocation for current IP: ${ipAddress} and last IP: ${lastTransaction.ip_address}`);
                 
                 const [currentGeoResponse, lastGeoResponse] = await Promise.all([
-                  fetch(`http://ip-api.com/json/${ipAddress}?fields=status,message,city,country,lat,lon`),
-                  fetch(`http://ip-api.com/json/${lastTransaction.ip_address}?fields=status,message,city,country,lat,lon`)
+                  fetch(`https://ip-api.com/json/${ipAddress}?fields=status,message,city,country,lat,lon`),
+                  fetch(`https://ip-api.com/json/${lastTransaction.ip_address}?fields=status,message,city,country,lat,lon`)
                 ]);
                 
                 const currentGeo = await currentGeoResponse.json();
