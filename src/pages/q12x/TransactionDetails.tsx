@@ -3,12 +3,13 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, MapPin, Repeat } from 'lucide-react';
+import { ArrowLeft, MapPin, Repeat, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
 import TransactionMap from '@/components/q12x/TransactionMap';
 import { useTranslation } from 'react-i18next';
 import { getIpCoordinates } from '@/utils/ipGeolocation';
+import AvailabilityCell from '@/components/q12x/AvailabilityCell';
 
 const Q12xTransactionDetails = () => {
   const { t } = useTranslation('q12x');
@@ -19,6 +20,7 @@ const Q12xTransactionDetails = () => {
   const [location, setLocation] = useState<any>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [availableAt, setAvailableAt] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTransaction = async () => {
@@ -79,6 +81,20 @@ const Q12xTransactionDetails = () => {
         navigate(-1);
       } else {
         setTransaction(data);
+        
+        // Fetch availability from merchant_balance_ledgers
+        if (data.merchant_account_id) {
+          const { data: ledgerData } = await supabase
+            .from('merchant_balance_ledgers')
+            .select('available_at')
+            .eq('transaction_id', data.id)
+            .eq('type', 'capture')
+            .single();
+          
+          if (ledgerData) {
+            setAvailableAt(ledgerData.available_at);
+          }
+        }
       }
       setLoading(false);
     };
@@ -172,6 +188,14 @@ const Q12xTransactionDetails = () => {
                  transaction.type}
               </p>
             </div>
+            {availableAt && (
+              <div>
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Clock className="h-4 w-4" /> {t('transactionDetails.fundsAvailability')}
+                </p>
+                <AvailabilityCell availableAt={availableAt} />
+              </div>
+            )}
           </div>
           <div className="space-y-4">
             <div>
@@ -204,11 +228,11 @@ const Q12xTransactionDetails = () => {
                 <MapPin className="h-4 w-4" /> {t('transactionDetails.geolocation')}
               </h4>
               {locationLoading ? (
-                <Skeleton className="h-[250px] w-full rounded-lg" />
+                <Skeleton className="h-[400px] w-full rounded-lg" />
               ) : location && location.lat && location.lon ? (
                 <TransactionMap latitude={location.lat} longitude={location.lon} />
               ) : (
-                <div className="h-[250px] w-full rounded-lg bg-gray-100 flex items-center justify-center text-center p-4">
+                <div className="h-[400px] w-full rounded-lg bg-gray-100 flex items-center justify-center text-center p-4">
                   <p className="text-sm text-muted-foreground">
                     {locationError || t('transactionDetails.geolocationUnavailable')}
                   </p>
