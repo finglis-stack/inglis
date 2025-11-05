@@ -26,30 +26,35 @@ export interface IpGeolocationData {
 
 /**
  * Récupère les données de géolocalisation pour une adresse IP
- * Appelle directement ip-api.com en HTTPS (45 requêtes/minute gratuit)
+ * Utilise une Edge Function proxy pour éviter les problèmes CORS et HTTPS
  * 
  * @param ipAddress - L'adresse IP à géolocaliser
- * @param fields - Les champs à récupérer (optionnel, par défaut tous les champs utiles)
+ * @param fields - Les champs à récupérer (optionnel, ignoré car l'Edge Function récupère tous les champs)
  * @returns Les données de géolocalisation ou null en cas d'erreur
  */
 export const getIpGeolocation = async (
   ipAddress: string,
-  fields: string[] = ['status', 'message', 'country', 'countryCode', 'region', 'regionName', 'city', 'zip', 'lat', 'lon', 'timezone', 'isp', 'org', 'as', 'mobile', 'proxy', 'hosting', 'query']
+  fields?: string[]
 ): Promise<IpGeolocationData | null> => {
   try {
-    console.log('Fetching geolocation for IP:', ipAddress);
-    const fieldsParam = fields.join(',');
-    const response = await fetch(`https://ip-api.com/json/${ipAddress}?fields=${fieldsParam}`);
+    console.log('Fetching geolocation via Edge Function for IP:', ipAddress);
     
-    if (!response.ok) {
-      console.error(`IP geolocation API error: ${response.status} ${response.statusText}`);
+    const { data, error } = await supabase.functions.invoke('get-ip-geolocation', {
+      body: { ipAddress }
+    });
+    
+    if (error) {
+      console.error('Edge Function invocation error:', error);
       return null;
     }
     
-    const data: IpGeolocationData = await response.json();
+    if (!data) {
+      console.error('No data returned from Edge Function');
+      return null;
+    }
     
     if (data.status !== 'success') {
-      console.error(`IP geolocation failed: ${data.message || 'Unknown error'}`);
+      console.warn('Geolocation failed or unavailable:', data.message || 'Unknown reason');
       return null;
     }
     
@@ -70,10 +75,10 @@ export const getIpGeolocation = async (
 export const getIpCoordinates = async (
   ipAddress: string
 ): Promise<{ lat: number; lon: number; city?: string; country?: string } | null> => {
-  const data = await getIpGeolocation(ipAddress, ['status', 'message', 'lat', 'lon', 'city', 'country']);
+  const data = await getIpGeolocation(ipAddress);
   
   if (!data || !data.lat || !data.lon) {
-    console.error('No coordinates in geolocation data:', data);
+    console.warn('No coordinates available for IP:', ipAddress);
     return null;
   }
   
@@ -92,7 +97,7 @@ export const getIpCoordinates = async (
  * @returns true si l'IP est suspecte (VPN/Proxy/Hosting)
  */
 export const isIpSuspicious = async (ipAddress: string): Promise<boolean> => {
-  const data = await getIpGeolocation(ipAddress, ['status', 'message', 'proxy', 'hosting', 'org']);
+  const data = await getIpGeolocation(ipAddress);
   
   if (!data) {
     return false; // En cas d'erreur, on ne bloque pas

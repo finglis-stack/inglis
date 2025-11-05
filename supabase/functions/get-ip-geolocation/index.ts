@@ -26,14 +26,25 @@ serve(async (req) => {
     
     if (!response.ok) {
       console.error(`IP geolocation API error: ${response.status} ${response.statusText}`);
-      throw new Error(`Failed to fetch geolocation: ${response.statusText}`);
+      // Retourner une réponse 200 avec status fail au lieu de throw
+      return new Response(JSON.stringify({ 
+        status: 'fail',
+        message: `API returned ${response.status}: ${response.statusText}`
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200, // Retourner 200 même en cas d'erreur pour que le client puisse gérer
+      })
     }
     
     const data = await response.json();
     
     if (data.status !== 'success') {
       console.error(`IP geolocation failed: ${data.message || 'Unknown error'}`);
-      throw new Error(data.message || 'Geolocation failed');
+      // Retourner la réponse telle quelle avec status 200
+      return new Response(JSON.stringify(data), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
     }
 
     console.log('Geolocation successful:', data);
@@ -44,12 +55,13 @@ serve(async (req) => {
     })
   } catch (error) {
     console.error('Error in get-ip-geolocation function:', error);
+    // Retourner 200 avec status fail au lieu de 500
     return new Response(JSON.stringify({ 
       status: 'fail',
-      message: error.message 
+      message: error.message || 'Unknown error'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
+      status: 200, // Toujours retourner 200 pour éviter les erreurs côté client
     })
   }
 })
