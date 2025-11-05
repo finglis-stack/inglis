@@ -18,50 +18,81 @@ serve(async (req) => {
       throw new Error('IP address is required');
     }
 
-    console.log('Fetching geolocation for IP:', ipAddress);
-
-    // Utiliser ip-api.com avec HTTPS
-    const fields = 'status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,mobile,proxy,hosting,query';
-    const response = await fetch(`https://ip-api.com/json/${ipAddress}?fields=${fields}`);
+    // Récupérer la clé API depuis les variables d'environnement
+    const apiKey = Deno.env.get('IPGEOLOCATION_API_KEY');
     
-    if (!response.ok) {
-      console.error(`IP geolocation API error: ${response.status} ${response.statusText}`);
-      // Retourner une réponse 200 avec status fail au lieu de throw
+    if (!apiKey) {
+      console.error('IPGEOLOCATION_API_KEY not found in environment variables');
       return new Response(JSON.stringify({ 
         status: 'fail',
-        message: `API returned ${response.status}: ${response.statusText}`
+        message: 'API key not configured'
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200, // Retourner 200 même en cas d'erreur pour que le client puisse gérer
-      })
-    }
-    
-    const data = await response.json();
-    
-    if (data.status !== 'success') {
-      console.error(`IP geolocation failed: ${data.message || 'Unknown error'}`);
-      // Retourner la réponse telle quelle avec status 200
-      return new Response(JSON.stringify(data), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       })
     }
 
-    console.log('Geolocation successful:', data);
+    console.log('Fetching geolocation for IP:', ipAddress, 'with API key:', apiKey.substring(0, 8) + '...');
 
-    return new Response(JSON.stringify(data), {
+    // Utiliser ipgeolocation.io avec la clé API
+    const url = `https://api.ipgeolocation.io/ipgeo?apiKey=${apiKey}&ip=${ipAddress}&fields=geo,security`;
+    console.log('Calling URL:', url.replace(apiKey, 'HIDDEN'));
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`IP geolocation API error: ${response.status} ${response.statusText}`, errorText);
+      return new Response(JSON.stringify({ 
+        status: 'fail',
+        message: `API returned ${response.status}: ${response.statusText}`
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+    
+    const data = await response.json();
+    console.log('Raw API response:', JSON.stringify(data, null, 2));
+    
+    // Transformer les données ipgeolocation.io vers le format attendu
+    const transformedData = {
+      status: 'success',
+      country: data.country_name,
+      countryCode: data.country_code2,
+      region: data.state_code,
+      regionName: data.state_prov,
+      city: data.city,
+      zip: data.zipcode,
+      lat: parseFloat(data.latitude),
+      lon: parseFloat(data.longitude),
+      timezone: data.time_zone?.name,
+      isp: data.isp,
+      org: data.organization,
+      as: data.asn,
+      query: data.ip,
+      // Données de sécurité de ipgeolocation.io
+      mobile: false,
+      proxy: data.security?.is_proxy || false,
+      hosting: data.security?.is_hosting || false,
+      vpn: data.security?.is_vpn || false,
+      tor: data.security?.is_tor || false,
+    };
+
+    console.log('Transformed data:', JSON.stringify(transformedData, null, 2));
+
+    return new Response(JSON.stringify(transformedData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
   } catch (error) {
     console.error('Error in get-ip-geolocation function:', error);
-    // Retourner 200 avec status fail au lieu de 500
     return new Response(JSON.stringify({ 
       status: 'fail',
       message: error.message || 'Unknown error'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200, // Toujours retourner 200 pour éviter les erreurs côté client
+      status: 200,
     })
   }
 })
