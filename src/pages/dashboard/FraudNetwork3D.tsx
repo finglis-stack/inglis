@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Network, Search, MapPin, AlertTriangle, Info } from 'lucide-react';
-import { Globe, Entity, EntityCollection, LonLat, Vector } from '@openglobus/og';
+import { Globe, Entity, EntityCollection, LonLat } from '@openglobus/og';
 import { XYZ } from '@openglobus/og';
 import '@openglobus/og/css/og.css';
 
@@ -76,12 +76,9 @@ const FraudNetwork3D = () => {
         name: "Earth",
         terrain: null,
         layers: [osm],
-        autoActivated: true,
-        atmosphereEnabled: true,
-        sun: {
-          stopped: false
-        }
-      });
+        autoActivate: true,
+        atmosphereEnabled: true
+      } as any);
 
       globeInstance.current = globe;
 
@@ -115,9 +112,7 @@ const FraudNetwork3D = () => {
       }
 
       // Créer une nouvelle collection d'entités
-      const entityCollection = new EntityCollection({
-        name: 'fraudNetwork'
-      });
+      const entityCollection = new EntityCollection();
       
       entityCollectionRef.current = entityCollection;
 
@@ -141,7 +136,7 @@ const FraudNetwork3D = () => {
           }
         });
 
-        entity.events.on("click", () => {
+        (entity as any).events.on("click", () => {
           setSelectedNode(node);
         });
 
@@ -157,8 +152,8 @@ const FraudNetwork3D = () => {
           const lineEntity = new Entity({
             polyline: {
               path3v: [
-                [sourceNode.lon, sourceNode.lat, 100000],
-                [targetNode.lon, targetNode.lat, 100000]
+                [sourceNode.lon, sourceNode.lat, 100000] as any,
+                [targetNode.lon, targetNode.lat, 100000] as any
               ],
               thickness: edge.suspicious ? 3 : 1,
               color: edge.suspicious ? "rgba(239, 68, 68, 0.6)" : "rgba(148, 163, 184, 0.4)"
