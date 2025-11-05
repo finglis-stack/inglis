@@ -9,6 +9,7 @@
     "users": "Users",
     "transactions": "Transactions",
     "creditFiles": "Credit Files",
+    "fraudNetwork": "Fraud Network",
     "settings": "Settings"
   },
   "sharedSteps": {

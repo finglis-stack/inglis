@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { CreditCard, LayoutDashboard, Users, ArrowRightLeft, Settings, FileText } from 'lucide-react';
+import { CreditCard, LayoutDashboard, Users, ArrowRightLeft, Settings, FileText, Network } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +17,7 @@ export const Sidebar = ({ className, onLinkClick }: SidebarProps) => {
     { to: '/dashboard/users', icon: <Users className="h-5 w-5" />, label: t('sidebar.users') },
     { to: '/dashboard/transactions', icon: <ArrowRightLeft className="h-5 w-5" />, label: t('sidebar.transactions') },
     { to: '/dashboard/credit-files', icon: <FileText className="h-5 w-5" />, label: t('sidebar.creditFiles') },
+    { to: '/dashboard/fraud-network', icon: <Network className="h-5 w-5" />, label: t('sidebar.fraudNetwork') },
     { to: '/dashboard/settings', icon: <Settings className="h-5 w-5" />, label: t('sidebar.settings') },
   ];
 
