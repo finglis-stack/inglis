@@ -463,7 +463,7 @@ const FraudNetwork3D = () => {
               <CardContent>
                 <div 
                   ref={globeRef} 
-                  className="h-[600px] border rounded-lg overflow-hidden bg-slate-900"
+                  className="h-[600px] border rounded-lg overflow-hidden"
                   style={{ width: '100%' }}
                 />
               </CardContent>
