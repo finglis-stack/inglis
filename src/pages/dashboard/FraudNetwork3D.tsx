@@ -5,17 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Network, Search, MapPin, AlertTriangle } from 'lucide-react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Line, Sphere, Text, Html } from '@react-three/drei';
+import { Network, Search, MapPin, AlertTriangle, Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import * as THREE from 'three';
 
 interface NetworkNode {
   id: string;
   type: 'profile' | 'card' | 'ip' | 'device';
   label: string;
-  position: [number, number, number];
   color: string;
   suspicious: boolean;
   metadata?: any;
@@ -28,77 +24,9 @@ interface NetworkEdge {
   suspicious: boolean;
 }
 
-interface GeoLocation {
-  lat: number;
-  lon: number;
-  city?: string;
-  country?: string;
-}
-
-// Convertir lat/lon en coordonnées 3D sur une sphère (Terre)
-const latLonToVector3 = (lat: number, lon: number, radius: number = 100): [number, number, number] => {
-  const phi = (90 - lat) * (Math.PI / 180);
-  const theta = (lon + 180) * (Math.PI / 180);
-  
-  const x = -(radius * Math.sin(phi) * Math.cos(theta));
-  const z = radius * Math.sin(phi) * Math.sin(theta);
-  const y = radius * Math.cos(phi);
-  
-  return [x, y, z];
-};
-
-const Node3D = ({ node, onClick, selected }: { node: NetworkNode; onClick: () => void; selected: boolean }) => {
-  return (
-    <group position={node.position}>
-      <Sphere args={[selected ? 2 : 1.5, 16, 16]} onClick={onClick}>
-        <meshStandardMaterial 
-          color={node.color} 
-          emissive={node.suspicious ? '#ff0000' : '#000000'}
-          emissiveIntensity={node.suspicious ? 0.5 : 0}
-        />
-      </Sphere>
-      {selected && (
-        <Html distanceFactor={10}>
-          <div className="bg-white p-2 rounded shadow-lg text-xs whitespace-nowrap">
-            <div className="font-bold">{node.label}</div>
-            <div className="text-gray-600">{node.type}</div>
-            {node.metadata?.city && <div>{node.metadata.city}, {node.metadata.country}</div>}
-          </div>
-        </Html>
-      )}
-    </group>
-  );
-};
-
-const Connection3D = ({ start, end, suspicious }: { start: [number, number, number]; end: [number, number, number]; suspicious: boolean }) => {
-  const points = [new THREE.Vector3(...start), new THREE.Vector3(...end)];
-  return (
-    <Line
-      points={points}
-      color={suspicious ? '#ef4444' : '#94a3b8'}
-      lineWidth={suspicious ? 2 : 1}
-      opacity={0.6}
-      transparent
-    />
-  );
-};
-
-const Earth3D = () => {
-  return (
-    <Sphere args={[98, 64, 64]}>
-      <meshStandardMaterial 
-        color="#1e40af" 
-        opacity={0.3} 
-        transparent 
-        wireframe
-      />
-    </Sphere>
-  );
-};
-
 const FraudNetwork3D = () => {
   const { t } = useTranslation('dashboard');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [nodes, setNodes] = useState<NetworkNode[]>([]);
   const [edges, setEdges] = useState<NetworkEdge[]>([]);
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null);
@@ -182,94 +110,30 @@ const FraudNetwork3D = () => {
         return;
       }
 
-      // Récupérer les géolocalisations des IPs
-      const ipIds = new Set<string>();
-      edgesData.forEach(edge => {
-        if (edge.source_type === 'ip') ipIds.add(edge.source_id);
-        if (edge.target_type === 'ip') ipIds.add(edge.target_id);
-      });
-
-      const ipLocations = new Map<string, GeoLocation>();
-      
-      for (const ipId of ipIds) {
-        const { data: ipData } = await supabase
-          .from('ip_addresses')
-          .select('ip_address, geolocation')
-          .eq('id', ipId)
-          .single();
-
-        if (ipData?.geolocation) {
-          ipLocations.set(ipId, {
-            lat: ipData.geolocation.lat,
-            lon: ipData.geolocation.lon,
-            city: ipData.geolocation.city,
-            country: ipData.geolocation.country
-          });
-        }
-      }
-
       // Construire les nœuds
       const nodeMap = new Map<string, NetworkNode>();
       const edgesList: NetworkEdge[] = [];
 
-      // Position centrale pour l'entité recherchée
-      const centerPos: [number, number, number] = [0, 0, 0];
-
-      edgesData.forEach((edge, index) => {
+      edgesData.forEach((edge) => {
         // Source node
         if (!nodeMap.has(edge.source_id)) {
-          let position: [number, number, number];
-          
-          if (edge.source_type === 'ip' && ipLocations.has(edge.source_id)) {
-            const loc = ipLocations.get(edge.source_id)!;
-            position = latLonToVector3(loc.lat, loc.lon);
-          } else {
-            // Position aléatoire autour du centre
-            const angle = (index / edgesData.length) * Math.PI * 2;
-            const radius = 50;
-            position = [
-              Math.cos(angle) * radius,
-              Math.sin(angle) * radius,
-              (Math.random() - 0.5) * 30
-            ];
-          }
-
           nodeMap.set(edge.source_id, {
             id: edge.source_id,
             type: edge.source_type as any,
             label: edge.source_id.substring(0, 8),
-            position,
             color: getNodeColor(edge.source_type, edge.is_suspicious),
             suspicious: edge.is_suspicious || false,
-            metadata: edge.source_type === 'ip' ? ipLocations.get(edge.source_id) : undefined
           });
         }
 
         // Target node
         if (!nodeMap.has(edge.target_id)) {
-          let position: [number, number, number];
-          
-          if (edge.target_type === 'ip' && ipLocations.has(edge.target_id)) {
-            const loc = ipLocations.get(edge.target_id)!;
-            position = latLonToVector3(loc.lat, loc.lon);
-          } else {
-            const angle = ((index + 0.5) / edgesData.length) * Math.PI * 2;
-            const radius = 50;
-            position = [
-              Math.cos(angle) * radius,
-              Math.sin(angle) * radius,
-              (Math.random() - 0.5) * 30
-            ];
-          }
-
           nodeMap.set(edge.target_id, {
             id: edge.target_id,
             type: edge.target_type as any,
             label: edge.target_id.substring(0, 8),
-            position,
             color: getNodeColor(edge.target_type, edge.is_suspicious),
             suspicious: edge.is_suspicious || false,
-            metadata: edge.target_type === 'ip' ? ipLocations.get(edge.target_id) : undefined
           });
         }
 
@@ -290,23 +154,15 @@ const FraudNetwork3D = () => {
     }
   };
 
-  if (loading && nodes.length === 0) {
-    return (
-      <div className="p-8">
-        <Skeleton className="h-screen w-full" />
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Network className="h-8 w-8" />
-            Réseau de Fraude 3D
+            Réseau de Fraude
           </h1>
-          <p className="text-muted-foreground">Visualisation géographique des connexions suspectes</p>
+          <p className="text-muted-foreground">Visualisation des connexions suspectes</p>
         </div>
       </div>
 
@@ -352,51 +208,53 @@ const FraudNetwork3D = () => {
         </CardContent>
       </Card>
 
-      {nodes.length > 0 ? (
+      {loading ? (
+        <Skeleton className="h-96 w-full" />
+      ) : nodes.length > 0 ? (
         <div className="grid lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3">
             <Card>
               <CardHeader>
-                <CardTitle>Carte du Réseau 3D</CardTitle>
+                <CardTitle>Réseau de Connexions</CardTitle>
                 <CardDescription>
-                  Utilisez la souris pour naviguer. Les points rouges indiquent des activités suspectes.
+                  Cliquez sur un nœud pour voir ses détails
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-[600px] border rounded-lg overflow-hidden bg-slate-950">
-                  <Canvas camera={{ position: [0, 0, 200], fov: 60 }}>
-                    <ambientLight intensity={0.5} />
-                    <pointLight position={[100, 100, 100]} intensity={1} />
-                    <pointLight position={[-100, -100, -100]} intensity={0.5} />
-                    
-                    <Earth3D />
-                    
-                    {edges.map((edge, i) => {
-                      const sourceNode = nodes.find(n => n.id === edge.source);
-                      const targetNode = nodes.find(n => n.id === edge.target);
-                      if (!sourceNode || !targetNode) return null;
-                      
-                      return (
-                        <Connection3D
-                          key={i}
-                          start={sourceNode.position}
-                          end={targetNode.position}
-                          suspicious={edge.suspicious}
-                        />
-                      );
-                    })}
-                    
-                    {nodes.map((node) => (
-                      <Node3D
-                        key={node.id}
-                        node={node}
-                        onClick={() => setSelectedNode(node)}
-                        selected={selectedNode?.id === node.id}
-                      />
-                    ))}
-                    
-                    <OrbitControls enablePan enableZoom enableRotate />
-                  </Canvas>
+                <div className="space-y-4">
+                  {nodes.map((node) => (
+                    <div
+                      key={node.id}
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                        selectedNode?.id === node.id ? 'border-primary bg-primary/5' : 'hover:border-gray-400'
+                      }`}
+                      onClick={() => setSelectedNode(node)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-4 h-4 rounded-full"
+                            style={{ backgroundColor: node.color }}
+                          />
+                          <div>
+                            <p className="font-semibold">{node.label}</p>
+                            <p className="text-sm text-muted-foreground">{node.type}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {node.suspicious && (
+                            <Badge variant="destructive">
+                              <AlertTriangle className="h-3 w-3 mr-1" />
+                              Suspect
+                            </Badge>
+                          )}
+                          <Badge variant="outline">
+                            {edges.filter(e => e.source === node.id || e.target === node.id).length} connexions
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -405,7 +263,10 @@ const FraudNetwork3D = () => {
           <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Légende</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Info className="h-5 w-5" />
+                  Légende
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-2">
@@ -445,14 +306,6 @@ const FraudNetwork3D = () => {
                     <span className="text-sm font-semibold">ID:</span>
                     <p className="text-xs font-mono mt-1 break-all">{selectedNode.id}</p>
                   </div>
-                  {selectedNode.metadata?.city && (
-                    <div>
-                      <span className="text-sm font-semibold">Localisation:</span>
-                      <p className="text-sm mt-1">
-                        {selectedNode.metadata.city}, {selectedNode.metadata.country}
-                      </p>
-                    </div>
-                  )}
                   <div>
                     <span className="text-sm font-semibold">Statut:</span>
                     {selectedNode.suspicious ? (
