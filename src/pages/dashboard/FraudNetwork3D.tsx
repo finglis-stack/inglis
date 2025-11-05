@@ -9,7 +9,6 @@ import { Network, Search, MapPin, AlertTriangle, Info } from 'lucide-react';
 
 // Import OpenGlobus de manière plus simple
 import * as og from '@openglobus/og';
-import '@openglobus/og/css/og.css';
 
 interface NetworkNode {
   id: string;
