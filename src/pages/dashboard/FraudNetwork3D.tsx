@@ -144,12 +144,15 @@ const FraudNetwork3D = () => {
           name: p.full_name || p.legal_name,
           label: `${p.full_name || p.legal_name} (Profil)`
         })),
-        ...(cards || []).map(c => ({ 
-          type: 'card', 
-          id: c.id, 
-          name: `${c.user_initials} ${c.issuer_id} ${c.random_letters} ****${c.unique_identifier.slice(-3)} ${c.check_digit}`,
-          label: `Carte ${c.user_initials}... (${c.profiles?.full_name || c.profiles?.legal_name})`
-        }))
+        ...(cards || []).map(c => {
+          const profile = Array.isArray(c.profiles) ? c.profiles[0] : c.profiles;
+          return { 
+            type: 'card', 
+            id: c.id, 
+            name: `${c.user_initials} ${c.issuer_id} ${c.random_letters} ****${c.unique_identifier.slice(-3)} ${c.check_digit}`,
+            label: `Carte ${c.user_initials}... (${profile?.full_name || profile?.legal_name})`
+          };
+        })
       ];
 
       setSearchResults(results);

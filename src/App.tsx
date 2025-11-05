@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { lazy, Suspense } from 'react';
 
 // --- Special Localhost Chooser ---
 import LocalhostChooser from '@/pages/LocalhostChooser';
@@ -67,7 +68,8 @@ import HostedPaymentForm from "@/pages/HostedPaymentForm";
 import HostedFormLayout from '@/pages/HostedFormLayout';
 import RiskAnalysisDetails from '@/pages/dashboard/risk/RiskAnalysisDetails';
 import FraudAnalytics from './pages/dashboard/FraudAnalytics';
-import FraudNetwork3D from './pages/dashboard/FraudNetwork3D';
+
+const FraudNetwork3D = lazy(() => import('./pages/dashboard/FraudNetwork3D'));
 
 // --- Q12xApp Imports ---
 import Q12xLogin from "@/pages/q12x/Login";
@@ -117,7 +119,11 @@ const MainAppRoutes = () => (
       <Route path="users" element={<Users />} />
       <Route path="users/profile/:id" element={<UserProfile />} />
       <Route path="fraud-analytics" element={<FraudAnalytics />} />
-      <Route path="fraud-network" element={<FraudNetwork3D />} />
+      <Route path="fraud-network" element={
+        <Suspense fallback={<div className="p-8">Chargement...</div>}>
+          <FraudNetwork3D />
+        </Suspense>
+      } />
       <Route path="risk-analysis/:assessmentId" element={<RiskAnalysisDetails />} />
       <Route path="accounts/debit/:accountId" element={<DebitAccountDetails />} />
       <Route path="accounts/credit/:accountId" element={<CreditAccountDetails />} />
