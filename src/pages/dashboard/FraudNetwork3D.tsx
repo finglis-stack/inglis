@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,72 @@ const containerStyle = {
   borderRadius: '0.5rem',
 };
 
+const NetworkMap = ({ apiKey, nodes, edges, center, onNodeClick, selectedNode, onInfoWindowClose }) => {
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: 'fraud-network-map-script',
+    googleMapsApiKey: apiKey,
+    preventGoogleFontsLoading: true,
+  });
+
+  if (loadError) return <div className="text-red-500">Erreur de chargement de la carte.</div>;
+  if (!isLoaded) return <Skeleton className="h-[600px] w-full" />;
+
+  return (
+    <GoogleMap
+      mapContainerStyle={containerStyle}
+      center={center}
+      zoom={8}
+      mapTypeId="satellite"
+      options={{ mapTypeControl: false, streetViewControl: false, fullscreenControl: false, tilt: 45 }}
+    >
+      {nodes.map(node => (
+        <Marker
+          key={node.id}
+          position={{ lat: node.lat, lng: node.lon }}
+          title={node.label}
+          onClick={() => onNodeClick(node)}
+          icon={{
+            path: 'M-8,0a8,8 0 1,0 16,0a8,8 0 1,0 -16,0',
+            fillColor: node.color,
+            fillOpacity: 0.9,
+            strokeColor: node.suspicious ? '#ef4444' : '#ffffff',
+            strokeWeight: 2,
+            scale: node.suspicious ? 1.5 : 1,
+          }}
+        />
+      ))}
+      {edges.map((edge, i) => {
+        const source = nodes.find(n => n.id === edge.source);
+        const target = nodes.find(n => n.id === edge.target);
+        if (!source || !target) return null;
+        return (
+          <Polyline
+            key={i}
+            path={[{ lat: source.lat, lng: source.lon }, { lat: target.lat, lng: target.lon }]}
+            options={{
+              strokeColor: edge.suspicious ? "rgba(239, 68, 68, 0.7)" : "rgba(107, 114, 128, 0.5)",
+              strokeOpacity: 1,
+              strokeWeight: edge.suspicious ? 3 : 1.5,
+              geodesic: true,
+            }}
+          />
+        );
+      })}
+      {selectedNode && (
+        <InfoWindow
+          position={{ lat: selectedNode.lat, lng: selectedNode.lon }}
+          onCloseClick={onInfoWindowClose}
+        >
+          <div className="p-2">
+            <h4 className="font-bold">{selectedNode.label}</h4>
+            <p>Type: {selectedNode.type}</p>
+          </div>
+        </InfoWindow>
+      )}
+    </GoogleMap>
+  );
+};
+
 const FraudNetwork3D = () => {
   const [loading, setLoading] = useState(false);
   const [nodes, setNodes] = useState<NetworkNode[]>([]);
@@ -57,17 +123,11 @@ const FraudNetwork3D = () => {
   const [searching, setSearching] = useState(false);
   const [mapCenter, setMapCenter] = useState({ lat: 46.8139, lng: -71.2080 }); // Québec
 
-  const { data: apiKey, isError: isApiKeyError, error: apiKeyError } = useQuery({
+  const { data: apiKey, isLoading: isLoadingApiKey, isError: isApiKeyError, error: apiKeyError } = useQuery({
     queryKey: ['google-maps-api-key'],
     queryFn: fetchMapsApiKey,
     staleTime: Infinity,
     gcTime: Infinity,
-  });
-
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: apiKey || '',
-    preventGoogleFontsLoading: true,
   });
 
   const getNodeColor = (type: string, suspicious: boolean) => {
@@ -184,64 +244,21 @@ const FraudNetwork3D = () => {
     }
   }, []);
 
-  const renderMap = () => {
-    if (isApiKeyError) return <div className="text-red-500">Erreur: {apiKeyError.message}</div>;
-    if (loadError) return <div className="text-red-500">Erreur de chargement de la carte.</div>;
-    if (!isLoaded) return <Skeleton className="h-[600px] w-full" />;
+  const renderMapContent = () => {
+    if (isLoadingApiKey) return <Skeleton className="h-[600px] w-full" />;
+    if (isApiKeyError) return <div className="text-red-500">Erreur de clé API: {apiKeyError.message}</div>;
+    if (!apiKey) return <div className="text-muted-foreground">Clé API non disponible.</div>;
 
     return (
-      <GoogleMap
-        mapContainerStyle={containerStyle}
+      <NetworkMap
+        apiKey={apiKey}
+        nodes={nodes}
+        edges={edges}
         center={mapCenter}
-        zoom={8}
-        mapTypeId="satellite"
-        options={{ mapTypeControl: false, streetViewControl: false, fullscreenControl: false, tilt: 45 }}
-      >
-        {nodes.map(node => (
-          <Marker
-            key={node.id}
-            position={{ lat: node.lat, lng: node.lon }}
-            title={node.label}
-            onClick={() => setSelectedNode(node)}
-            icon={{
-              path: 'M-8,0a8,8 0 1,0 16,0a8,8 0 1,0 -16,0',
-              fillColor: node.color,
-              fillOpacity: 0.9,
-              strokeColor: node.suspicious ? '#ef4444' : '#ffffff',
-              strokeWeight: 2,
-              scale: node.suspicious ? 1.5 : 1,
-            }}
-          />
-        ))}
-        {edges.map((edge, i) => {
-          const source = nodes.find(n => n.id === edge.source);
-          const target = nodes.find(n => n.id === edge.target);
-          if (!source || !target) return null;
-          return (
-            <Polyline
-              key={i}
-              path={[{ lat: source.lat, lng: source.lon }, { lat: target.lat, lng: target.lon }]}
-              options={{
-                strokeColor: edge.suspicious ? "rgba(239, 68, 68, 0.7)" : "rgba(107, 114, 128, 0.5)",
-                strokeOpacity: 1,
-                strokeWeight: edge.suspicious ? 3 : 1.5,
-                geodesic: true,
-              }}
-            />
-          );
-        })}
-        {selectedNode && (
-          <InfoWindow
-            position={{ lat: selectedNode.lat, lng: selectedNode.lon }}
-            onCloseClick={() => setSelectedNode(null)}
-          >
-            <div className="p-2">
-              <h4 className="font-bold">{selectedNode.label}</h4>
-              <p>Type: {selectedNode.type}</p>
-            </div>
-          </InfoWindow>
-        )}
-      </GoogleMap>
+        selectedNode={selectedNode}
+        onNodeClick={setSelectedNode}
+        onInfoWindowClose={() => setSelectedNode(null)}
+      />
     );
   };
 
@@ -284,7 +301,7 @@ const FraudNetwork3D = () => {
           <div className="lg:col-span-3">
             <Card>
               <CardHeader><CardTitle>Carte du Réseau</CardTitle><CardDescription>Utilisez la souris pour naviguer. Les points rouges indiquent des activités suspectes.</CardDescription></CardHeader>
-              <CardContent>{renderMap()}</CardContent>
+              <CardContent>{renderMapContent()}</CardContent>
             </Card>
           </div>
           <div className="space-y-4">
