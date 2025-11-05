@@ -6,9 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Network, Search, MapPin, AlertTriangle, Info } from 'lucide-react';
-import { Globe } from '@openglobus/og';
-import { Vector, LonLat } from '@openglobus/og';
-import { Entity, EntityCollection } from '@openglobus/og';
+import { Globe, Entity, EntityCollection, LonLat, Vector } from '@openglobus/og';
+import { XYZ } from '@openglobus/og';
+import '@openglobus/og/css/og.css';
 
 interface NetworkNode {
   id: string;
@@ -38,6 +38,7 @@ interface GeoLocation {
 const FraudNetwork3D = () => {
   const globeRef = useRef<HTMLDivElement>(null);
   const globeInstance = useRef<any>(null);
+  const entityCollectionRef = useRef<any>(null);
   const [loading, setLoading] = useState(false);
   const [nodes, setNodes] = useState<NetworkNode[]>([]);
   const [edges, setEdges] = useState<NetworkEdge[]>([]);
@@ -60,20 +61,45 @@ const FraudNetwork3D = () => {
   useEffect(() => {
     if (!globeRef.current || globeInstance.current) return;
 
-    // Initialiser OpenGlobus
-    const globe = new Globe({
-      target: globeRef.current,
-      name: "Earth",
-      terrain: null,
-      layers: [],
-      autoActivated: true
-    });
+    try {
+      // Créer une couche de tuiles OpenStreetMap
+      const osm = new XYZ("OpenStreetMap", {
+        isBaseLayer: true,
+        url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        visibility: true,
+        attribution: 'Data @ OpenStreetMap contributors, ODbL'
+      });
 
-    globeInstance.current = globe;
+      // Initialiser OpenGlobus avec la couche OSM
+      const globe = new Globe({
+        target: globeRef.current,
+        name: "Earth",
+        terrain: null,
+        layers: [osm],
+        autoActivated: true,
+        atmosphereEnabled: true,
+        sun: {
+          stopped: false
+        }
+      });
+
+      globeInstance.current = globe;
+
+      // Positionner la caméra
+      globe.planet.viewExtentArr([0, 0, 0, 0]);
+
+      console.log('Globe initialized successfully');
+    } catch (error) {
+      console.error('Error initializing globe:', error);
+    }
 
     return () => {
       if (globeInstance.current) {
-        globeInstance.current.destroy();
+        try {
+          globeInstance.current.destroy();
+        } catch (e) {
+          console.error('Error destroying globe:', e);
+        }
         globeInstance.current = null;
       }
     };
@@ -82,62 +108,77 @@ const FraudNetwork3D = () => {
   useEffect(() => {
     if (!globeInstance.current || nodes.length === 0) return;
 
-    // Créer une collection d'entités pour les nœuds
-    const entityCollection = new EntityCollection();
-    
-    nodes.forEach((node) => {
-      const entity = new Entity({
-        lonlat: [node.lon, node.lat],
-        label: {
-          text: node.label,
-          size: 12,
-          color: node.color,
-          outline: 1,
-          outlineColor: "rgba(255,255,255,0.5)"
-        },
-        billboard: {
-          src: createCircleSVG(node.color, node.suspicious),
-          size: [20, 20],
-          color: node.color
-        },
-        properties: {
-          nodeData: node
+    try {
+      // Supprimer l'ancienne collection si elle existe
+      if (entityCollectionRef.current) {
+        globeInstance.current.planet.removeEntityCollection(entityCollectionRef.current);
+      }
+
+      // Créer une nouvelle collection d'entités
+      const entityCollection = new EntityCollection({
+        name: 'fraudNetwork'
+      });
+      
+      entityCollectionRef.current = entityCollection;
+
+      nodes.forEach((node) => {
+        const entity = new Entity({
+          lonlat: [node.lon, node.lat],
+          label: {
+            text: node.label,
+            size: 14,
+            color: node.color,
+            outline: 1,
+            outlineColor: "rgba(255,255,255,0.8)"
+          },
+          billboard: {
+            src: createCircleSVG(node.color, node.suspicious),
+            size: [node.suspicious ? 24 : 16, node.suspicious ? 24 : 16],
+            color: node.color
+          },
+          properties: {
+            nodeData: node
+          }
+        });
+
+        entity.events.on("click", () => {
+          setSelectedNode(node);
+        });
+
+        entityCollection.add(entity);
+      });
+
+      // Dessiner les connexions
+      edges.forEach((edge) => {
+        const sourceNode = nodes.find(n => n.id === edge.source);
+        const targetNode = nodes.find(n => n.id === edge.target);
+        
+        if (sourceNode && targetNode) {
+          const lineEntity = new Entity({
+            polyline: {
+              path3v: [
+                [sourceNode.lon, sourceNode.lat, 100000],
+                [targetNode.lon, targetNode.lat, 100000]
+              ],
+              thickness: edge.suspicious ? 3 : 1,
+              color: edge.suspicious ? "rgba(239, 68, 68, 0.6)" : "rgba(148, 163, 184, 0.4)"
+            }
+          });
+          entityCollection.add(lineEntity);
         }
       });
 
-      entity.events.on("click", () => {
-        setSelectedNode(node);
-      });
+      globeInstance.current.planet.addEntityCollection(entityCollection);
 
-      entityCollection.add(entity);
-    });
-
-    globeInstance.current.planet.addEntityCollection(entityCollection);
-
-    // Dessiner les connexions
-    edges.forEach((edge) => {
-      const sourceNode = nodes.find(n => n.id === edge.source);
-      const targetNode = nodes.find(n => n.id === edge.target);
-      
-      if (sourceNode && targetNode) {
-        const lineEntity = new Entity({
-          polyline: {
-            path3v: [
-              [sourceNode.lon, sourceNode.lat, 100000],
-              [targetNode.lon, targetNode.lat, 100000]
-            ],
-            thickness: edge.suspicious ? 3 : 1,
-            color: edge.suspicious ? "rgba(239, 68, 68, 0.6)" : "rgba(148, 163, 184, 0.4)"
-          }
-        });
-        entityCollection.add(lineEntity);
+      // Centrer la vue sur les nœuds
+      if (nodes.length > 0) {
+        const firstNode = nodes[0];
+        globeInstance.current.planet.flyLonLat(new LonLat(firstNode.lon, firstNode.lat, 5000000));
       }
-    });
 
-    // Centrer la vue sur les nœuds
-    if (nodes.length > 0) {
-      const firstNode = nodes[0];
-      globeInstance.current.planet.flyLonLat(new LonLat(firstNode.lon, firstNode.lat, 5000000));
+      console.log('Entities added successfully:', nodes.length, 'nodes,', edges.length, 'edges');
+    } catch (error) {
+      console.error('Error adding entities:', error);
     }
 
   }, [nodes, edges]);
@@ -427,7 +468,7 @@ const FraudNetwork3D = () => {
               <CardContent>
                 <div 
                   ref={globeRef} 
-                  className="h-[600px] border rounded-lg overflow-hidden"
+                  className="h-[600px] border rounded-lg overflow-hidden bg-slate-900"
                   style={{ width: '100%' }}
                 />
               </CardContent>
