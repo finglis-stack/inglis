@@ -2,7 +2,7 @@ import { useJsApiLoader, GoogleMap, Marker } from '@react-google-maps/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, MapPin } from 'lucide-react';
 
 const containerStyle = {
   width: '100%',
@@ -16,22 +16,43 @@ interface TransactionMapProps {
 }
 
 const fetchMapsApiKey = async (): Promise<string> => {
-  const { data, error } = await supabase.functions.invoke('get-google-maps-key');
-  if (error) {
-    const functionError = await error.context.json();
-    throw new Error(functionError.error || 'Impossible de récupérer la clé d\'API Google Maps.');
+  try {
+    const { data, error } = await supabase.functions.invoke('get-google-maps-key');
+    
+    if (error) {
+      console.error('Error fetching Google Maps API key:', error);
+      throw new Error('Impossible de récupérer la clé d\'API Google Maps.');
+    }
+    
+    if (!data || !data.apiKey) {
+      throw new Error('La clé API Google Maps n\'est pas configurée.');
+    }
+    
+    return data.apiKey;
+  } catch (err) {
+    console.error('Exception fetching Google Maps API key:', err);
+    throw err;
   }
-  if (!data.apiKey) {
-    throw new Error('La clé API Google Maps n\'a pas été retournée par la fonction serveur.');
-  }
-  return data.apiKey;
 };
 
-const ErrorDisplay = ({ message }: { message: string }) => (
-  <div className="h-[250px] w-full rounded-lg bg-red-50 border border-red-200 flex flex-col items-center justify-center text-center p-4">
-    <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
-    <p className="text-sm font-semibold text-red-800">Erreur de carte</p>
-    <p className="text-xs text-red-700">{message}</p>
+const ErrorDisplay = ({ message, latitude, longitude }: { message: string, latitude?: number, longitude?: number }) => (
+  <div className="h-[250px] w-full rounded-lg bg-gray-50 border border-gray-200 flex flex-col items-center justify-center text-center p-4">
+    <MapPin className="h-8 w-8 text-gray-400 mb-2" />
+    <p className="text-sm font-semibold text-gray-700">Carte non disponible</p>
+    <p className="text-xs text-gray-600 mt-1">{message}</p>
+    {latitude && longitude && (
+      <div className="mt-3 text-xs text-gray-500">
+        <p>Coordonnées : {latitude.toFixed(4)}, {longitude.toFixed(4)}</p>
+        <a 
+          href={`https://www.google.com/maps?q=${latitude},${longitude}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-indigo-600 hover:underline mt-1 inline-block"
+        >
+          Ouvrir dans Google Maps →
+        </a>
+      </div>
+    )}
   </div>
 );
 
@@ -44,7 +65,8 @@ const MapWithKey = ({ apiKey, latitude, longitude }: { apiKey: string, latitude:
   });
 
   if (loadError) {
-    return <ErrorDisplay message={`Erreur de chargement du script Google Maps: ${loadError.message}`} />;
+    console.error('Google Maps load error:', loadError);
+    return <ErrorDisplay message="Erreur de chargement de Google Maps" latitude={latitude} longitude={longitude} />;
   }
 
   if (!isLoaded) {
@@ -60,13 +82,13 @@ const MapWithKey = ({ apiKey, latitude, longitude }: { apiKey: string, latitude:
     <GoogleMap
       mapContainerStyle={containerStyle}
       center={center}
-      zoom={18}
+      zoom={15}
       options={{
-        disableDefaultUI: true,
+        disableDefaultUI: false,
         zoomControl: true,
-        tilt: 45,
-        heading: 90,
-        mapTypeId: 'satellite',
+        streetViewControl: false,
+        mapTypeControl: true,
+        fullscreenControl: false,
       }}
     >
       <Marker position={center} />
@@ -80,7 +102,8 @@ const TransactionMap = ({ latitude, longitude }: TransactionMapProps) => {
     queryFn: fetchMapsApiKey,
     staleTime: Infinity,
     gcTime: Infinity,
-    retry: false,
+    retry: 1,
+    retryDelay: 1000,
   });
 
   if (isLoadingApiKey) {
@@ -88,11 +111,24 @@ const TransactionMap = ({ latitude, longitude }: TransactionMapProps) => {
   }
 
   if (isError) {
-    return <ErrorDisplay message={error.message} />;
+    console.error('Error loading API key:', error);
+    return <ErrorDisplay 
+      message={error instanceof Error ? error.message : 'Erreur inconnue'} 
+      latitude={latitude} 
+      longitude={longitude} 
+    />;
+  }
+
+  if (!apiKey) {
+    return <ErrorDisplay 
+      message="Clé API Google Maps non disponible" 
+      latitude={latitude} 
+      longitude={longitude} 
+    />;
   }
 
   // Nous avons maintenant une clé API valide, nous pouvons donc rendre le composant de la carte.
-  return <MapWithKey apiKey={apiKey!} latitude={latitude} longitude={longitude} />;
+  return <MapWithKey apiKey={apiKey} latitude={latitude} longitude={longitude} />;
 };
 
 export default TransactionMap;

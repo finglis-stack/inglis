@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,18 +12,12 @@ serve(async (req) => {
   }
 
   try {
-    // Authentifier l'utilisateur pour s'assurer que seuls les utilisateurs connectés peuvent obtenir la clé
-    const authHeader = req.headers.get('Authorization')!
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    )
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
-    if (userError) throw userError
-
+    // Pas besoin d'authentification pour obtenir la clé API Google Maps
+    // Cette clé est publique et sera utilisée côté client de toute façon
     const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
+    
     if (!apiKey) {
+      console.error('GOOGLE_MAPS_API_KEY is not set in environment variables');
       throw new Error('La clé API Google Maps n\'est pas configurée dans les secrets Supabase.');
     }
 
@@ -33,6 +26,7 @@ serve(async (req) => {
       status: 200,
     })
   } catch (error) {
+    console.error('Error in get-google-maps-key function:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,

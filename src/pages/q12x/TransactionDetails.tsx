@@ -3,10 +3,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Info, MapPin, Repeat } from 'lucide-react';
+import { ArrowLeft, MapPin, Repeat } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError } from '@/utils/toast';
-import AvailabilityCell from '@/components/q12x/AvailabilityCell';
 import TransactionMap from '@/components/q12x/TransactionMap';
 import { useTranslation } from 'react-i18next';
 import { getIpCoordinates } from '@/utils/ipGeolocation';
@@ -76,7 +75,7 @@ const Q12xTransactionDetails = () => {
         .single();
 
       if (error) {
-        showError(t('transactionDetails.notFound'));
+        showError('Transaction non trouvée');
         navigate(-1);
       } else {
         setTransaction(data);
@@ -84,24 +83,30 @@ const Q12xTransactionDetails = () => {
       setLoading(false);
     };
     fetchTransaction();
-  }, [id, navigate, t]);
+  }, [id, navigate]);
 
   useEffect(() => {
     if (transaction?.ip_address) {
       const fetchLocation = async () => {
         setLocationLoading(true);
         setLocationError(null);
-        const coords = await getIpCoordinates(transaction.ip_address);
-        if (coords) {
-          setLocation(coords);
-        } else {
-          setLocationError('Erreur de géolocalisation');
+        try {
+          const coords = await getIpCoordinates(transaction.ip_address);
+          if (coords) {
+            setLocation(coords);
+          } else {
+            setLocationError(t('transactionDetails.geolocationUnavailable'));
+          }
+        } catch (error) {
+          console.error('Erreur de géolocalisation:', error);
+          setLocationError(t('transactionDetails.geolocationError'));
+        } finally {
+          setLocationLoading(false);
         }
-        setLocationLoading(false);
       };
       fetchLocation();
     }
-  }, [transaction]);
+  }, [transaction, t]);
 
   if (loading) {
     return <Skeleton className="h-64 w-full" />;
@@ -110,7 +115,7 @@ const Q12xTransactionDetails = () => {
   if (!transaction) {
     return (
       <div className="p-8">
-        <p>{t('transactionDetails.notFound')}</p>
+        <p>Transaction non trouvée</p>
       </div>
     );
   }
@@ -143,32 +148,42 @@ const Q12xTransactionDetails = () => {
               <p className="text-lg">{transaction.description}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('transactionDetails.status')}</p>
+              <p className="text-sm text-muted-foreground">Statut</p>
               <Badge variant={
                 transaction.status === 'completed' || transaction.status === 'captured' ? 'default' :
                 transaction.status === 'authorized' ? 'secondary' :
                 transaction.status === 'cancelled' || transaction.status === 'expired' ? 'destructive' :
                 'outline'
               } className="capitalize">
-                {transaction.status.replace('_', ' ')}
+                {transaction.status === 'captured' ? 'Capturée' : 
+                 transaction.status === 'completed' ? 'Complétée' :
+                 transaction.status === 'authorized' ? 'Autorisée' :
+                 transaction.status === 'cancelled' ? 'Annulée' :
+                 transaction.status === 'expired' ? 'Expirée' :
+                 transaction.status}
               </Badge>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('transactionDetails.type')}</p>
-              <p className="capitalize">{transaction.type.replace('_', ' ')}</p>
+              <p className="text-sm text-muted-foreground">Type</p>
+              <p className="capitalize">
+                {transaction.type === 'purchase' ? 'Achat' :
+                 transaction.type === 'payment' ? 'Paiement' :
+                 transaction.type === 'cash_advance' ? 'Avance de fonds' :
+                 transaction.type}
+              </p>
             </div>
           </div>
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground">{t('transactionDetails.card')}</p>
+              <p className="text-sm text-muted-foreground">{t('transactionDetails.cardUsed')}</p>
               <p className="font-mono">{cardNumber}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('transactionDetails.issuer')}</p>
+              <p className="text-sm text-muted-foreground">{t('transactionDetails.cardIssuer')}</p>
               <p>{issuerName}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('transactionDetails.merchant')}</p>
+              <p className="text-sm text-muted-foreground">Marchand</p>
               <p>{transaction.merchant_accounts?.name || 'N/A'}</p>
             </div>
             <div>
@@ -185,14 +200,18 @@ const Q12xTransactionDetails = () => {
           </div>
           {transaction.ip_address && (
             <div className="md:col-span-2">
-              <h4 className="font-semibold flex items-center gap-2 mb-2"><MapPin className="h-4 w-4" /> Géolocalisation (approximative)</h4>
+              <h4 className="font-semibold flex items-center gap-2 mb-2">
+                <MapPin className="h-4 w-4" /> {t('transactionDetails.geolocation')}
+              </h4>
               {locationLoading ? (
                 <Skeleton className="h-[250px] w-full rounded-lg" />
               ) : location && location.lat && location.lon ? (
                 <TransactionMap latitude={location.lat} longitude={location.lon} />
               ) : (
                 <div className="h-[250px] w-full rounded-lg bg-gray-100 flex items-center justify-center text-center p-4">
-                  <p className="text-sm text-muted-foreground">{locationError || 'Données de localisation non disponibles.'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {locationError || t('transactionDetails.geolocationUnavailable')}
+                  </p>
                 </div>
               )}
             </div>
