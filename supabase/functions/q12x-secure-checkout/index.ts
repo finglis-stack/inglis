@@ -232,43 +232,52 @@ serve(async (req) => {
 
     // 4. IP ADDRESS ANALYSIS & STORAGE
     if (ipAddress) {
-      // Get IP geolocation data using ip-api.com (45 req/min free)
+      // Utiliser l'edge function get-ip-geolocation au lieu de ip-api.com
       let ipGeoData = null;
       let isVpn = false;
+      
       try {
-        const ipCheckResponse = await fetch(`https://ip-api.com/json/${ipAddress}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,mobile,proxy,hosting,query`);
-        const rawData = await ipCheckResponse.json();
+        console.log('Calling get-ip-geolocation edge function for IP:', ipAddress);
         
-        if (rawData.status === 'success') {
-          // Transform ip-api.com format to match our expected format
+        const { data: geoResponse, error: geoError } = await supabaseAdmin.functions.invoke('get-ip-geolocation', {
+          body: { ipAddress }
+        });
+        
+        if (geoError) {
+          console.error('Geolocation edge function error:', geoError);
+        } else if (geoResponse && geoResponse.status === 'success') {
           ipGeoData = {
-            ip: rawData.query,
-            city: rawData.city,
-            region: rawData.regionName,
-            country: rawData.country,
-            country_code: rawData.countryCode,
-            latitude: rawData.lat,
-            longitude: rawData.lon,
-            timezone: rawData.timezone,
-            isp: rawData.isp,
-            org: rawData.org,
-            as: rawData.as,
-            is_mobile: rawData.mobile,
-            is_proxy: rawData.proxy,
-            is_hosting: rawData.hosting
+            ip: geoResponse.query,
+            city: geoResponse.city,
+            region: geoResponse.regionName,
+            country: geoResponse.country,
+            country_code: geoResponse.countryCode,
+            latitude: geoResponse.lat,
+            longitude: geoResponse.lon,
+            timezone: geoResponse.timezone,
+            isp: geoResponse.isp,
+            org: geoResponse.org,
+            as: geoResponse.as,
+            is_mobile: geoResponse.mobile,
+            is_proxy: geoResponse.proxy,
+            is_hosting: geoResponse.hosting,
+            is_vpn: geoResponse.vpn,
+            is_tor: geoResponse.tor
           };
           
-          // Detect VPN/Proxy/Hosting
-          isVpn = rawData.proxy || rawData.hosting || (rawData.org && (
-            rawData.org.toLowerCase().includes('vpn') || 
-            rawData.org.toLowerCase().includes('proxy') || 
-            rawData.org.toLowerCase().includes('hosting')
+          // Detect VPN/Proxy/Hosting/Tor
+          isVpn = geoResponse.proxy || geoResponse.hosting || geoResponse.vpn || geoResponse.tor || (geoResponse.org && (
+            geoResponse.org.toLowerCase().includes('vpn') || 
+            geoResponse.org.toLowerCase().includes('proxy') || 
+            geoResponse.org.toLowerCase().includes('hosting')
           ));
+          
+          console.log('Geolocation successful:', ipGeoData);
         } else {
-          console.error("IP geolocation failed:", rawData.message);
+          console.error('Geolocation failed:', geoResponse?.message || 'Unknown error');
         }
       } catch (e) {
-        console.error("IP geolocation failed:", e);
+        console.error('IP geolocation failed:', e);
       }
 
       // Check if IP exists in database
@@ -289,7 +298,7 @@ serve(async (req) => {
             geolocation: ipGeoData,
             is_vpn: isVpn,
             is_proxy: ipGeoData?.is_proxy || false,
-            is_tor: false // ip-api.com doesn't detect Tor directly
+            is_tor: ipGeoData?.is_tor || false
           })
           .eq('id', existingIp.id);
 
@@ -306,6 +315,7 @@ serve(async (req) => {
             profile_id: profile.id,
             is_vpn: isVpn,
             is_proxy: ipGeoData?.is_proxy || false,
+            is_tor: ipGeoData?.is_tor || false,
             country: ipGeoData?.country,
             city: ipGeoData?.city,
             organization: ipGeoData?.org,
@@ -313,10 +323,11 @@ serve(async (req) => {
           });
       }
 
-      // VPN/Proxy detection
+      // VPN/Proxy/Tor detection
       if (isVpn) {
         riskScore -= 30;
-        analysisLog.push({ step: "Détection VPN/Proxy", result: `VPN/Proxy/Hosting détecté: ${ipGeoData?.org}`, impact: "-30", timestamp: Date.now() - startTime });
+        const suspectType = ipGeoData?.is_tor ? 'Tor' : ipGeoData?.is_vpn ? 'VPN' : ipGeoData?.is_proxy ? 'Proxy' : 'Hosting';
+        analysisLog.push({ step: "Détection VPN/Proxy/Tor", result: `${suspectType} détecté: ${ipGeoData?.org || 'Unknown'}`, impact: "-30", timestamp: Date.now() - startTime });
       } else {
         analysisLog.push({ step: "Détection VPN/Proxy", result: "IP résidentielle normale", impact: "+0", timestamp: Date.now() - startTime });
       }
@@ -431,21 +442,22 @@ serve(async (req) => {
               try {
                 console.log(`Fetching geolocation for current IP: ${ipAddress} and last IP: ${lastTransaction.ip_address}`);
                 
-                const [currentGeoResponse, lastGeoResponse] = await Promise.all([
-                  fetch(`https://ip-api.com/json/${ipAddress}?fields=status,message,city,country,lat,lon`),
-                  fetch(`https://ip-api.com/json/${lastTransaction.ip_address}?fields=status,message,city,country,lat,lon`)
+                // Utiliser l'edge function pour les deux IPs
+                const [currentGeoResult, lastGeoResult] = await Promise.all([
+                  supabaseAdmin.functions.invoke('get-ip-geolocation', { body: { ipAddress } }),
+                  supabaseAdmin.functions.invoke('get-ip-geolocation', { body: { ipAddress: lastTransaction.ip_address } })
                 ]);
                 
-                const currentGeo = await currentGeoResponse.json();
-                const lastGeo = await lastGeoResponse.json();
+                const currentGeo = currentGeoResult.data;
+                const lastGeo = lastGeoResult.data;
                 
                 console.log('Current geo data:', JSON.stringify(currentGeo));
                 console.log('Last geo data:', JSON.stringify(lastGeo));
                 
-                if (currentGeo.status !== 'success' || lastGeo.status !== 'success') {
+                if (currentGeo?.status !== 'success' || lastGeo?.status !== 'success') {
                   analysisLog.push({ 
                     step: "Vélocité géographique", 
-                    result: `Erreur API géolocalisation: ${currentGeo.message || lastGeo.message || 'Unknown'}`, 
+                    result: `Erreur géolocalisation: ${currentGeo?.message || lastGeo?.message || 'Unknown'}`, 
                     impact: "+0", 
                     timestamp: Date.now() - startTime 
                   });
@@ -503,13 +515,13 @@ serve(async (req) => {
                 } else {
                   analysisLog.push({ 
                     step: "Vélocité géographique", 
-                    result: `Données de géolocalisation incomplètes (current: ${currentGeo.lat ? 'OK' : 'MISSING'}, last: ${lastGeo.lat ? 'OK' : 'MISSING'})`, 
+                    result: `Données de géolocalisation incomplètes (current: ${currentGeo?.lat ? 'OK' : 'MISSING'}, last: ${lastGeo?.lat ? 'OK' : 'MISSING'})`, 
                     impact: "+0", 
                     timestamp: Date.now() - startTime 
                   });
                 }
               } catch (geoError) {
-                console.error("Geolocation API error:", geoError);
+                console.error("Geolocation error:", geoError);
                 analysisLog.push({ 
                   step: "Vélocité géographique", 
                   result: `Erreur lors de la récupération des données de géolocalisation: ${geoError.message}`, 
