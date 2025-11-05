@@ -6,9 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Network, Search, MapPin, AlertTriangle, Info } from 'lucide-react';
-import { Globe, Entity, EntityCollection, LonLat } from '@openglobus/og';
-import { XYZ } from '@openglobus/og';
-import '@openglobus/og/css/og.css';
+
+// Import OpenGlobus de manière plus simple
+import * as og from '@openglobus/og';
 
 interface NetworkNode {
   id: string;
@@ -63,7 +63,7 @@ const FraudNetwork3D = () => {
 
     try {
       // Créer une couche de tuiles OpenStreetMap
-      const osm = new XYZ("OpenStreetMap", {
+      const osm = new og.layer.XYZ("OpenStreetMap", {
         isBaseLayer: true,
         url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
         visibility: true,
@@ -71,7 +71,7 @@ const FraudNetwork3D = () => {
       });
 
       // Initialiser OpenGlobus avec la couche OSM
-      const globe = new Globe({
+      const globe = new og.Globe({
         target: globeRef.current,
         name: "Earth",
         terrain: null,
@@ -112,12 +112,12 @@ const FraudNetwork3D = () => {
       }
 
       // Créer une nouvelle collection d'entités
-      const entityCollection = new EntityCollection();
+      const entityCollection = new og.EntityCollection();
       
       entityCollectionRef.current = entityCollection;
 
       nodes.forEach((node) => {
-        const entity = new Entity({
+        const entity = new og.Entity({
           lonlat: [node.lon, node.lat],
           label: {
             text: node.label,
@@ -149,7 +149,7 @@ const FraudNetwork3D = () => {
         const targetNode = nodes.find(n => n.id === edge.target);
         
         if (sourceNode && targetNode) {
-          const lineEntity = new Entity({
+          const lineEntity = new og.Entity({
             polyline: {
               path3v: [
                 [sourceNode.lon, sourceNode.lat, 100000] as any,
@@ -168,7 +168,7 @@ const FraudNetwork3D = () => {
       // Centrer la vue sur les nœuds
       if (nodes.length > 0) {
         const firstNode = nodes[0];
-        globeInstance.current.planet.flyLonLat(new LonLat(firstNode.lon, firstNode.lat, 5000000));
+        globeInstance.current.planet.flyLonLat(new og.LonLat(firstNode.lon, firstNode.lat, 5000000));
       }
 
       console.log('Entities added successfully:', nodes.length, 'nodes,', edges.length, 'edges');
