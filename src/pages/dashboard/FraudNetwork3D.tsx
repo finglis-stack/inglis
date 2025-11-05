@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Network, Search, MapPin, AlertTriangle, Info } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { GoogleMap, useJsApiLoader, Marker, Polyline, InfoWindow } from '@react-google-maps/api';
+import { showError } from '@/utils/toast';
 
 interface NetworkNode {
   id: string;
@@ -157,6 +158,7 @@ const FraudNetwork3D = () => {
       setSearchResults(results);
     } catch (error) {
       console.error('Search error:', error);
+      showError("Une erreur est survenue lors de la recherche.");
     } finally {
       setSearching(false);
     }
@@ -184,19 +186,19 @@ const FraudNetwork3D = () => {
         setNodes([]); setEdges([]); setLoading(false); return;
       }
 
-      const ipNodeIds = new Set<string>();
+      const ipAddresses = new Set<string>();
       edgesData.forEach(edge => {
-        if (edge.source_type === 'ip') ipNodeIds.add(edge.source_id);
-        if (edge.target_type === 'ip') ipNodeIds.add(edge.target_id);
+        if (edge.source_type === 'ip') ipAddresses.add(edge.source_id);
+        if (edge.target_type === 'ip') ipAddresses.add(edge.target_id);
       });
 
       const ipLocations = new Map<string, GeoLocation>();
-      if (ipNodeIds.size > 0) {
-        const { data: ipData, error: ipError } = await supabase.from('ip_addresses').select('id, geolocation, city, country').in('id', Array.from(ipNodeIds));
+      if (ipAddresses.size > 0) {
+        const { data: ipData, error: ipError } = await supabase.from('ip_addresses').select('ip_address, geolocation, city, country').in('ip_address', Array.from(ipAddresses));
         if (ipError) throw ipError;
         ipData.forEach(ip => {
           if (ip.geolocation?.lat && ip.geolocation?.lon) {
-            ipLocations.set(ip.id, { lat: ip.geolocation.lat, lon: ip.geolocation.lon, city: ip.city, country: ip.country });
+            ipLocations.set(ip.ip_address, { lat: ip.geolocation.lat, lon: ip.geolocation.lon, city: ip.city, country: ip.country });
           }
         });
       }
@@ -220,7 +222,7 @@ const FraudNetwork3D = () => {
       allNodeInfos.forEach(nodeInfo => {
         if (nodeInfo.type === 'ip' && ipLocations.has(nodeInfo.id)) {
           const loc = ipLocations.get(nodeInfo.id)!;
-          nodeMap.set(nodeInfo.id, { id: nodeInfo.id, type: nodeInfo.type, label: `${nodeInfo.type}: ${nodeInfo.id.substring(0, 8)}`, lat: loc.lat, lon: loc.lon, color: getNodeColor(nodeInfo.type, nodeInfo.suspicious), suspicious: nodeInfo.suspicious || false, metadata: loc });
+          nodeMap.set(nodeInfo.id, { id: nodeInfo.id, type: nodeInfo.type, label: `${nodeInfo.type}: ${nodeInfo.id}`, lat: loc.lat, lon: loc.lon, color: getNodeColor(nodeInfo.type, nodeInfo.suspicious), suspicious: nodeInfo.suspicious || false, metadata: loc });
         } else {
           nonGeoNodeInfos.push(nodeInfo);
         }
@@ -232,13 +234,14 @@ const FraudNetwork3D = () => {
         const angle = i * angleStep;
         const lat = centerLat + radius * Math.cos(angle);
         const lon = centerLon + radius * Math.sin(angle);
-        nodeMap.set(nodeInfo.id, { id: nodeInfo.id, type: nodeInfo.type, label: `${nodeInfo.type}: ${nodeInfo.id.substring(0, 8)}`, lat, lon, color: getNodeColor(nodeInfo.type, nodeInfo.suspicious), suspicious: nodeInfo.suspicious || false });
+        nodeMap.set(nodeInfo.id, { id: nodeInfo.id, type: nodeInfo.type, label: `${nodeInfo.type}: ${nodeInfo.id.substring(0, 8)}...`, lat, lon, color: getNodeColor(nodeInfo.type, nodeInfo.suspicious), suspicious: nodeInfo.suspicious || false });
       });
 
       setNodes(Array.from(nodeMap.values()));
       setEdges(edgesData.map(edge => ({ source: edge.source_id, target: edge.target_id, weight: edge.weight || 1, suspicious: edge.is_suspicious || false })));
     } catch (error) {
       console.error('Error loading network:', error);
+      showError("Une erreur est survenue lors du chargement du réseau de fraude.");
     } finally {
       setLoading(false);
     }
