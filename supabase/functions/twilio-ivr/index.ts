@@ -179,6 +179,11 @@ serve(async (req) => {
         }
         twiml.redirect(`${baseUrl}?step=menu&lang=${lang}&cardId=${cardId}`);
         break;
+      
+      default:
+        twiml.say({ voice: 'alice', language: 'fr-CA' }, "Erreur de configuration. Au revoir.");
+        twiml.hangup();
+        break;
     }
 
     return new Response(twiml.toString(), { headers: { ...corsHeaders, 'Content-Type': 'application/xml' } });
