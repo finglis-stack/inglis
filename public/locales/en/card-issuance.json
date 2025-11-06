@@ -22,9 +22,11 @@
     "initials_desc": "The first two letters identify the cardholder, providing a quick visual check.",
     "issuer_title": "Issuer ID (NNNNNN)",
     "issuer_desc": "A six-digit block that identifies your institution and the product type (credit, debit, etc.).",
-    "unique_id_title": "Unique & Random Identifier (LLNNNNNNN)",
-    "unique_id_desc": "A combination of letters and numbers that ensures the uniqueness of each card among billions of possibilities.",
-    "luhn_title": "Validation by Luhn Algorithm",
+    "random_letters_title": "Random Letters (LL)",
+    "random_letters_desc": "Two random letters add a layer of entropy, making card numbers harder to guess.",
+    "unique_id_title": "Unique Identifier (NNNNNNN)",
+    "unique_id_desc": "A seven-digit sequence that ensures the uniqueness of each card within your program.",
+    "luhn_title": "Check Digit (C)",
     "luhn_desc": "To ensure the integrity of each card number, we use a modified version of the Luhn algorithm. The alphanumeric sequence is first converted into a purely numeric string before the check digit is calculated.",
     "luhn_result": "This process ensures that only valid card numbers can be processed, reducing data entry errors and simple fraud attempts."
   }

@@ -22,9 +22,11 @@
     "initials_desc": "Les deux premières lettres identifient le porteur de la carte, offrant une vérification visuelle rapide.",
     "issuer_title": "Identifiant Émetteur (NNNNNN)",
     "issuer_desc": "Un bloc de six chiffres qui identifie votre institution et le type de produit (crédit, débit, etc.).",
-    "unique_id_title": "Identifiant Unique & Aléatoire (LLNNNNNNN)",
-    "unique_id_desc": "Une combinaison de lettres et de chiffres qui garantit l'unicité de chaque carte parmi des milliards de possibilités.",
-    "luhn_title": "Validation par Algorithme de Luhn",
+    "random_letters_title": "Lettres Aléatoires (LL)",
+    "random_letters_desc": "Deux lettres aléatoires ajoutent une couche d'entropie, rendant les numéros de carte plus difficiles à deviner.",
+    "unique_id_title": "Identifiant Unique (NNNNNNN)",
+    "unique_id_desc": "Une séquence de sept chiffres qui garantit l'unicité de chaque carte au sein de votre programme.",
+    "luhn_title": "Chiffre de Contrôle (C)",
     "luhn_desc": "Pour assurer l'intégrité de chaque numéro de carte, nous utilisons une version modifiée de l'algorithme de Luhn. La séquence alphanumérique est d'abord convertie en une chaîne purement numérique avant que le chiffre de contrôle ne soit calculé.",
     "luhn_result": "Ce processus garantit que seuls les numéros de carte valides peuvent être traités, réduisant ainsi les erreurs de saisie et les tentatives de fraude simples."
   }
