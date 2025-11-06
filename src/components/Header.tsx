@@ -46,7 +46,6 @@ export const Header = ({ isTransparent = false }: HeaderProps) => {
   const { t } = useTranslation('landing');
 
   const navLinks = [
-    { href: "/card-structure", label: t('header.process') },
     { href: "/#testimonials", label: t('header.partners') },
   ];
 

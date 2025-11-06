@@ -1,27 +1,28 @@
 {
   "hero": {
-    "title": "Advanced Fraud Protection",
-    "subtitle": "Our multi-layered system analyzes every transaction in real-time to protect your business and your customers from threats."
+    "title": "Real-Time Fraud Prevention",
+    "subtitle": "Our multi-layered system analyzes every transaction in real-time to protect your business and your customers from emerging threats."
   },
   "layers": {
     "title": "Defense in Depth",
+    "subtitle": "We combine several cutting-edge technologies to create a robust shield against fraud, going far beyond traditional checks.",
     "device": {
       "title": "Device Fingerprinting",
-      "description": "We uniquely identify each device to detect suspicious connections, compromised devices, and spoofing attempts."
+      "description": "We uniquely identify each device by analyzing hundreds of data points (browser, OS, hardware). This allows us to detect suspicious connections, compromised devices, and spoofing attempts, even if the card information is valid."
     },
     "behavioral": {
       "title": "Behavioral Biometrics",
-      "description": "Our AI analyzes how a user interacts with the page (typing speed, mouse movements) to distinguish a human from a bot."
+      "description": "Our AI analyzes how a user interacts with the payment page: typing speed, mouse movements, hesitation. These micro-behaviors create a unique signature that helps us distinguish a legitimate customer from a fraudster or a bot."
     },
     "velocity": {
       "title": "Velocity Checks",
-      "description": "We monitor the frequency, geolocation, and amount of transactions to spot abnormal patterns and impossible travel."
+      "description": "We monitor the frequency, geolocation, and amount of transactions for a card, device, or IP address. Abnormal patterns, such as multiple purchases in a short time from impossible geographic locations, are instantly blocked."
     }
   },
   "charts": {
     "risk": {
       "title": "Dynamic Risk Scoring",
-      "description": "Each transaction receives a confidence score based on hundreds of signals. High-risk transactions are automatically blocked, while legitimate ones are approved without friction.",
+      "description": "Each transaction receives a confidence score based on hundreds of signals. High-risk transactions are automatically blocked, while legitimate ones are approved without friction, ensuring a smooth customer experience.",
       "chartTitle": "Sample Signal Analysis"
     },
     "behavioral": {

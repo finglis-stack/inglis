@@ -1,25 +1,25 @@
 {
   "hero": {
-    "title": "Credit Bureau Integration",
-    "subtitle": "Manage credit data sharing securely and compliantly, respecting your users' consent."
+    "title": "Simplified Credit Bureau Integration",
+    "subtitle": "Manage credit data sharing securely and compliantly, respecting your users' consent at every step."
   },
   "features": {
     "reporting": {
-      "title": "Automated Reporting",
-      "description": "Transmit your customers' payment and balance information to credit agencies to help them build their credit history."
+      "title": "Automated and Continuous Reporting",
+      "description": "Our platform automatically and securely transmits your customers' payment and balance information to credit agencies. Help your customers build a strong credit history while adhering to industry standards."
     },
     "pulling": {
-      "title": "File Pulling",
-      "description": "Access complete credit files of your applicants to make informed and responsible lending decisions."
+      "title": "On-Demand File Pulling",
+      "description": "Access complete credit files of your applicants through a secure interface. Get the information you need to make informed, responsible, and fast lending decisions."
     },
     "consent": {
-      "title": "Consent Management",
-      "description": "Our platform manages the user consent process transparently, ensuring compliance with privacy regulations."
+      "title": "Granular Consent Management",
+      "description": "Our system manages the user consent process transparently and with documentation. Every request for sharing or consultation is tracked, ensuring compliance with privacy regulations."
     }
   },
   "cta": {
     "title": "Make Smarter Credit Decisions",
-    "subtitle": "Integrate our credit management tools to reduce risk and offer products better suited to your customers.",
+    "subtitle": "Integrate our credit management tools to reduce risk, automate compliance, and offer products better suited to your customers.",
     "button": "Talk to an Expert"
   }
 }

@@ -18,7 +18,6 @@ import InstitutionInfo from "@/pages/onboarding/InstitutionInfo";
 import InstitutionType from "@/pages/onboarding/InstitutionType";
 import ContactInfo from "@/pages/onboarding/ContactInfo";
 import Dashboard from "@/pages/Dashboard";
-import CardStructure from "@/pages/CardStructure";
 import Login from "@/pages/Login";
 import DashboardLayout from "@/pages/DashboardLayout";
 import Cards from "@/pages/dashboard/Cards";
@@ -97,7 +96,6 @@ const MainAppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/login" element={<Login />} />
-    <Route path="/card-structure" element={<CardStructure />} />
     <Route path="/card-issuance" element={<CardIssuance />} />
     <Route path="/fraud-prevention" element={<FraudPrevention />} />
     <Route path="/credit-bureau" element={<CreditBureau />} />

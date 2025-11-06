@@ -1,52 +1,31 @@
 {
   "hero": {
-    "title": "White-Label Card Issuing",
-    "subtitle": "Launch your own payment card program, fully customized to your brand, without the traditional complexities."
+    "title": "Card Issuing Platform",
+    "subtitle": "Launch your own white-label payment card program, fully customized to your brand, without the traditional complexities and costs."
   },
-  "steps": {
-    "title": "From Idea to Reality in 3 Simple Steps",
-    "design": {
-      "title": "Design & Customization",
-      "description": "Define the card type (credit, debit, prepaid), configure financial parameters, and customize the design to match your brand identity."
-    },
-    "launch": {
-      "title": "Launch & Distribution",
-      "description": "Instantly issue virtual cards via our API or order physical cards. We handle production and logistics for you."
-    },
-    "management": {
-      "title": "Management & Control",
-      "description": "Use our dashboard to manage accounts, track transactions, set limits, and access detailed real-time analytics."
-    }
+  "process": {
+    "title": "Our Integration Process",
+    "subtitle": "A simple, fast, and transparent launch, designed to get you to market in record time.",
+    "step1_title": "Consultation & Strategy",
+    "step1_desc": "Together, we define your needs to create a custom card program that meets your business objectives and aligns with your market strategy.",
+    "step2_title": "Integration & Customization",
+    "step2_desc": "Our technical teams integrate our platform with your systems via a robust API and customize physical and virtual cards according to your brand.",
+    "step3_title": "Launch & Growth",
+    "step3_desc": "We support you during the launch of your program and provide you with the analytical tools to ensure its success and evolution."
   },
-  "features": {
-    "title": "A Complete and Flexible Platform",
-    "subtitle": "All the tools you need for a successful card program.",
-    "hybrid": {
-      "title": "Hybrid Cards",
-      "description": "Combine credit, debit, and prepaid features on a single card to create innovative and flexible financial products."
-    },
-    "virtual": {
-      "title": "Instant Virtual Cards",
-      "description": "Generate and distribute virtual cards in seconds, ready for online and mobile payments."
-    },
-    "api": {
-      "title": "Comprehensive API",
-      "description": "Automate every aspect of your card program, from account creation to transaction management, with our RESTful API."
-    }
-  },
-  "cardTypes": {
-    "title": "Supported Card Types",
-    "credit": {
-      "title": "Credit Cards",
-      "description": "Offer lines of credit with fully customizable interest rates, limits, and billing cycles."
-    },
-    "debit": {
-      "title": "Debit Cards",
-      "description": "Connect cards directly to your users' accounts for real-time transactions, with advanced spending controls."
-    },
-    "prepaid": {
-      "title": "Prepaid Cards",
-      "description": "Ideal for gift cards, corporate expenses, or rewards programs. Reloadable and easy to manage."
-    }
+  "technical": {
+    "title": "A Unique and Secure Card Architecture",
+    "subtitle": "Each card is designed with a logical structure that combines clear identification and robust security.",
+    "structure_title": "Anatomy of a Card Number",
+    "structure_desc": "Our 18-character alphanumeric format is designed to be both readable and highly secure, embedding key information directly into the number.",
+    "initials_title": "Holder's Initials (LL)",
+    "initials_desc": "The first two letters identify the cardholder, providing a quick visual check.",
+    "issuer_title": "Issuer ID (NNNNNN)",
+    "issuer_desc": "A six-digit block that identifies your institution and the product type (credit, debit, etc.).",
+    "unique_id_title": "Unique & Random Identifier (LLNNNNNNN)",
+    "unique_id_desc": "A combination of letters and numbers that ensures the uniqueness of each card among billions of possibilities.",
+    "luhn_title": "Validation by Luhn Algorithm",
+    "luhn_desc": "To ensure the integrity of each card number, we use a modified version of the Luhn algorithm. The alphanumeric sequence is first converted into a purely numeric string before the check digit is calculated.",
+    "luhn_result": "This process ensures that only valid card numbers can be processed, reducing data entry errors and simple fraud attempts."
   }
 }

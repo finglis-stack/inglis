@@ -1,17 +1,10 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard, Palette, Rocket, ShieldCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const CardIssuance = () => {
   const { t } = useTranslation('card-issuance');
-
-  const steps = [
-    { icon: <Palette className="h-8 w-8 text-primary" />, title: t('steps.design.title'), description: t('steps.design.description') },
-    { icon: <Rocket className="h-8 w-8 text-primary" />, title: t('steps.launch.title'), description: t('steps.launch.description') },
-    { icon: <ShieldCheck className="h-8 w-8 text-primary" />, title: t('steps.management.title'), description: t('steps.management.description') },
-  ];
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -19,7 +12,6 @@ const CardIssuance = () => {
       <main className="flex-grow">
         <section className="py-20 text-center bg-white">
           <div className="container px-4 md:px-6">
-            <CreditCard className="h-16 w-16 mx-auto text-primary mb-6" />
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{t('hero.title')}</h1>
             <p className="mt-4 max-w-3xl mx-auto text-lg text-muted-foreground">{t('hero.subtitle')}</p>
           </div>
@@ -28,65 +20,55 @@ const CardIssuance = () => {
         <section className="py-20 bg-secondary">
           <div className="container px-4 md:px-6">
             <div className="text-center mb-16">
-              <h2 className="text-3xl font-bold tracking-tight">{t('steps.title')}</h2>
+              <h2 className="text-3xl font-bold tracking-tight">{t('process.title')}</h2>
+              <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">{t('process.subtitle')}</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-              {steps.map((step, index) => (
-                <div key={index} className="flex flex-col items-center text-center">
-                  <div className="flex items-center justify-center h-16 w-16 rounded-xl bg-primary/10 mb-6">{step.icon}</div>
-                  <h3 className="text-xl font-semibold">{step.title}</h3>
-                  <p className="text-muted-foreground mt-2">{step.description}</p>
-                </div>
-              ))}
+            <div className="relative grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+              <div className="relative flex flex-col items-center">
+                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary text-primary-foreground font-bold text-2xl mb-4 z-10">1</div>
+                <h3 className="text-xl font-semibold">{t('process.step1_title')}</h3>
+                <p className="text-muted-foreground mt-2">{t('process.step1_desc')}</p>
+                <div className="hidden md:block absolute top-8 left-1/2 w-full h-0.5 bg-border -z-0" />
+              </div>
+              <div className="relative flex flex-col items-center">
+                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary text-primary-foreground font-bold text-2xl mb-4 z-10">2</div>
+                <h3 className="text-xl font-semibold">{t('process.step2_title')}</h3>
+                <p className="text-muted-foreground mt-2">{t('process.step2_desc')}</p>
+                <div className="hidden md:block absolute top-8 left-0 w-full h-0.5 bg-border -z-0" />
+              </div>
+              <div className="relative flex flex-col items-center">
+                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary text-primary-foreground font-bold text-2xl mb-4 z-10">3</div>
+                <h3 className="text-xl font-semibold">{t('process.step3_title')}</h3>
+                <p className="text-muted-foreground mt-2">{t('process.step3_desc')}</p>
+              </div>
             </div>
           </div>
         </section>
 
         <section className="py-20 bg-white">
-          <div className="container px-4 md:px-6 grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold">{t('features.title')}</h2>
-              <p className="text-muted-foreground mt-4">{t('features.subtitle')}</p>
-              <ul className="mt-6 space-y-4">
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold">{t('features.hybrid.title')}</h4>
-                    <p className="text-sm text-muted-foreground">{t('features.hybrid.description')}</p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold">{t('features.virtual.title')}</h4>
-                    <p className="text-sm text-muted-foreground">{t('features.virtual.description')}</p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold">{t('features.api.title')}</h4>
-                    <p className="text-sm text-muted-foreground">{t('features.api.description')}</p>
-                  </div>
-                </li>
-              </ul>
+          <div className="container px-4 md:px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold tracking-tight">{t('technical.title')}</h2>
+              <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">{t('technical.subtitle')}</p>
             </div>
             <Card className="shadow-lg">
-              <CardHeader>
-                <CardTitle>{t('cardTypes.title')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-semibold">{t('cardTypes.credit.title')}</h4>
-                  <p className="text-sm text-muted-foreground">{t('cardTypes.credit.description')}</p>
+              <CardContent className="p-8 grid md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">{t('technical.structure_title')}</h3>
+                  <p className="text-muted-foreground">{t('technical.structure_desc')}</p>
+                  <ul className="list-disc list-inside space-y-2 text-sm">
+                    <li><strong>{t('technical.initials_title')}:</strong> {t('technical.initials_desc')}</li>
+                    <li><strong>{t('technical.issuer_title')}:</strong> {t('technical.issuer_desc')}</li>
+                    <li><strong>{t('technical.unique_id_title')}:</strong> {t('technical.unique_id_desc')}</li>
+                  </ul>
                 </div>
-                <div>
-                  <h4 className="font-semibold">{t('cardTypes.debit.title')}</h4>
-                  <p className="text-sm text-muted-foreground">{t('cardTypes.debit.description')}</p>
-                </div>
-                <div>
-                  <h4 className="font-semibold">{t('cardTypes.prepaid.title')}</h4>
-                  <p className="text-sm text-muted-foreground">{t('cardTypes.prepaid.description')}</p>
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">{t('technical.luhn_title')}</h3>
+                  <p className="text-muted-foreground">{t('technical.luhn_desc')}</p>
+                  <pre className="bg-gray-100 p-3 rounded-md text-xs font-mono">
+                    <code>{`2129 (LT) + 000000 (Issuer) + 2635 (QZ) + 0000000 (ID) = 212900000026350000000`}</code>
+                  </pre>
+                  <p className="text-muted-foreground text-sm">{t('technical.luhn_result')}</p>
                 </div>
               </CardContent>
             </Card>
@@ -97,12 +79,5 @@ const CardIssuance = () => {
     </div>
   );
 };
-
-const CheckCircle = ({ className }: { className: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-    <polyline points="22 4 12 14.01 9 11.01" />
-  </svg>
-);
 
 export default CardIssuance;

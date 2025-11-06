@@ -1,27 +1,28 @@
 {
   "hero": {
-    "title": "Protection Avancée Contre la Fraude",
-    "subtitle": "Notre système multicouche analyse chaque transaction en temps réel pour protéger votre entreprise et vos clients contre les menaces."
+    "title": "Prévention de la Fraude en Temps Réel",
+    "subtitle": "Notre système multicouche analyse chaque transaction en temps réel pour protéger votre entreprise et vos clients contre les menaces émergentes."
   },
   "layers": {
     "title": "Une Défense en Profondeur",
+    "subtitle": "Nous combinons plusieurs technologies de pointe pour créer un bouclier robuste contre la fraude, bien au-delà des vérifications traditionnelles.",
     "device": {
       "title": "Analyse d'Empreinte Numérique",
-      "description": "Nous identifions chaque appareil de manière unique pour détecter les connexions suspectes, les appareils compromis et les tentatives d'usurpation."
+      "description": "Nous identifions chaque appareil de manière unique en analysant des centaines de points de données (navigateur, OS, matériel). Cela nous permet de détecter les connexions suspectes, les appareils compromis et les tentatives d'usurpation, même si les informations de la carte sont valides."
     },
     "behavioral": {
       "title": "Biométrie Comportementale",
-      "description": "Notre IA analyse la manière dont un utilisateur interagit avec la page (vitesse de frappe, mouvements de souris) pour distinguer un humain d'un bot."
+      "description": "Notre IA analyse la manière dont un utilisateur interagit avec la page de paiement : la vitesse de frappe, les mouvements de la souris, l'hésitation. Ces micro-comportements créent une signature unique qui nous aide à distinguer un client légitime d'un fraudeur ou d'un bot."
     },
     "velocity": {
       "title": "Contrôles de Vélocité",
-      "description": "Nous surveillons la fréquence, la géolocalisation et le montant des transactions pour repérer les schémas anormaux et les déplacements impossibles."
+      "description": "Nous surveillons la fréquence, la géolocalisation et le montant des transactions pour une carte, un appareil ou une adresse IP. Des schémas anormaux, comme des achats multiples en peu de temps depuis des lieux géographiques impossibles, sont instantanément bloqués."
     }
   },
   "charts": {
     "risk": {
       "title": "Score de Risque Dynamique",
-      "description": "Chaque transaction reçoit un score de confiance basé sur des centaines de signaux. Les transactions à haut risque sont automatiquement bloquées, tandis que les transactions légitimes sont approuvées sans friction.",
+      "description": "Chaque transaction reçoit un score de confiance basé sur des centaines de signaux. Les transactions à haut risque sont automatiquement bloquées, tandis que les transactions légitimes sont approuvées sans friction, assurant une expérience client fluide.",
       "chartTitle": "Exemple d'Analyse de Signaux"
     },
     "behavioral": {

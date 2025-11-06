@@ -1,25 +1,25 @@
 {
   "hero": {
-    "title": "Intégration au Bureau de Crédit",
-    "subtitle": "Gérez le partage de données de crédit de manière sécurisée et conforme, en respectant le consentement de vos utilisateurs."
+    "title": "Intégration Simplifiée au Bureau de Crédit",
+    "subtitle": "Gérez le partage de données de crédit de manière sécurisée et conforme, en respectant le consentement de vos utilisateurs à chaque étape."
   },
   "features": {
     "reporting": {
-      "title": "Rapports Automatisés",
-      "description": "Transmettez les informations de paiement et de solde de vos clients aux agences de crédit pour les aider à bâtir leur historique de crédit."
+      "title": "Rapports Automatisés et Continus",
+      "description": "Notre plateforme transmet automatiquement et de manière sécurisée les informations de paiement et de solde de vos clients aux agences de crédit. Aidez vos clients à bâtir un historique de crédit solide tout en respectant les normes de l'industrie."
     },
     "pulling": {
-      "title": "Consultation de Dossiers",
-      "description": "Accédez aux dossiers de crédit complets de vos demandeurs pour prendre des décisions d'octroi de crédit éclairées et responsables."
+      "title": "Consultation de Dossiers sur Demande",
+      "description": "Accédez aux dossiers de crédit complets de vos demandeurs via une interface sécurisée. Obtenez les informations nécessaires pour prendre des décisions d'octroi de crédit éclairées, responsables et rapides."
     },
     "consent": {
-      "title": "Gestion du Consentement",
-      "description": "Notre plateforme gère le processus de consentement de l'utilisateur de manière transparente, garantissant la conformité avec les réglementations sur la protection de la vie privée."
+      "title": "Gestion du Consentement Granulaire",
+      "description": "Notre système gère le processus de consentement de l'utilisateur de manière transparente et documentée. Chaque demande de partage ou de consultation est tracée, garantissant la conformité avec les réglementations sur la protection de la vie privée."
     }
   },
   "cta": {
     "title": "Prenez des Décisions de Crédit Plus Intelligentes",
-    "subtitle": "Intégrez nos outils de gestion de crédit pour réduire les risques et offrir des produits mieux adaptés à vos clients.",
+    "subtitle": "Intégrez nos outils de gestion de crédit pour réduire les risques, automatiser la conformité et offrir des produits mieux adaptés à vos clients.",
     "button": "Parler à un expert"
   }
 }
