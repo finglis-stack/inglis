@@ -46,7 +46,7 @@ const translations = {
   fr: {
     voice: 'alice',
     language: 'fr-CA',
-    welcome: "Bienvenue chez Inglis Dominion. Pour le service en français, appuyez sur 1. For service in English, press 2.",
+    welcome: "Pour le service en français, appuyez sur 1. For service in English, press 2.",
     askForCard: "Veuillez entrer les 18 caractères de votre numéro de carte, suivis de la touche dièse.",
     askForPin: "Veuillez maintenant entrer votre NIP à 4 chiffres, suivi de la touche dièse.",
     authFailed: "Désolé, les informations fournies sont incorrectes. Au revoir.",
@@ -64,7 +64,7 @@ const translations = {
   en: {
     voice: 'alice',
     language: 'en-US',
-    welcome: "Welcome to Inglis Dominion. For service in English, press 2. Pour le service en français, appuyez sur 1.",
+    welcome: "For service in English, press 2. Pour le service en français, appuyez sur 1.",
     askForCard: "Please enter the 18 characters of your card number, followed by the pound key.",
     askForPin: "Please enter your 4-digit PIN, followed by the pound key.",
     authFailed: "Sorry, the information provided is incorrect. Goodbye.",
@@ -91,7 +91,7 @@ serve(async (req) => {
     const bodyText = await req.text();
     const params = new URLSearchParams(bodyText);
     const digits = params.get('Digits');
-    const lang = url.searchParams.get('lang');
+    let lang = url.searchParams.get('lang');
     const cardNumber = url.searchParams.get('cardNumber');
     const cardId = url.searchParams.get('cardId');
     const twiml = new VoiceResponse();
@@ -104,47 +104,51 @@ serve(async (req) => {
     // Étape 1: Sélection de la langue
     if (!lang) {
       if (digits) {
-        const selectedLang = digits === '1' ? 'fr' : 'en';
-        twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${selectedLang}`);
+        lang = digits === '1' ? 'fr' : 'en';
+        // Ne pas rediriger, continuer directement à l'étape suivante
       } else {
         twiml.gather({ numDigits: 1, action: `${url.origin}${url.pathname}`, method: 'POST' }, {
-          say: { voice: 'alice', language: 'fr-CA', text: "Pour le service en français, appuyez sur 1. For service in English, press 2." }
+          say: { voice: 'alice', language: 'fr-CA', text: translations.fr.welcome }
         });
         twiml.say({ voice: 'alice', language: 'fr-CA' }, "Nous n'avons pas reçu votre sélection. Au revoir.");
         twiml.hangup();
+        return new Response(twiml.toString(), { headers: { ...corsHeaders, 'Content-Type': 'application/xml' } });
       }
     }
-    // Étape 2: Saisie du numéro de carte et du NIP
-    else if (!cardId) {
-      const t = translations[lang];
-      if (digits && !cardNumber) {
-        const cardNumberRaw = digits.toUpperCase();
-        twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${lang}&cardNumber=${cardNumberRaw}`);
-      } else if (digits && cardNumber) {
-        const pin = digits;
-        const cardParts = { user_initials: cardNumber.substring(0, 2), issuer_id: cardNumber.substring(2, 8), random_letters: cardNumber.substring(8, 10), unique_identifier: cardNumber.substring(10, 17), check_digit: cardNumber.substring(17, 18) };
-        const { data: card, error: cardError } = await supabaseAdmin.from('cards').select('id, pin').match(cardParts).single();
-        if (cardError || !card || !card.pin || !bcrypt.compareSync(pin, card.pin)) {
-          twiml.say({ voice: t.voice, language: t.language }, t.authFailed);
-          twiml.hangup();
-        } else {
-          twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${lang}&cardId=${card.id}`);
-        }
-      } else if (cardNumber) {
-         twiml.gather({ numDigits: 4, finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}&cardNumber=${cardNumber}`, method: 'POST' }, {
-          say: { voice: t.voice, language: t.language, text: t.askForPin }
-        });
-        twiml.hangup();
-      } else {
+
+    const t = translations[lang];
+
+    // Étape 2: Authentification (si pas déjà fait)
+    if (!cardId) {
+      if (!cardNumber) {
+        // On a la langue, on demande le numéro de carte
         twiml.gather({ finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.askForCard }
         });
         twiml.hangup();
+      } else if (!digits) {
+        // On a le numéro de carte, on demande le NIP
+        twiml.gather({ numDigits: 4, finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}&cardNumber=${cardNumber}`, method: 'POST' }, {
+          say: { voice: t.voice, language: t.language, text: t.askForPin }
+        });
+        twiml.hangup();
+      } else {
+        // On a le numéro de carte et le NIP, on valide
+        const pin = digits;
+        const cardParts = { user_initials: cardNumber.substring(0, 2), issuer_id: cardNumber.substring(2, 8), random_letters: cardNumber.substring(8, 10), unique_identifier: cardNumber.substring(10, 17), check_digit: cardNumber.substring(17, 18) };
+        const { data: card, error: cardError } = await supabaseAdmin.from('cards').select('id, pin').match(cardParts).single();
+        
+        if (cardError || !card || !card.pin || !bcrypt.compareSync(pin, card.pin)) {
+          twiml.say({ voice: t.voice, language: t.language }, t.authFailed);
+          twiml.hangup();
+        } else {
+          // Authentification réussie, on redirige vers le menu
+          twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${lang}&cardId=${card.id}`);
+        }
       }
     }
-    // Étape 3: Menu principal (l'utilisateur est authentifié)
-    else if (cardId) {
-      const t = translations[lang];
+    // Étape 3: Menu principal
+    else {
       if (digits) {
         switch (digits) {
           case '1':
@@ -167,15 +171,14 @@ serve(async (req) => {
           case '2':
             twiml.say({ voice: t.voice, language: t.language }, t.featureNotAvailable);
             break;
-          case '9':
-            twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`);
-            break;
           default:
             twiml.say({ voice: t.voice, language: t.language }, t.invalidOption);
             break;
         }
+        // Après l'action, on redirige vers le menu principal
         twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`);
       } else {
+        // Si pas de digits, on présente le menu
         twiml.gather({ numDigits: 1, action: `${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.menu }
         });
