@@ -121,7 +121,7 @@ const getEmailHtml = (details) => {
         <p style="font-size: 12px; color: #6c757d; margin-top: 24px;">Ce lien est unique et expirera dans 24 heures. Si vous n'avez pas demandé cette carte, veuillez contacter notre support immédiatement.</p>
       </div>
       <div class="footer">
-        <p><a href="https://www.inglisdominion.ca/">&copy; ${new Date().getFullYear()} Inglis Dominium. Tous droits réservés.</a></p>
+        <p><a href="https://www.inglisdominion.ca/">&copy; ${new Date().getFullYear()} Inglis Dominion. Tous droits réservés.</a></p>
       </div>
     </div>
   </body>
@@ -216,7 +216,7 @@ serve(async (req) => {
 
     if (profile.email) {
       const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-      const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'Inglis Dominium <onboarding@resend.dev>';
+      const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'Inglis Dominion <onboarding@resend.dev>';
       
       if (RESEND_API_KEY) {
         const profileName = profile.type === 'personal' ? profile.full_name : profile.legal_name;
@@ -241,7 +241,7 @@ serve(async (req) => {
           body: JSON.stringify({
             from: fromEmail,
             to: [profile.email],
-            subject: "Votre nouvelle carte Inglis Dominium est prête",
+            subject: "Votre nouvelle carte Inglis Dominion est prête",
             html: emailHtml,
           }),
         });

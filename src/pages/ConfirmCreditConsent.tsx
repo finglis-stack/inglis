@@ -42,7 +42,7 @@ const ConfirmCreditConsent = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="mx-auto h-12 mb-4" />
+          <img src="/logo-dark.png" alt="Inglis Dominion Logo" className="mx-auto h-12 mb-4" />
           <CardTitle>Autorisation de Partage de Données</CardTitle>
         </CardHeader>
         <CardContent>

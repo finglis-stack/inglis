@@ -33,7 +33,7 @@ const getEmailHtml = (details) => `
       <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail en toute sécurité.</p>
     </div>
     <div class="footer">
-      <p>&copy; ${new Date().getFullYear()} Inglis Dominium. Tous droits réservés.</p>
+      <p>&copy; ${new Date().getFullYear()} Inglis Dominion. Tous droits réservés.</p>
     </div>
   </div>
 </body>
@@ -80,7 +80,7 @@ serve(async (req) => {
     if (updateError) throw updateError;
 
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'Inglis Dominium <onboarding@resend.dev>';
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'Inglis Dominion <onboarding@resend.dev>';
     
     if (RESEND_API_KEY) {
       const emailHtml = getEmailHtml({

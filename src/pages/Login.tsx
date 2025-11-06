@@ -75,7 +75,7 @@ const Login = () => {
         
         <div className="text-center">
           <Link to="/">
-            <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="mx-auto h-12 mb-4" />
+            <img src="/logo-dark.png" alt="Inglis Dominion Logo" className="mx-auto h-12 mb-4" />
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
           <p className="text-gray-500">{t('subtitle')}</p>

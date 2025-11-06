@@ -40,14 +40,14 @@ const ConfirmCreditPull = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="text-center">
-          <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="mx-auto h-12 mb-4" />
+          <img src="/logo-dark.png" alt="Inglis Dominion Logo" className="mx-auto h-12 mb-4" />
           <CardTitle>Autorisation de Consultation de Dossier de Crédit</CardTitle>
         </CardHeader>
         <CardContent>
           {status === 'idle' && (
             <div className="space-y-6">
               <p className="text-muted-foreground">
-                En cliquant sur "Confirmer et autoriser", vous donnez votre consentement explicite à votre institution financière pour qu'elle consulte votre dossier de crédit complet via la plateforme Inglis Dominium.
+                En cliquant sur "Confirmer et autoriser", vous donnez votre consentement explicite à votre institution financière pour qu'elle consulte votre dossier de crédit complet via la plateforme Inglis Dominion.
               </p>
               <div className="p-4 bg-gray-50 rounded-md border">
                 <h4 className="font-semibold">Conditions de consultation</h4>

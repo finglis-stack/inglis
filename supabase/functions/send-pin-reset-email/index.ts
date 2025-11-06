@@ -39,7 +39,7 @@ const getEmailHtml = (details) => {
         <p>Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet e-mail en toute sécurité.</p>
       </div>
       <div class="footer">
-        <p>&copy; ${new Date().getFullYear()} Inglis Dominium. Tous droits réservés.</p>
+        <p>&copy; ${new Date().getFullYear()} Inglis Dominion. Tous droits réservés.</p>
       </div>
     </div>
   </body>
@@ -109,7 +109,7 @@ serve(async (req) => {
     }
 
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'Inglis Dominium <onboarding@resend.dev>';
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || 'Inglis Dominion <onboarding@resend.dev>';
     
     if (RESEND_API_KEY) {
       const emailHtml = getEmailHtml(emailDetails);
@@ -119,7 +119,7 @@ serve(async (req) => {
         body: JSON.stringify({
           from: fromEmail,
           to: [profile.email],
-          subject: "Réinitialisation de votre NIP Inglis Dominium",
+          subject: "Réinitialisation de votre NIP Inglis Dominion",
           html: emailHtml,
         }),
       });

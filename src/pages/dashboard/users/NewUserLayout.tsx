@@ -38,7 +38,7 @@ const NewUserLayout = () => {
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
           <Link to="/dashboard">
-            <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="h-10" />
+            <img src="/logo-dark.png" alt="Inglis Dominion Logo" className="h-10" />
           </Link>
           <h1 className="text-xl font-bold text-gray-800 hidden sm:block">
             {t('newUser.title')}
