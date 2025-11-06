@@ -36,7 +36,7 @@
   },
   "testimonials": {
     "title": "Ce que nos partenaires en disent",
-    "testimonial1_quote": "L'intégration de la solution Inglis Dominium nous a permis de lancer une carte de crédit innovante en un temps record, tout en réduisant nos coûts opérationnels de manière significative.",
+    "testimonial1_quote": "L'intégration de la solution Inglis Dominion nous a permis de lancer une carte de crédit innovante en un temps record, tout en réduisant nos coûts opérationnels de manière significative.",
     "testimonial1_author": "Directeur des Finances",
     "testimonial1_company": "Grande institution financière",
     "testimonial2_quote": "Le programme de cartes prépayées en marque blanche a transformé notre programme de fidélité. C'est un outil marketing puissant et une nouvelle source de revenus pour nous.",
@@ -45,17 +45,17 @@
   },
   "cta": {
     "title": "Prêt à lancer votre propre solution de paiement ?",
-    "subtitle": "Contactez notre équipe d'experts pour découvrir comment Inglis Dominium peut transformer votre entreprise.",
+    "subtitle": "Contactez notre équipe d'experts pour découvrir comment Inglis Dominion peut transformer votre entreprise.",
     "button": "Planifier une consultation"
   },
   "footer": {
-    "copyright": "© 2024 Inglis Dominium. Tous droits réservés.",
+    "copyright": "© 2024 Inglis Dominion. Tous droits réservés.",
     "terms": "Termes de service",
     "privacy": "Politique de confidentialité"
   },
   "cardExplained": {
     "title": "Fonctionnement de nos cartes",
-    "subtitle": "Découvrez la structure unique et la logique derrière chaque carte Inglis Dominium.",
+    "subtitle": "Découvrez la structure unique et la logique derrière chaque carte Inglis Dominion.",
     "cardTitle": "Exemple de Carte",
     "interactiveHint": "Cliquez sur une section du numéro de carte pour en savoir plus.",
     "initials_title": "LL : Initiales de l'utilisateur",

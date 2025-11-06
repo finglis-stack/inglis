@@ -15,10 +15,10 @@ export const Header = () => {
   ];
 
   return (
-    <header className="bg-neutral-950 sticky top-0 z-50 border-b border-neutral-800">
+    <header className="sticky top-0 z-50 border-b border-neutral-800 bg-neutral-950/80 backdrop-blur-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-6">
         <Link to="/" className="flex items-center">
-          <img src="/logo.png" alt="Inglis Dominium Logo" className="h-10" />
+          <img src="/logo.png" alt="Inglis Dominion Logo" className="h-10" />
         </Link>
         <nav className="hidden md:flex gap-6 text-sm font-medium items-center">
           {navLinks.map(link => (
@@ -32,7 +32,7 @@ export const Header = () => {
             <Button variant="outline" className="bg-transparent border-neutral-700 text-gray-300 hover:bg-neutral-800 hover:text-white" asChild>
               <Link to="/login">{t('header.login')}</Link>
             </Button>
-            <Button className="bg-neutral-800 text-gray-300 hover:bg-neutral-700" asChild>
+            <Button className="bg-white text-black hover:bg-gray-200" asChild>
               <Link to="/onboarding/welcome">{t('header.becomePartner')}</Link>
             </Button>
           </div>
@@ -58,7 +58,7 @@ export const Header = () => {
                 <Button variant="outline" className="w-full bg-transparent border-neutral-700 text-gray-300 hover:bg-neutral-800 hover:text-white" asChild>
                   <Link to="/login">{t('header.login')}</Link>
                 </Button>
-                <Button className="w-full bg-neutral-800 text-gray-300 hover:bg-neutral-700" asChild>
+                <Button className="w-full bg-white text-black hover:bg-gray-200" asChild>
                   <Link to="/onboarding/welcome">{t('header.becomePartner')}</Link>
                 </Button>
               </div>

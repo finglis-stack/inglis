@@ -1,5 +1,4 @@
 import { DollarSign, Award, Layers, Users } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
 
 const featureKeys = [
@@ -29,21 +28,21 @@ export const Features = () => {
   const { t } = useTranslation('landing');
 
   return (
-    <section id="features" className="py-20 bg-secondary">
+    <section id="features" className="py-20 bg-white">
       <div className="container px-4 md:px-6">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold">{t('features.title')}</h2>
-          <p className="text-muted-foreground mt-2">{t('features.subtitle')}</p>
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-bold tracking-tight">{t('features.title')}</h2>
+          <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">{t('features.subtitle')}</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {featureKeys.map((feature, index) => (
-            <Card key={index}>
-              <CardHeader>
+            <div key={index} className="flex flex-col items-center text-center">
+              <div className="flex items-center justify-center h-16 w-16 rounded-xl bg-primary/10 mb-6">
                 {feature.icon}
-                <CardTitle className="mt-4">{t(feature.titleKey)}</CardTitle>
-                <CardDescription className="mt-2">{t(feature.descriptionKey)}</CardDescription>
-              </CardHeader>
-            </Card>
+              </div>
+              <h3 className="text-xl font-semibold">{t(feature.titleKey)}</h3>
+              <p className="text-muted-foreground mt-2">{t(feature.descriptionKey)}</p>
+            </div>
           ))}
         </div>
       </div>
