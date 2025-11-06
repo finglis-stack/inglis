@@ -117,7 +117,6 @@ serve(async (req) => {
         twiml.gather({ finishOnKey: '#', action: `${baseUrl}?lang=${selectedLang}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.askForCard }
         });
-        twiml.hangup();
       } else {
         console.log('Asking for language');
         twiml.gather({ numDigits: 1, action: baseUrl, method: 'POST' }, {
@@ -137,7 +136,6 @@ serve(async (req) => {
         twiml.gather({ numDigits: 4, finishOnKey: '#', action: `${baseUrl}?lang=${lang}&cardNumber=${digits}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.askForPin }
         });
-        twiml.hangup();
       } else if (cardNumber && digits) {
         console.log('PIN entered, validating...');
         const pin = digits;
@@ -166,7 +164,6 @@ serve(async (req) => {
         twiml.gather({ finishOnKey: '#', action: `${baseUrl}?lang=${lang}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.askForCard }
         });
-        twiml.hangup();
       }
     }
     // Étape 3: Menu principal
@@ -209,7 +206,6 @@ serve(async (req) => {
         twiml.gather({ numDigits: 1, action: `${baseUrl}?lang=${lang}&cardId=${cardId}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.menu }
         });
-        twiml.hangup();
       }
     }
 
