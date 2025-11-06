@@ -1,0 +1,31 @@
+{
+  "hero": {
+    "title": "Transparent and Scalable Pricing",
+    "subtitle": "Start for free and only pay for what you use. Our model is designed to adapt to your growth."
+  },
+  "platform": {
+    "title": "Platform Pricing",
+    "issuance_desc": "Issuing virtual cards is free. If you choose to apply annual fees to your end-users, we collect a commission of $15 per card, per year.",
+    "transaction_desc": "Transactions on our network are free. If you apply transaction fees to your merchants, we take a 0.5% commission on the processed volume.",
+    "bin_desc": "Using a shared BIN is free. A dedicated BIN, for enhanced branding, is available for $230 per month, plus $15 per 1000 successful transactions.",
+    "fraud_desc": "Our standard anti-fraud verification, including behavioral and velocity analysis, is included at no extra cost."
+  },
+  "services": {
+    "title": "Additional Services",
+    "kyc_desc": "Identity verification (KYC), including government ID validation, selfie, and phone/email verifications, is billed at $2.51 per complete verification.",
+    "physical_cards_desc": "Physical card issuance is available starting at $4 per plastic card and $6 per metal card, with bundling options for volume discounts.",
+    "sms_desc": "SMS verifications (Inglis 1-way) are billed at $0.0093 per message sent."
+  },
+  "calculator": {
+    "title": "Estimate Your Costs",
+    "subtitle": "Use our simulator to get an estimate of your monthly fees.",
+    "cards": "{{count}} active cards",
+    "transactions": "{{count}} transactions/month",
+    "avg_value": "Average value: {{value}}",
+    "charge_user_fee": "Charge annual fees to users",
+    "charge_merchant_fee": "Charge transaction fees to merchants",
+    "dedicated_bin": "Use a dedicated BIN",
+    "monthly_cost": "Estimated Monthly Cost",
+    "annual_cost": "Estimated Annual Cost (cards)"
+  }
+}

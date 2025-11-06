@@ -1,0 +1,31 @@
+{
+  "hero": {
+    "title": "Une Tarification Transparente et Évolutive",
+    "subtitle": "Commencez gratuitement et ne payez que pour ce que vous utilisez. Notre modèle est conçu pour s'adapter à votre croissance."
+  },
+  "platform": {
+    "title": "Tarification de la Plateforme",
+    "issuance_desc": "L'émission de cartes virtuelles est gratuite. Si vous choisissez d'appliquer des frais annuels à vos utilisateurs finaux, nous percevons une commission de 15 $ par carte, par an.",
+    "transaction_desc": "Les transactions sur notre réseau sont sans frais. Si vous appliquez des frais de transaction à vos marchands, nous prenons une commission de 0.5% sur le volume traité.",
+    "bin_desc": "L'utilisation d'un BIN partagé est gratuite. Un BIN dédié, pour une image de marque renforcée, est disponible pour 230 $ par mois, plus 15 $ par tranche de 1000 transactions réussies.",
+    "fraud_desc": "Notre vérification anti-fraude standard, incluant l'analyse comportementale et de vélocité, est incluse sans frais supplémentaires."
+  },
+  "services": {
+    "title": "Services Complémentaires",
+    "kyc_desc": "La vérification d'identité (KYC), incluant la validation de pièce d'identité gouvernementale, selfie, et vérifications téléphoniques/e-mail, est facturée à 2.51 $ par vérification complète.",
+    "physical_cards_desc": "L'émission de cartes physiques est disponible à partir de 4 $ par carte plastique et 6 $ par carte en métal, avec des options de groupage pour des tarifs dégressifs.",
+    "sms_desc": "Les vérifications par SMS (Inglis 1-way) sont facturées à 0.0093 $ par message envoyé."
+  },
+  "calculator": {
+    "title": "Estimez vos Coûts",
+    "subtitle": "Utilisez notre simulateur pour obtenir une estimation de vos frais mensuels.",
+    "cards": "{{count}} cartes actives",
+    "transactions": "{{count}} transactions/mois",
+    "avg_value": "Valeur moyenne: {{value}}",
+    "charge_user_fee": "Facturer des frais annuels aux utilisateurs",
+    "charge_merchant_fee": "Facturer des frais de transaction aux marchands",
+    "dedicated_bin": "Utiliser un BIN dédié",
+    "monthly_cost": "Coût mensuel estimé",
+    "annual_cost": "Coût annuel estimé (cartes)"
+  }
+}

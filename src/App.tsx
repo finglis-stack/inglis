@@ -70,6 +70,7 @@ import FraudAnalytics from './pages/dashboard/FraudAnalytics';
 import CardIssuance from './pages/CardIssuance';
 import FraudPrevention from './pages/FraudPrevention';
 import CreditBureau from './pages/CreditBureau';
+import Pricing from './pages/Pricing';
 
 const FraudNetwork3D = lazy(() => import('./pages/dashboard/FraudNetwork3D'));
 
@@ -96,6 +97,7 @@ const MainAppRoutes = () => (
   <Routes>
     <Route path="/" element={<Index />} />
     <Route path="/login" element={<Login />} />
+    <Route path="/pricing" element={<Pricing />} />
     <Route path="/card-issuance" element={<CardIssuance />} />
     <Route path="/fraud-prevention" element={<FraudPrevention />} />
     <Route path="/credit-bureau" element={<CreditBureau />} />

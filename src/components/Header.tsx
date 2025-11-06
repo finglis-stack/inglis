@@ -46,6 +46,7 @@ export const Header = ({ isTransparent = false }: HeaderProps) => {
   const { t } = useTranslation('landing');
 
   const navLinks = [
+    { href: "/pricing", label: t('header.pricing') },
     { href: "/#testimonials", label: t('header.partners') },
   ];
 

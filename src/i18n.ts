@@ -10,7 +10,7 @@ i18n
   .init({
     supportedLngs: ["en", "fr"],
     fallbackLng: "fr",
-    ns: ['common', 'landing', 'onboarding', 'login', 'dashboard', 'q12x', 'card-issuance', 'fraud-prevention', 'credit-bureau'],
+    ns: ['common', 'landing', 'onboarding', 'login', 'dashboard', 'q12x', 'card-issuance', 'fraud-prevention', 'credit-bureau', 'pricing'],
     defaultNS: 'common',
     detection: {
       order: ["cookie", "htmlTag", "localStorage", "path", "subdomain"],
