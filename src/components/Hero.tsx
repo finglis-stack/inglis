@@ -6,15 +6,11 @@ export const Hero = () => {
   const { t } = useTranslation('landing');
 
   return (
-    <section className="relative py-24 md:py-40 lg:py-48 text-center text-white overflow-hidden">
-      <div className="absolute inset-0 z-[-1]">
-        <img
-          src="/hero-background.jpg"
-          alt="Paysage alpin avec chalet"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 to-black/50" />
-      </div>
+    <section 
+      className="relative py-24 md:py-40 lg:py-48 text-center text-white overflow-hidden bg-cover bg-center"
+      style={{ backgroundImage: "url('/hero-background.jpg')" }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/70 to-black/40" />
       
       <div className="container relative px-4 md:px-6">
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter text-shadow-lg">
