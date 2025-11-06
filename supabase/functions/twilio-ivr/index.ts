@@ -8,6 +8,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-twilio-signature',
 };
 
+const FUNCTION_URL = 'https://bsmclnbeywqosuhijhae.supabase.co/functions/v1/twilio-ivr';
+
 // --- Helpers pour générer le TwiML (XML) ---
 class VoiceResponse {
   constructor() {
@@ -112,13 +114,13 @@ serve(async (req) => {
         const selectedLang = digits === '1' ? 'fr' : 'en';
         console.log('Language selected:', selectedLang);
         const t = translations[selectedLang];
-        twiml.gather({ finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${selectedLang}`, method: 'POST' }, {
+        twiml.gather({ finishOnKey: '#', action: `${FUNCTION_URL}?lang=${selectedLang}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.askForCard }
         });
         twiml.hangup();
       } else {
         console.log('Asking for language');
-        twiml.gather({ numDigits: 1, action: `${url.origin}${url.pathname}`, method: 'POST' }, {
+        twiml.gather({ numDigits: 1, action: FUNCTION_URL, method: 'POST' }, {
           say: { voice: 'alice', language: 'fr-CA', text: translations.fr.welcome }
         });
         twiml.say({ voice: 'alice', language: 'fr-CA' }, "Nous n'avons pas reçu votre sélection. Au revoir.");
@@ -133,7 +135,7 @@ serve(async (req) => {
       if (!cardNumber && digits) {
         // L'utilisateur vient d'entrer le numéro de carte
         console.log('Card number entered:', digits);
-        twiml.gather({ numDigits: 4, finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}&cardNumber=${digits}`, method: 'POST' }, {
+        twiml.gather({ numDigits: 4, finishOnKey: '#', action: `${FUNCTION_URL}?lang=${lang}&cardNumber=${digits}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.askForPin }
         });
         twiml.hangup();
@@ -159,19 +161,19 @@ serve(async (req) => {
           twiml.hangup();
         } else {
           console.log('Authentication successful, redirecting to menu');
-          twiml.redirect(`${url.origin}${url.pathname}?lang=${lang}&cardId=${card.id}`);
+          twiml.redirect(`${FUNCTION_URL}?lang=${lang}&cardId=${card.id}`);
         }
       } else if (!cardNumber) {
         // On demande le numéro de carte
         console.log('Asking for card number');
-        twiml.gather({ finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}`, method: 'POST' }, {
+        twiml.gather({ finishOnKey: '#', action: `${FUNCTION_URL}?lang=${lang}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.askForCard }
         });
         twiml.hangup();
       } else {
         // On demande le NIP
         console.log('Asking for PIN');
-        twiml.gather({ numDigits: 4, finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}&cardNumber=${cardNumber}`, method: 'POST' }, {
+        twiml.gather({ numDigits: 4, finishOnKey: '#', action: `${FUNCTION_URL}?lang=${lang}&cardNumber=${cardNumber}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.askForPin }
         });
         twiml.hangup();
@@ -211,10 +213,10 @@ serve(async (req) => {
             twiml.say({ voice: t.voice, language: t.language }, t.invalidOption);
             break;
         }
-        twiml.redirect(`${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`);
+        twiml.redirect(`${FUNCTION_URL}?lang=${lang}&cardId=${cardId}`);
       } else {
         console.log('Presenting main menu');
-        twiml.gather({ numDigits: 1, action: `${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`, method: 'POST' }, {
+        twiml.gather({ numDigits: 1, action: `${FUNCTION_URL}?lang=${lang}&cardId=${cardId}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.menu }
         });
         twiml.hangup();
