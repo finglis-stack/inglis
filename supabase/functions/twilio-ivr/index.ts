@@ -25,13 +25,8 @@ class VoiceResponse {
     }
     this.body.push(`<Gather ${attrs}>${nestedContent}</Gather>`);
   }
-  redirect(attributes, url) {
-      if (typeof attributes === 'string') {
-          url = attributes;
-          attributes = {};
-      }
-      const attrs = Object.entries(attributes).map(([key, val]) => `${key}="${val}"`).join(' ');
-      this.body.push(`<Redirect ${attrs}>${url}</Redirect>`);
+  redirect(url) {
+    this.body.push(`<Redirect method="POST">${url}</Redirect>`);
   }
   hangup() {
     this.body.push('<Hangup/>');
@@ -91,9 +86,18 @@ serve(async (req) => {
     const bodyText = await req.text();
     const params = new URLSearchParams(bodyText);
     const digits = params.get('Digits');
-    let lang = url.searchParams.get('lang');
+    const lang = url.searchParams.get('lang');
     const cardNumber = url.searchParams.get('cardNumber');
     const cardId = url.searchParams.get('cardId');
+    
+    console.log('=== IVR REQUEST ===');
+    console.log('URL:', url.toString());
+    console.log('Digits:', digits);
+    console.log('Lang:', lang);
+    console.log('CardNumber:', cardNumber);
+    console.log('CardId:', cardId);
+    console.log('Body:', bodyText);
+    
     const twiml = new VoiceResponse();
 
     const supabaseAdmin = createClient(
@@ -103,55 +107,86 @@ serve(async (req) => {
 
     // Étape 1: Sélection de la langue
     if (!lang) {
+      console.log('STEP: Language selection');
       if (digits) {
-        lang = digits === '1' ? 'fr' : 'en';
-        // Ne pas rediriger, continuer directement à l'étape suivante
+        const selectedLang = digits === '1' ? 'fr' : 'en';
+        console.log('Language selected:', selectedLang);
+        const t = translations[selectedLang];
+        twiml.gather({ finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${selectedLang}`, method: 'POST' }, {
+          say: { voice: t.voice, language: t.language, text: t.askForCard }
+        });
+        twiml.hangup();
       } else {
+        console.log('Asking for language');
         twiml.gather({ numDigits: 1, action: `${url.origin}${url.pathname}`, method: 'POST' }, {
           say: { voice: 'alice', language: 'fr-CA', text: translations.fr.welcome }
         });
         twiml.say({ voice: 'alice', language: 'fr-CA' }, "Nous n'avons pas reçu votre sélection. Au revoir.");
         twiml.hangup();
-        return new Response(twiml.toString(), { headers: { ...corsHeaders, 'Content-Type': 'application/xml' } });
       }
     }
-
-    const t = translations[lang];
-
-    // Étape 2: Authentification (si pas déjà fait)
-    if (!cardId) {
-      if (!cardNumber) {
-        // On a la langue, on demande le numéro de carte
+    // Étape 2: Authentification
+    else if (!cardId) {
+      console.log('STEP: Authentication');
+      const t = translations[lang];
+      
+      if (!cardNumber && digits) {
+        // L'utilisateur vient d'entrer le numéro de carte
+        console.log('Card number entered:', digits);
+        twiml.gather({ numDigits: 4, finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}&cardNumber=${digits}`, method: 'POST' }, {
+          say: { voice: t.voice, language: t.language, text: t.askForPin }
+        });
+        twiml.hangup();
+      } else if (cardNumber && digits) {
+        // L'utilisateur vient d'entrer le NIP
+        console.log('PIN entered, validating...');
+        const pin = digits;
+        const cardParts = { 
+          user_initials: cardNumber.substring(0, 2), 
+          issuer_id: cardNumber.substring(2, 8), 
+          random_letters: cardNumber.substring(8, 10), 
+          unique_identifier: cardNumber.substring(10, 17), 
+          check_digit: cardNumber.substring(17, 18) 
+        };
+        console.log('Card parts:', cardParts);
+        
+        const { data: card, error: cardError } = await supabaseAdmin.from('cards').select('id, pin').match(cardParts).single();
+        console.log('Card lookup result:', { card: card?.id, error: cardError });
+        
+        if (cardError || !card || !card.pin || !bcrypt.compareSync(pin, card.pin)) {
+          console.log('Authentication failed');
+          twiml.say({ voice: t.voice, language: t.language }, t.authFailed);
+          twiml.hangup();
+        } else {
+          console.log('Authentication successful, redirecting to menu');
+          twiml.redirect(`${url.origin}${url.pathname}?lang=${lang}&cardId=${card.id}`);
+        }
+      } else if (!cardNumber) {
+        // On demande le numéro de carte
+        console.log('Asking for card number');
         twiml.gather({ finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.askForCard }
         });
         twiml.hangup();
-      } else if (!digits) {
-        // On a le numéro de carte, on demande le NIP
+      } else {
+        // On demande le NIP
+        console.log('Asking for PIN');
         twiml.gather({ numDigits: 4, finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}&cardNumber=${cardNumber}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.askForPin }
         });
         twiml.hangup();
-      } else {
-        // On a le numéro de carte et le NIP, on valide
-        const pin = digits;
-        const cardParts = { user_initials: cardNumber.substring(0, 2), issuer_id: cardNumber.substring(2, 8), random_letters: cardNumber.substring(8, 10), unique_identifier: cardNumber.substring(10, 17), check_digit: cardNumber.substring(17, 18) };
-        const { data: card, error: cardError } = await supabaseAdmin.from('cards').select('id, pin').match(cardParts).single();
-        
-        if (cardError || !card || !card.pin || !bcrypt.compareSync(pin, card.pin)) {
-          twiml.say({ voice: t.voice, language: t.language }, t.authFailed);
-          twiml.hangup();
-        } else {
-          // Authentification réussie, on redirige vers le menu
-          twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${lang}&cardId=${card.id}`);
-        }
       }
     }
     // Étape 3: Menu principal
     else {
+      console.log('STEP: Main menu');
+      const t = translations[lang];
+      
       if (digits) {
+        console.log('Menu option selected:', digits);
         switch (digits) {
           case '1':
+            console.log('Getting balance...');
             const { data: debitAccount } = await supabaseAdmin.from('debit_accounts').select('id').eq('card_id', cardId).single();
             const { data: creditAccount } = await supabaseAdmin.from('credit_accounts').select('id').eq('card_id', cardId).single();
             let balanceText = '';
@@ -166,6 +201,7 @@ serve(async (req) => {
               const [dollars, cents] = data.available_credit.toFixed(2).split('.');
               balanceText = `${t.availableCreditIs} ${dollars} ${t.dollars} ${t.and} ${cents} ${t.cents}.`;
             }
+            console.log('Balance text:', balanceText);
             twiml.say({ voice: t.voice, language: t.language }, balanceText);
             break;
           case '2':
@@ -175,10 +211,9 @@ serve(async (req) => {
             twiml.say({ voice: t.voice, language: t.language }, t.invalidOption);
             break;
         }
-        // Après l'action, on redirige vers le menu principal
-        twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`);
+        twiml.redirect(`${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`);
       } else {
-        // Si pas de digits, on présente le menu
+        console.log('Presenting main menu');
         twiml.gather({ numDigits: 1, action: `${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.menu }
         });
@@ -186,9 +221,15 @@ serve(async (req) => {
       }
     }
 
-    return new Response(twiml.toString(), { headers: { ...corsHeaders, 'Content-Type': 'application/xml' } });
+    const response = twiml.toString();
+    console.log('=== RESPONSE TwiML ===');
+    console.log(response);
+    
+    return new Response(response, { headers: { ...corsHeaders, 'Content-Type': 'application/xml' } });
   } catch (error) {
-    console.error('IVR Error:', error);
+    console.error('=== IVR ERROR ===');
+    console.error('Error:', error);
+    console.error('Stack:', error.stack);
     const twiml = new VoiceResponse();
     twiml.say({ voice: translations.fr.voice, language: translations.fr.language }, translations.fr.error);
     twiml.hangup();
