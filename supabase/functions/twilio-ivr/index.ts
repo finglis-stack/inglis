@@ -109,6 +109,7 @@ serve(async (req) => {
   try {
     const twilioSignature = req.headers.get('x-twilio-signature');
     const url = new URL(req.url);
+    const fullUrl = url.toString(); // CORRECTION: Utiliser l'URL complète
     const bodyText = await req.text();
     const params = new URLSearchParams(bodyText);
     const paramsObj = Object.fromEntries(params);
@@ -116,7 +117,7 @@ serve(async (req) => {
     const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
     if (!authToken) throw new Error("TWILIO_AUTH_TOKEN is not set.");
 
-    const requestIsValid = await validateTwilioRequest(authToken, twilioSignature, url.toString().split('?')[0], paramsObj);
+    const requestIsValid = await validateTwilioRequest(authToken, twilioSignature, fullUrl, paramsObj);
     if (!requestIsValid) {
       return new Response("Invalid Twilio signature", { status: 403 });
     }
@@ -151,7 +152,7 @@ serve(async (req) => {
     } else if (digits && url.searchParams.get('cardNumber')) {
       const cardNumberRaw = url.searchParams.get('cardNumber');
       const pin = digits;
-      const cardParts = { initials: cardNumberRaw.substring(0, 2), issuer_id: cardNumberRaw.substring(2, 8), random_letters: cardNumberRaw.substring(8, 10), unique_identifier: cardNumberRaw.substring(10, 17), check_digit: cardNumberRaw.substring(17, 18) };
+      const cardParts = { user_initials: cardNumberRaw.substring(0, 2), issuer_id: cardNumberRaw.substring(2, 8), random_letters: cardNumberRaw.substring(8, 10), unique_identifier: cardNumberRaw.substring(10, 17), check_digit: cardNumberRaw.substring(17, 18) };
       const { data: card, error: cardError } = await supabaseAdmin.from('cards').select('id, pin').match(cardParts).single();
       if (cardError || !card || !card.pin || !bcrypt.compareSync(pin, card.pin)) {
         twiml.say({ voice: t.voice, language: t.language }, t.authFailed);
