@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-import twilio from 'https://esm.sh/twilio@5.2.2';
+import twilio from 'https://esm.sh/twilio@5.0.4';
 import bcrypt from 'https://esm.sh/bcryptjs@2.4.3';
 
 const corsHeaders = {
