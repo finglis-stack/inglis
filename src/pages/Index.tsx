@@ -8,8 +8,8 @@ import { Footer } from "@/components/Footer";
 
 const Index = () => {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
+    <div className="flex flex-col min-h-screen bg-neutral-950">
+      <Header isTransparent />
       <main className="flex-grow">
         <Hero />
         <Features />
