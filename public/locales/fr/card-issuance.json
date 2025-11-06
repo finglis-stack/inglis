@@ -1,0 +1,52 @@
+{
+  "hero": {
+    "title": "Émission de Cartes en Marque Blanche",
+    "subtitle": "Lancez votre propre programme de cartes de paiement, entièrement personnalisé à votre marque, sans les complexités traditionnelles."
+  },
+  "steps": {
+    "title": "De l'Idée à la Réalité en 3 Étapes Simples",
+    "design": {
+      "title": "Conception et Personnalisation",
+      "description": "Définissez le type de carte (crédit, débit, prépayée), configurez les paramètres financiers et personnalisez le design pour qu'il corresponde à votre identité de marque."
+    },
+    "launch": {
+      "title": "Lancement et Distribution",
+      "description": "Émettez des cartes virtuelles instantanément via notre API ou commandez des cartes physiques. Nous gérons la production et la logistique pour vous."
+    },
+    "management": {
+      "title": "Gestion et Contrôle",
+      "description": "Utilisez notre tableau de bord pour gérer les comptes, suivre les transactions, définir des limites et accéder à des analyses détaillées en temps réel."
+    }
+  },
+  "features": {
+    "title": "Une Plateforme Complète et Flexible",
+    "subtitle": "Tous les outils dont vous avez besoin pour un programme de cartes réussi.",
+    "hybrid": {
+      "title": "Cartes Hybrides",
+      "description": "Combinez les fonctionnalités de crédit, débit et prépayé sur une seule carte pour créer des produits financiers innovants et flexibles."
+    },
+    "virtual": {
+      "title": "Cartes Virtuelles Instantanées",
+      "description": "Générez et distribuez des cartes virtuelles en quelques secondes, prêtes à être utilisées pour les paiements en ligne et mobiles."
+    },
+    "api": {
+      "title": "API Complète",
+      "description": "Automatisez chaque aspect de votre programme de cartes, de la création de comptes à la gestion des transactions, avec notre API RESTful."
+    }
+  },
+  "cardTypes": {
+    "title": "Types de Cartes Supportés",
+    "credit": {
+      "title": "Cartes de Crédit",
+      "description": "Offrez des lignes de crédit avec des taux d'intérêt, des limites et des cycles de facturation entièrement personnalisables."
+    },
+    "debit": {
+      "title": "Cartes de Débit",
+      "description": "Connectez les cartes directement aux comptes de vos utilisateurs pour des transactions en temps réel, avec des contrôles de dépenses avancés."
+    },
+    "prepaid": {
+      "title": "Cartes Prépayées",
+      "description": "Idéal pour les cartes-cadeaux, les dépenses d'entreprise ou les programmes de récompenses. Rechargeables et faciles à gérer."
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "hero": {
+    "title": "White-Label Card Issuing",
+    "subtitle": "Launch your own payment card program, fully customized to your brand, without the traditional complexities."
+  },
+  "steps": {
+    "title": "From Idea to Reality in 3 Simple Steps",
+    "design": {
+      "title": "Design & Customization",
+      "description": "Define the card type (credit, debit, prepaid), configure financial parameters, and customize the design to match your brand identity."
+    },
+    "launch": {
+      "title": "Launch & Distribution",
+      "description": "Instantly issue virtual cards via our API or order physical cards. We handle production and logistics for you."
+    },
+    "management": {
+      "title": "Management & Control",
+      "description": "Use our dashboard to manage accounts, track transactions, set limits, and access detailed real-time analytics."
+    }
+  },
+  "features": {
+    "title": "A Complete and Flexible Platform",
+    "subtitle": "All the tools you need for a successful card program.",
+    "hybrid": {
+      "title": "Hybrid Cards",
+      "description": "Combine credit, debit, and prepaid features on a single card to create innovative and flexible financial products."
+    },
+    "virtual": {
+      "title": "Instant Virtual Cards",
+      "description": "Generate and distribute virtual cards in seconds, ready for online and mobile payments."
+    },
+    "api": {
+      "title": "Comprehensive API",
+      "description": "Automate every aspect of your card program, from account creation to transaction management, with our RESTful API."
+    }
+  },
+  "cardTypes": {
+    "title": "Supported Card Types",
+    "credit": {
+      "title": "Credit Cards",
+      "description": "Offer lines of credit with fully customizable interest rates, limits, and billing cycles."
+    },
+    "debit": {
+      "title": "Debit Cards",
+      "description": "Connect cards directly to your users' accounts for real-time transactions, with advanced spending controls."
+    },
+    "prepaid": {
+      "title": "Prepaid Cards",
+      "description": "Ideal for gift cards, corporate expenses, or rewards programs. Reloadable and easy to manage."
+    }
+  }
+}

@@ -1,20 +1,51 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Menu, CreditCard, ShieldCheck, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface HeaderProps {
   isTransparent?: boolean;
 }
 
+const solutionComponents: { title: string; href: string; description: string, icon: React.ReactNode }[] = [
+  {
+    title: "Émission de Cartes",
+    href: "/card-issuance",
+    description: "Lancez des programmes de cartes de crédit, débit et prépayées en marque blanche.",
+    icon: <CreditCard className="h-5 w-5" />
+  },
+  {
+    title: "Prévention de la Fraude",
+    href: "/fraud-prevention",
+    description: "Protégez vos transactions avec notre système d'analyse comportementale et de risque en temps réel.",
+    icon: <ShieldCheck className="h-5 w-5" />
+  },
+  {
+    title: "Bureau de Crédit",
+    href: "/credit-bureau",
+    description: "Gérez le consentement et le partage de données avec les agences d'évaluation du crédit.",
+    icon: <FileText className="h-5 w-5" />
+  },
+];
+
 export const Header = ({ isTransparent = false }: HeaderProps) => {
   const { t } = useTranslation('landing');
 
   const navLinks = [
-    { href: "/#features", label: t('header.solution') },
     { href: "/card-structure", label: t('header.process') },
     { href: "/#testimonials", label: t('header.partners') },
   ];
@@ -31,15 +62,42 @@ export const Header = ({ isTransparent = false }: HeaderProps) => {
           <img 
             src="/logo.png" 
             alt="Inglis Dominion Logo" 
-            className="h-10"
+            className={cn("h-10", isTransparent && "brightness-0 invert")}
           />
         </Link>
-        <nav className="hidden md:flex gap-6 text-sm font-medium items-center">
-          {navLinks.map(link => (
-            <Link key={link.label} to={link.href} className={cn("transition-colors", isTransparent ? "text-gray-200 hover:text-white" : "text-gray-300 hover:text-white")}>
-              {link.label}
-            </Link>
-          ))}
+        <nav className="hidden md:flex gap-2 text-sm font-medium items-center">
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className={cn("bg-transparent", isTransparent ? "text-gray-200 hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white" : "text-gray-300 hover:bg-neutral-800 hover:text-white focus:bg-neutral-800 focus:text-white")}>
+                  {t('header.solution')}
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
+                    {solutionComponents.map((component) => (
+                      <ListItem
+                        key={component.title}
+                        title={component.title}
+                        href={component.href}
+                        icon={component.icon}
+                      >
+                        {component.description}
+                      </ListItem>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+              {navLinks.map(link => (
+                <NavigationMenuItem key={link.label}>
+                  <Link to={link.href}>
+                    <NavigationMenuLink className={cn(navigationMenuTriggerStyle(), "bg-transparent", isTransparent ? "text-gray-200 hover:bg-white/10 hover:text-white focus:bg-white/10 focus:text-white" : "text-gray-300 hover:bg-neutral-800 hover:text-white focus:bg-neutral-800 focus:text-white")}>
+                      {link.label}
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
         </nav>
         <div className="flex items-center gap-2">
           <div className="hidden md:flex items-center gap-2">
@@ -48,7 +106,7 @@ export const Header = ({ isTransparent = false }: HeaderProps) => {
               className={cn(
                 "transition-colors",
                 isTransparent 
-                  ? "bg-white/10 border-white/20 text-white hover:bg-white/20" 
+                  ? "bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white" 
                   : "bg-transparent border-neutral-700 text-gray-300 hover:bg-neutral-800 hover:text-white"
               )} 
               asChild
@@ -77,20 +135,42 @@ export const Header = ({ isTransparent = false }: HeaderProps) => {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="bg-neutral-950 text-gray-300 border-neutral-800">
-              <nav className="grid gap-6 text-lg font-medium mt-8">
+              <nav className="grid gap-2 text-lg font-medium mt-8">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="item-1" className="border-b-0">
+                    <AccordionTrigger className="hover:no-underline text-lg font-medium hover:text-white transition-colors py-2">{t('header.solution')}</AccordionTrigger>
+                    <AccordionContent className="pl-4">
+                      <div className="grid gap-4 mt-2">
+                        {solutionComponents.map(component => (
+                          <SheetClose asChild key={component.title}>
+                            <Link to={component.href} className="flex items-center gap-3 text-base text-gray-400 hover:text-white transition-colors">
+                              {component.icon} {component.title}
+                            </Link>
+                          </SheetClose>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
                 {navLinks.map(link => (
-                  <Link key={link.label} to={link.href} className="hover:text-white transition-colors">
-                    {link.label}
-                  </Link>
+                  <SheetClose asChild key={link.label}>
+                    <Link to={link.href} className="py-2 hover:text-white transition-colors">
+                      {link.label}
+                    </Link>
+                  </SheetClose>
                 ))}
               </nav>
               <div className="mt-8 space-y-4">
-                <Button variant="outline" className="w-full bg-transparent border-neutral-700 text-gray-300 hover:bg-neutral-800 hover:text-white" asChild>
-                  <Link to="/login">{t('header.login')}</Link>
-                </Button>
-                <Button className="w-full bg-white text-black hover:bg-gray-200" asChild>
-                  <Link to="/onboarding/welcome">{t('header.becomePartner')}</Link>
-                </Button>
+                <SheetClose asChild>
+                  <Button variant="outline" className="w-full bg-transparent border-neutral-700 text-gray-300 hover:bg-neutral-800 hover:text-white" asChild>
+                    <Link to="/login">{t('header.login')}</Link>
+                  </Button>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Button className="w-full bg-white text-black hover:bg-gray-200" asChild>
+                    <Link to="/onboarding/welcome">{t('header.becomePartner')}</Link>
+                  </Button>
+                </SheetClose>
               </div>
             </SheetContent>
           </Sheet>
@@ -99,3 +179,31 @@ export const Header = ({ isTransparent = false }: HeaderProps) => {
     </header>
   );
 };
+
+const ListItem = React.forwardRef<
+  React.ElementRef<"a">,
+  React.ComponentPropsWithoutRef<"a"> & { icon: React.ReactNode }
+>(({ className, title, children, icon, ...props }, ref) => {
+  return (
+    <li>
+      <NavigationMenuLink asChild>
+        <a
+          ref={ref}
+          className={cn(
+            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            className
+          )}
+          {...props}
+        >
+          <div className="flex items-center gap-2 text-sm font-medium leading-none">
+            {icon} {title}
+          </div>
+          <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+            {children}
+          </p>
+        </a>
+      </NavigationMenuLink>
+    </li>
+  )
+})
+ListItem.displayName = "ListItem"

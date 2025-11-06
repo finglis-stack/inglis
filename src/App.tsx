@@ -68,6 +68,9 @@ import HostedPaymentForm from "@/pages/HostedPaymentForm";
 import HostedFormLayout from '@/pages/HostedFormLayout';
 import RiskAnalysisDetails from '@/pages/dashboard/risk/RiskAnalysisDetails';
 import FraudAnalytics from './pages/dashboard/FraudAnalytics';
+import CardIssuance from './pages/CardIssuance';
+import FraudPrevention from './pages/FraudPrevention';
+import CreditBureau from './pages/CreditBureau';
 
 const FraudNetwork3D = lazy(() => import('./pages/dashboard/FraudNetwork3D'));
 
@@ -95,6 +98,9 @@ const MainAppRoutes = () => (
     <Route path="/" element={<Index />} />
     <Route path="/login" element={<Login />} />
     <Route path="/card-structure" element={<CardStructure />} />
+    <Route path="/card-issuance" element={<CardIssuance />} />
+    <Route path="/fraud-prevention" element={<FraudPrevention />} />
+    <Route path="/credit-bureau" element={<CreditBureau />} />
     <Route path="/credit-report-access" element={<CreditReportAccess />} />
     <Route path="/set-card-pin/:token" element={<SetCardPin />} />
     <Route path="/set-profile-pin/:token" element={<SetProfilePin />} />

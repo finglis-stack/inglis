@@ -1,0 +1,33 @@
+{
+  "hero": {
+    "title": "Advanced Fraud Protection",
+    "subtitle": "Our multi-layered system analyzes every transaction in real-time to protect your business and your customers from threats."
+  },
+  "layers": {
+    "title": "Defense in Depth",
+    "device": {
+      "title": "Device Fingerprinting",
+      "description": "We uniquely identify each device to detect suspicious connections, compromised devices, and spoofing attempts."
+    },
+    "behavioral": {
+      "title": "Behavioral Biometrics",
+      "description": "Our AI analyzes how a user interacts with the page (typing speed, mouse movements) to distinguish a human from a bot."
+    },
+    "velocity": {
+      "title": "Velocity Checks",
+      "description": "We monitor the frequency, geolocation, and amount of transactions to spot abnormal patterns and impossible travel."
+    }
+  },
+  "charts": {
+    "risk": {
+      "title": "Dynamic Risk Scoring",
+      "description": "Each transaction receives a confidence score based on hundreds of signals. High-risk transactions are automatically blocked, while legitimate ones are approved without friction.",
+      "chartTitle": "Sample Signal Analysis"
+    },
+    "behavioral": {
+      "title": "Behavioral Analysis",
+      "description": "By comparing user behavior to known patterns, we can identify suspicious activities that traditional systems miss. Bots and fraudsters have distinct behavioral signatures.",
+      "chartTitle": "Behavioral Profile (Example)"
+    }
+  }
+}

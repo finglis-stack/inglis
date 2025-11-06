@@ -1,0 +1,25 @@
+{
+  "hero": {
+    "title": "Intégration au Bureau de Crédit",
+    "subtitle": "Gérez le partage de données de crédit de manière sécurisée et conforme, en respectant le consentement de vos utilisateurs."
+  },
+  "features": {
+    "reporting": {
+      "title": "Rapports Automatisés",
+      "description": "Transmettez les informations de paiement et de solde de vos clients aux agences de crédit pour les aider à bâtir leur historique de crédit."
+    },
+    "pulling": {
+      "title": "Consultation de Dossiers",
+      "description": "Accédez aux dossiers de crédit complets de vos demandeurs pour prendre des décisions d'octroi de crédit éclairées et responsables."
+    },
+    "consent": {
+      "title": "Gestion du Consentement",
+      "description": "Notre plateforme gère le processus de consentement de l'utilisateur de manière transparente, garantissant la conformité avec les réglementations sur la protection de la vie privée."
+    }
+  },
+  "cta": {
+    "title": "Prenez des Décisions de Crédit Plus Intelligentes",
+    "subtitle": "Intégrez nos outils de gestion de crédit pour réduire les risques et offrir des produits mieux adaptés à vos clients.",
+    "button": "Parler à un expert"
+  }
+}

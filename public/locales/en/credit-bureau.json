@@ -1,0 +1,25 @@
+{
+  "hero": {
+    "title": "Credit Bureau Integration",
+    "subtitle": "Manage credit data sharing securely and compliantly, respecting your users' consent."
+  },
+  "features": {
+    "reporting": {
+      "title": "Automated Reporting",
+      "description": "Transmit your customers' payment and balance information to credit agencies to help them build their credit history."
+    },
+    "pulling": {
+      "title": "File Pulling",
+      "description": "Access complete credit files of your applicants to make informed and responsible lending decisions."
+    },
+    "consent": {
+      "title": "Consent Management",
+      "description": "Our platform manages the user consent process transparently, ensuring compliance with privacy regulations."
+    }
+  },
+  "cta": {
+    "title": "Make Smarter Credit Decisions",
+    "subtitle": "Integrate our credit management tools to reduce risk and offer products better suited to your customers.",
+    "button": "Talk to an Expert"
+  }
+}

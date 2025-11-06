@@ -1,0 +1,33 @@
+{
+  "hero": {
+    "title": "Protection Avancée Contre la Fraude",
+    "subtitle": "Notre système multicouche analyse chaque transaction en temps réel pour protéger votre entreprise et vos clients contre les menaces."
+  },
+  "layers": {
+    "title": "Une Défense en Profondeur",
+    "device": {
+      "title": "Analyse d'Empreinte Numérique",
+      "description": "Nous identifions chaque appareil de manière unique pour détecter les connexions suspectes, les appareils compromis et les tentatives d'usurpation."
+    },
+    "behavioral": {
+      "title": "Biométrie Comportementale",
+      "description": "Notre IA analyse la manière dont un utilisateur interagit avec la page (vitesse de frappe, mouvements de souris) pour distinguer un humain d'un bot."
+    },
+    "velocity": {
+      "title": "Contrôles de Vélocité",
+      "description": "Nous surveillons la fréquence, la géolocalisation et le montant des transactions pour repérer les schémas anormaux et les déplacements impossibles."
+    }
+  },
+  "charts": {
+    "risk": {
+      "title": "Score de Risque Dynamique",
+      "description": "Chaque transaction reçoit un score de confiance basé sur des centaines de signaux. Les transactions à haut risque sont automatiquement bloquées, tandis que les transactions légitimes sont approuvées sans friction.",
+      "chartTitle": "Exemple d'Analyse de Signaux"
+    },
+    "behavioral": {
+      "title": "Analyse Comportementale",
+      "description": "En comparant le comportement de l'utilisateur à des modèles connus, nous pouvons identifier les activités suspectes qui échappent aux systèmes traditionnels. Les bots et les fraudeurs ont des signatures comportementales distinctes.",
+      "chartTitle": "Profil Comportemental (Exemple)"
+    }
+  }
+}
