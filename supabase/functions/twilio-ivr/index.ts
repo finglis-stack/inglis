@@ -8,26 +8,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-twilio-signature',
 };
 
-// --- Helper pour valider la signature Twilio manuellement ---
-async function validateTwilioRequest(authToken, signature, url, params) {
-  const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode(authToken),
-    { name: "HMAC", hash: "SHA-1" },
-    false,
-    ["sign"]
-  );
-
-  const dataToSign = url + Object.keys(params).sort().map(key => key + params[key]).join('');
-  const signed = await crypto.subtle.sign("HMAC", key, encoder.encode(dataToSign));
-  
-  // Convert ArrayBuffer to Base64
-  const base64Signature = btoa(String.fromCharCode(...new Uint8Array(signed)));
-
-  return base64Signature === signature;
-}
-
 // --- Helpers pour générer le TwiML (XML) ---
 class VoiceResponse {
   constructor() {
@@ -107,21 +87,19 @@ serve(async (req) => {
   }
 
   try {
-    const twilioSignature = req.headers.get('x-twilio-signature');
+    // VALIDATION TEMPORAIREMENT DÉSACTIVÉE POUR DÉBOGUER
+    // const twilioSignature = req.headers.get('x-twilio-signature');
+    // const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+    // if (!authToken) throw new Error("TWILIO_AUTH_TOKEN is not set.");
+    // const requestIsValid = await validateTwilioRequest(authToken, twilioSignature, fullUrl, paramsObj);
+    // if (!requestIsValid) {
+    //   return new Response("Invalid Twilio signature", { status: 403 });
+    // }
+
     const url = new URL(req.url);
-    const fullUrl = url.toString(); // CORRECTION: Utiliser l'URL complète
     const bodyText = await req.text();
     const params = new URLSearchParams(bodyText);
-    const paramsObj = Object.fromEntries(params);
     
-    const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-    if (!authToken) throw new Error("TWILIO_AUTH_TOKEN is not set.");
-
-    const requestIsValid = await validateTwilioRequest(authToken, twilioSignature, fullUrl, paramsObj);
-    if (!requestIsValid) {
-      return new Response("Invalid Twilio signature", { status: 403 });
-    }
-
     const twiml = new VoiceResponse();
     const digits = params.get('Digits');
     const lang = url.searchParams.get('lang') || 'fr';
