@@ -31,7 +31,7 @@ export const Header = ({ isTransparent = false }: HeaderProps) => {
           <img 
             src="/logo.png" 
             alt="Inglis Dominion Logo" 
-            className={cn("h-10", isTransparent && "brightness-0 invert(1)")}
+            className="h-10"
           />
         </Link>
         <nav className="hidden md:flex gap-6 text-sm font-medium items-center">

@@ -10,7 +10,7 @@ export const Hero = () => {
       <div className="absolute inset-0 z-[-1]">
         <img
           src="/hero-background.jpg"
-          alt="Place Royale, Québec"
+          alt="Paysage alpin avec chalet"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/80 to-black/50" />
@@ -32,10 +32,6 @@ export const Hero = () => {
           </Button>
         </div>
       </div>
-
-      <p className="absolute bottom-2 right-4 text-xs text-gray-300/50">
-        Photo par DEZALB
-      </p>
     </section>
   );
 };
