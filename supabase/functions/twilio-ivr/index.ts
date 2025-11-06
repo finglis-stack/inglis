@@ -87,102 +87,100 @@ serve(async (req) => {
   }
 
   try {
-    // VALIDATION TEMPORAIREMENT DÉSACTIVÉE POUR DÉBOGUER
-    // const twilioSignature = req.headers.get('x-twilio-signature');
-    // const authToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-    // if (!authToken) throw new Error("TWILIO_AUTH_TOKEN is not set.");
-    // const requestIsValid = await validateTwilioRequest(authToken, twilioSignature, fullUrl, paramsObj);
-    // if (!requestIsValid) {
-    //   return new Response("Invalid Twilio signature", { status: 403 });
-    // }
-
     const url = new URL(req.url);
     const bodyText = await req.text();
     const params = new URLSearchParams(bodyText);
-    
-    const twiml = new VoiceResponse();
     const digits = params.get('Digits');
-    const lang = url.searchParams.get('lang') || 'fr';
-    const t = translations[lang];
+    const lang = url.searchParams.get('lang');
+    const cardNumber = url.searchParams.get('cardNumber');
+    const cardId = url.searchParams.get('cardId');
+    const twiml = new VoiceResponse();
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    if (!url.searchParams.has('lang')) {
-      twiml.gather({ numDigits: 1, action: `${url.origin}${url.pathname}`, method: 'POST' }, {
-        say: { voice: t.voice, language: 'fr-CA', text: "Pour le service en français, appuyez sur 1. For service in English, press 2." }
-      });
-      twiml.redirect(`${url.origin}${url.pathname}`);
-    } else if (digits && !url.searchParams.get('cardNumber') && !url.searchParams.get('cardId')) {
-      const selectedLang = digits === '1' ? 'fr' : 'en';
-      twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${selectedLang}`);
-    } else if (!url.searchParams.get('cardNumber') && !url.searchParams.get('cardId')) {
-      twiml.gather({ finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}`, method: 'POST' }, {
-        say: { voice: t.voice, language: t.language, text: t.askForCard }
-      });
-    } else if (digits && !url.searchParams.get('cardNumber') && !url.searchParams.get('cardId')) {
-      const cardNumberRaw = digits.toUpperCase();
-      twiml.gather({ numDigits: 4, finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}&cardNumber=${cardNumberRaw}`, method: 'POST' }, {
-        say: { voice: t.voice, language: t.language, text: t.askForPin }
-      });
-    } else if (digits && url.searchParams.get('cardNumber')) {
-      const cardNumberRaw = url.searchParams.get('cardNumber');
-      const pin = digits;
-      const cardParts = { user_initials: cardNumberRaw.substring(0, 2), issuer_id: cardNumberRaw.substring(2, 8), random_letters: cardNumberRaw.substring(8, 10), unique_identifier: cardNumberRaw.substring(10, 17), check_digit: cardNumberRaw.substring(17, 18) };
-      const { data: card, error: cardError } = await supabaseAdmin.from('cards').select('id, pin').match(cardParts).single();
-      if (cardError || !card || !card.pin || !bcrypt.compareSync(pin, card.pin)) {
-        twiml.say({ voice: t.voice, language: t.language }, t.authFailed);
+    // Étape 1: Sélection de la langue
+    if (!lang) {
+      if (digits) {
+        const selectedLang = digits === '1' ? 'fr' : 'en';
+        twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${selectedLang}`);
+      } else {
+        twiml.gather({ numDigits: 1, action: `${url.origin}${url.pathname}`, method: 'POST' }, {
+          say: { voice: 'alice', language: 'fr-CA', text: "Pour le service en français, appuyez sur 1. For service in English, press 2." }
+        });
+        twiml.say({ voice: 'alice', language: 'fr-CA' }, "Nous n'avons pas reçu votre sélection. Au revoir.");
+        twiml.hangup();
+      }
+    }
+    // Étape 2: Saisie du numéro de carte et du NIP
+    else if (!cardId) {
+      const t = translations[lang];
+      if (digits && !cardNumber) {
+        const cardNumberRaw = digits.toUpperCase();
+        twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${lang}&cardNumber=${cardNumberRaw}`);
+      } else if (digits && cardNumber) {
+        const pin = digits;
+        const cardParts = { user_initials: cardNumber.substring(0, 2), issuer_id: cardNumber.substring(2, 8), random_letters: cardNumber.substring(8, 10), unique_identifier: cardNumber.substring(10, 17), check_digit: cardNumber.substring(17, 18) };
+        const { data: card, error: cardError } = await supabaseAdmin.from('cards').select('id, pin').match(cardParts).single();
+        if (cardError || !card || !card.pin || !bcrypt.compareSync(pin, card.pin)) {
+          twiml.say({ voice: t.voice, language: t.language }, t.authFailed);
+          twiml.hangup();
+        } else {
+          twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${lang}&cardId=${card.id}`);
+        }
+      } else if (cardNumber) {
+         twiml.gather({ numDigits: 4, finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}&cardNumber=${cardNumber}`, method: 'POST' }, {
+          say: { voice: t.voice, language: t.language, text: t.askForPin }
+        });
         twiml.hangup();
       } else {
-        twiml.gather({ numDigits: 1, action: `${url.origin}${url.pathname}?lang=${lang}&cardId=${card.id}`, method: 'POST' }, {
+        twiml.gather({ finishOnKey: '#', action: `${url.origin}${url.pathname}?lang=${lang}`, method: 'POST' }, {
+          say: { voice: t.voice, language: t.language, text: t.askForCard }
+        });
+        twiml.hangup();
+      }
+    }
+    // Étape 3: Menu principal (l'utilisateur est authentifié)
+    else if (cardId) {
+      const t = translations[lang];
+      if (digits) {
+        switch (digits) {
+          case '1':
+            const { data: debitAccount } = await supabaseAdmin.from('debit_accounts').select('id').eq('card_id', cardId).single();
+            const { data: creditAccount } = await supabaseAdmin.from('credit_accounts').select('id').eq('card_id', cardId).single();
+            let balanceText = '';
+            if (debitAccount) {
+              const { data, error } = await supabaseAdmin.rpc('get_debit_account_balance', { p_account_id: debitAccount.id }).single();
+              if (error) throw error;
+              const [dollars, cents] = data.available_balance.toFixed(2).split('.');
+              balanceText = `${t.balanceIs} ${dollars} ${t.dollars} ${t.and} ${cents} ${t.cents}.`;
+            } else if (creditAccount) {
+              const { data, error } = await supabaseAdmin.rpc('get_credit_account_balance', { p_account_id: creditAccount.id }).single();
+              if (error) throw error;
+              const [dollars, cents] = data.available_credit.toFixed(2).split('.');
+              balanceText = `${t.availableCreditIs} ${dollars} ${t.dollars} ${t.and} ${cents} ${t.cents}.`;
+            }
+            twiml.say({ voice: t.voice, language: t.language }, balanceText);
+            break;
+          case '2':
+            twiml.say({ voice: t.voice, language: t.language }, t.featureNotAvailable);
+            break;
+          case '9':
+            twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`);
+            break;
+          default:
+            twiml.say({ voice: t.voice, language: t.language }, t.invalidOption);
+            break;
+        }
+        twiml.redirect({ method: 'POST' }, `${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`);
+      } else {
+        twiml.gather({ numDigits: 1, action: `${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`, method: 'POST' }, {
           say: { voice: t.voice, language: t.language, text: t.menu }
         });
-        twiml.redirect(`${url.origin}${url.pathname}?lang=${lang}&cardId=${card.id}`);
+        twiml.hangup();
       }
-    } else if (digits && url.searchParams.get('cardId')) {
-      const cardId = url.searchParams.get('cardId');
-      switch (digits) {
-        case '1':
-          const { data: debitAccount } = await supabaseAdmin.from('debit_accounts').select('id').eq('card_id', cardId).single();
-          const { data: creditAccount } = await supabaseAdmin.from('credit_accounts').select('id').eq('card_id', cardId).single();
-          let balanceText = '';
-          if (debitAccount) {
-            const { data, error } = await supabaseAdmin.rpc('get_debit_account_balance', { p_account_id: debitAccount.id }).single();
-            if (error) throw error;
-            const [dollars, cents] = data.available_balance.toFixed(2).split('.');
-            balanceText = `${t.balanceIs} ${dollars} ${t.dollars} ${t.and} ${cents} ${t.cents}.`;
-          } else if (creditAccount) {
-            const { data, error } = await supabaseAdmin.rpc('get_credit_account_balance', { p_account_id: creditAccount.id }).single();
-            if (error) throw error;
-            const [dollars, cents] = data.available_credit.toFixed(2).split('.');
-            balanceText = `${t.availableCreditIs} ${dollars} ${t.dollars} ${t.and} ${cents} ${t.cents}.`;
-          }
-          twiml.say({ voice: t.voice, language: t.language }, balanceText);
-          twiml.redirect(`${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`);
-          break;
-        case '2':
-          twiml.say({ voice: t.voice, language: t.language }, t.featureNotAvailable);
-          twiml.redirect(`${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`);
-          break;
-        case '9':
-          twiml.redirect(`${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`);
-          break;
-        default:
-          twiml.say({ voice: t.voice, language: t.language }, t.invalidOption);
-          twiml.redirect(`${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`);
-          break;
-      }
-    } else if (url.searchParams.get('cardId')) {
-      const cardId = url.searchParams.get('cardId');
-      twiml.gather({ numDigits: 1, action: `${url.origin}${url.pathname}?lang=${lang}&cardId=${cardId}`, method: 'POST' }, {
-        say: { voice: t.voice, language: t.language, text: t.menu }
-      });
-      twiml.hangup();
-    } else {
-      twiml.say({ voice: t.voice, language: t.language }, t.goodbye);
-      twiml.hangup();
     }
 
     return new Response(twiml.toString(), { headers: { ...corsHeaders, 'Content-Type': 'application/xml' } });
