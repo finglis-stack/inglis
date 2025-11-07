@@ -6,6 +6,7 @@ interface CardPreviewProps {
   cardType: 'credit' | 'debit';
   cardColor: string;
   userName?: string;
+  showCardNumber?: boolean;
 }
 
 const getInitials = (name?: string): string => {
@@ -20,7 +21,7 @@ const getInitials = (name?: string): string => {
   return 'XX';
 };
 
-export const CardPreview = ({ programName, cardType, cardColor, userName }: CardPreviewProps) => {
+export const CardPreview = ({ programName, cardType, cardColor, userName, showCardNumber = true }: CardPreviewProps) => {
   const { t } = useTranslation('dashboard');
   const isLight = cardColor.includes('fde0cf'); // Simple check for rose gold
 
@@ -30,7 +31,7 @@ export const CardPreview = ({ programName, cardType, cardColor, userName }: Card
   return (
     <div 
       className={cn(
-        "rounded-xl p-6 font-mono shadow-lg flex flex-col justify-between h-56 w-full",
+        "rounded-xl p-6 font-mono shadow-lg flex flex-col justify-between w-full aspect-[1.586]",
         isLight ? 'text-gray-800' : 'text-white'
       )}
       style={{ background: cardColor }}
@@ -44,9 +45,13 @@ export const CardPreview = ({ programName, cardType, cardColor, userName }: Card
       </div>
       
       <div>
-        <div className="w-12 h-8 bg-yellow-400 rounded-md mb-2 border border-yellow-500" />
-        <p className="text-2xl tracking-widest">{initials} 000000 QZ 0000000 7</p>
-        <div className="flex justify-between text-sm mt-2">
+        {showCardNumber && (
+          <>
+            <div className="w-12 h-8 bg-yellow-400 rounded-md mb-2 border border-yellow-500" />
+            <p className="text-2xl tracking-widest">{initials} 000000 QZ 0000000 7</p>
+          </>
+        )}
+        <div className={cn("flex justify-between text-sm", showCardNumber && "mt-2")}>
           <span>{displayName}</span>
           <span>06/28</span>
         </div>

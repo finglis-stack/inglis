@@ -59,7 +59,7 @@ const PublicOnboardingLayout = () => {
   return (
     <PublicOnboardingProvider formConfig={formConfig}>
       <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4 sm:p-8">
-        <header className="w-full max-w-2xl flex justify-between items-center mb-6">
+        <header className="w-full max-w-4xl flex justify-between items-center mb-6">
           {formConfig.institution.logo_url ? (
             <img src={formConfig.institution.logo_url} alt={formConfig.institution.name} className="h-10 w-auto" />
           ) : (
@@ -67,7 +67,7 @@ const PublicOnboardingLayout = () => {
           )}
           <LanguageSwitcher />
         </header>
-        <main className="w-full max-w-2xl">
+        <main className="w-full max-w-4xl">
           <Card>
             <CardContent className="p-6 sm:p-8">
               <Outlet />

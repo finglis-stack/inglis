@@ -1,0 +1,25 @@
+{
+  "welcome": {
+    "title": "Welcome",
+    "description": "Card application with {{institutionName}}",
+    "instructions": "This form will guide you through the necessary steps to complete your application.",
+    "start_button": "Start"
+  },
+  "card_selection": {
+    "title": "Select Your Card",
+    "subtitle": "Choose the product that best suits you.",
+    "previous_button": "Previous",
+    "next_button": "Next"
+  },
+  "personal_info": {
+    "title": "Your Personal Information",
+    "subtitle": "Please fill in the fields below.",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "dob": "Date of Birth",
+    "previous_button": "Previous",
+    "next_button": "Next"
+  }
+}

@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { CardPreview } from '@/components/dashboard/CardPreview';
 import { cn } from '@/lib/utils';
 import { CheckCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Step2CardSelection = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('public-onboarding');
   const { formConfig, updateData, formData } = usePublicOnboarding();
   const [selectedProgramId, setSelectedProgramId] = useState(formData.selectedProgramId || null);
 
@@ -24,34 +26,44 @@ const Step2CardSelection = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold">Sélectionnez votre carte</h2>
-      <p className="text-muted-foreground mt-1">Choisissez le produit qui vous convient le mieux.</p>
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <h2 className="text-xl font-semibold">{t('card_selection.title')}</h2>
+      <p className="text-muted-foreground mt-1">{t('card_selection.subtitle')}</p>
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
         {formConfig.cardPrograms.map((program: any) => (
           <div 
             key={program.id} 
-            className={cn(
-              "relative rounded-xl cursor-pointer border-2 transition-all",
-              selectedProgramId === program.id ? "border-primary ring-2 ring-primary" : "border-transparent hover:border-gray-300"
-            )}
-            onClick={() => handleSelect(program.id)}
+            className="space-y-3"
           >
-            <CardPreview 
-              programName={program.program_name}
-              cardType={program.card_type}
-              cardColor={program.card_color}
-            />
-            {selectedProgramId === program.id && (
-              <div className="absolute top-2 right-2 bg-white rounded-full p-1">
-                <CheckCircle className="h-6 w-6 text-primary" />
-              </div>
-            )}
+            <div 
+              className={cn(
+                "relative rounded-xl cursor-pointer border-2 transition-all",
+                selectedProgramId === program.id ? "border-primary ring-2 ring-primary" : "border-transparent hover:border-gray-300"
+              )}
+              onClick={() => handleSelect(program.id)}
+            >
+              <CardPreview 
+                programName={program.program_name}
+                cardType={program.card_type}
+                cardColor={program.card_color}
+                showCardNumber={false}
+                userName={formData.firstName ? `${formData.firstName} ${formData.lastName}` : undefined}
+              />
+              {selectedProgramId === program.id && (
+                <div className="absolute top-2 right-2 bg-white rounded-full p-1">
+                  <CheckCircle className="h-6 w-6 text-primary" />
+                </div>
+              )}
+            </div>
+            <div className="text-center">
+              <h3 className="font-semibold">{program.program_name}</h3>
+              <p className="text-sm text-muted-foreground capitalize">{program.card_type}</p>
+            </div>
           </div>
         ))}
       </div>
       <div className="flex justify-between mt-8">
-        <Button variant="outline" onClick={() => navigate('..')}>Précédent</Button>
-        <Button onClick={handleNext} disabled={!selectedProgramId}>Suivant</Button>
+        <Button variant="outline" onClick={() => navigate('..')}>{t('card_selection.previous_button')}</Button>
+        <Button onClick={handleNext} disabled={!selectedProgramId}>{t('card_selection.next_button')}</Button>
       </div>
     </div>
   );

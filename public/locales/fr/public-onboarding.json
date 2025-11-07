@@ -1,0 +1,25 @@
+{
+  "welcome": {
+    "title": "Bienvenue",
+    "description": "Demande de carte auprès de {{institutionName}}",
+    "instructions": "Ce formulaire vous guidera à travers les étapes nécessaires pour compléter votre demande.",
+    "start_button": "Commencer"
+  },
+  "card_selection": {
+    "title": "Sélectionnez votre carte",
+    "subtitle": "Choisissez le produit qui vous convient le mieux.",
+    "previous_button": "Précédent",
+    "next_button": "Suivant"
+  },
+  "personal_info": {
+    "title": "Vos informations personnelles",
+    "subtitle": "Veuillez remplir les champs ci-dessous.",
+    "first_name": "Prénom",
+    "last_name": "Nom de famille",
+    "email": "Adresse e-mail",
+    "phone": "Numéro de téléphone",
+    "dob": "Date de naissance",
+    "previous_button": "Précédent",
+    "next_button": "Suivant"
+  }
+}
