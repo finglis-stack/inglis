@@ -21,21 +21,33 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 1. Valider le formulaire et récupérer sa configuration complète
+    // 1. Valider le formulaire
     const { data: form, error: formError } = await supabaseAdmin
       .from('onboarding_forms')
-      .select('*, institutions(name, logo_url)')
+      .select('*')
       .eq('id', formId)
       .single();
 
     if (formError || !form) {
+      console.error('Error fetching form:', formError);
       throw new Error("Ce formulaire d'intégration n'est pas valide ou a expiré.");
     }
     if (!form.is_active) {
       throw new Error("Ce formulaire n'est plus actif.");
     }
 
-    // 2. Si des programmes de cartes sont liés, récupérer leurs détails
+    // 2. Récupérer les détails de l'institution
+    const { data: institution, error: institutionError } = await supabaseAdmin
+      .from('institutions')
+      .select('name, logo_url')
+      .eq('id', form.institution_id)
+      .single();
+    
+    if (institutionError || !institution) {
+      throw new Error("L'institution associée à ce formulaire est introuvable.");
+    }
+
+    // 3. Si des programmes de cartes sont liés, récupérer leurs détails
     let cardPrograms = [];
     if (form.linked_card_program_ids && form.linked_card_program_ids.length > 0) {
       const { data: programsData, error: programsError } = await supabaseAdmin
@@ -47,7 +59,7 @@ serve(async (req) => {
       cardPrograms = programsData;
     }
 
-    // 3. Construire la réponse avec toutes les informations nécessaires
+    // 4. Construire la réponse
     const responseData = {
       formDetails: {
         name: form.name,
@@ -56,7 +68,7 @@ serve(async (req) => {
         credit_limit_type: form.credit_limit_type,
         fixed_credit_limit: form.fixed_credit_limit,
       },
-      institution: form.institutions,
+      institution: institution,
       cardPrograms: cardPrograms,
     };
 

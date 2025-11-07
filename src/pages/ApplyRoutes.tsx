@@ -1,5 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import PublicOnboardingLayout from './public-onboarding/PublicOnboardingLayout';
+import Step1Welcome from './public-onboarding/Step1Welcome';
+import Step2CardSelection from './public-onboarding/Step2CardSelection';
 import ApplyIdPrompt from './ApplyIdPrompt';
 import NotFound from '@/pages/NotFound';
 
@@ -12,7 +14,9 @@ const ApplyRoutes = () => {
       <Routes>
         <Route path="/" element={<ApplyIdPrompt />} />
         <Route path="/apply/:formId" element={<PublicOnboardingLayout />}>
-          {/* Les étapes du formulaire seront ajoutées ici */}
+          <Route index element={<Step1Welcome />} />
+          <Route path="step-2" element={<Step2CardSelection />} />
+          {/* Les autres étapes seront ajoutées ici */}
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -23,7 +27,9 @@ const ApplyRoutes = () => {
   return (
     <Routes>
       <Route path="/:formId" element={<PublicOnboardingLayout />}>
-        {/* Les étapes du formulaire seront ajoutées ici */}
+        <Route index element={<Step1Welcome />} />
+        <Route path="step-2" element={<Step2CardSelection />} />
+        {/* Les autres étapes seront ajoutées ici */}
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
