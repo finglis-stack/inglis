@@ -9,12 +9,16 @@ const CreditBureau = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <Header />
+      <Header isTransparent />
       <main className="flex-grow">
-        <section className="py-20 text-center bg-white">
-          <div className="container px-4 md:px-6">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{t('hero.title')}</h1>
-            <p className="mt-4 max-w-3xl mx-auto text-lg text-muted-foreground">{t('hero.subtitle')}</p>
+        <section 
+          className="relative py-24 md:py-40 lg:py-48 text-center text-white overflow-hidden bg-cover bg-center"
+          style={{ backgroundImage: "url('/credit-bureau-hero.jpg')" }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/70 to-black/40" />
+          <div className="container relative px-4 md:px-6">
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter text-shadow-lg">{t('hero.title')}</h1>
+            <p className="mx-auto mt-6 max-w-3xl text-lg md:text-xl text-gray-200 text-shadow">{t('hero.subtitle')}</p>
           </div>
         </section>
 
