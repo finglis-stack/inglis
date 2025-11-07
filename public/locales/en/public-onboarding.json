@@ -19,6 +19,10 @@
     "email": "Email Address",
     "phone": "Phone Number",
     "dob": "Date of Birth",
+    "address": "Address",
+    "address_placeholder": "Start typing your address...",
+    "change_address": "Change address",
+    "address_required": "Please select a valid address.",
     "previous_button": "Previous",
     "next_button": "Next"
   },

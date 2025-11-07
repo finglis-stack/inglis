@@ -19,6 +19,10 @@
     "email": "Adresse e-mail",
     "phone": "Numéro de téléphone",
     "dob": "Date de naissance",
+    "address": "Adresse",
+    "address_placeholder": "Commencez à taper votre adresse...",
+    "change_address": "Modifier l'adresse",
+    "address_required": "Veuillez sélectionner une adresse valide.",
     "previous_button": "Précédent",
     "next_button": "Suivant"
   },

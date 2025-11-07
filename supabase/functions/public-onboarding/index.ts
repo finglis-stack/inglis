@@ -37,10 +37,11 @@ serve(async (req) => {
     const recordToInsert = {
       institution_id: form.institution_id,
       type: 'personal',
-      full_name: profileData.fullName,
+      full_name: `${profileData.firstName} ${profileData.lastName}`,
       email: profileData.email,
       phone: profileData.phone,
       dob: profileData.dob,
+      address: profileData.address, // Ajout de l'objet d'adresse
       status: 'pending', // Le profil est en attente de validation par l'institution
     };
 

@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from 'react-i18next';
+import { AddressAutocomplete } from '@/components/public-onboarding/AddressAutocomplete';
+import { showError } from '@/utils/toast';
 
 const Step3PersonalInfo = () => {
   const navigate = useNavigate();
@@ -17,6 +19,7 @@ const Step3PersonalInfo = () => {
     phone: formData.phone || '',
     dob: formData.dob || '',
   });
+  const [address, setAddress] = useState(formData.address || null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalData({ ...localData, [e.target.id]: e.target.value });
@@ -24,7 +27,11 @@ const Step3PersonalInfo = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateData(localData);
+    if (!address) {
+      showError(t('personal_info.address_required'));
+      return;
+    }
+    updateData({ ...localData, address });
     alert("Prochaine étape à implémenter !");
   };
 
@@ -57,6 +64,10 @@ const Step3PersonalInfo = () => {
         <div className="grid gap-2">
           <Label htmlFor="dob">{t('personal_info.dob')}</Label>
           <Input id="dob" type="date" value={localData.dob} onChange={handleChange} required />
+        </div>
+        <div className="grid gap-2">
+          <Label>{t('personal_info.address')}</Label>
+          <AddressAutocomplete initialAddress={address} onAddressSelect={setAddress} />
         </div>
       </div>
 
