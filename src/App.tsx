@@ -7,8 +7,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense } from 'react';
 import { BrandingProvider } from '@/context/BrandingContext';
 
-// --- Special Localhost Chooser ---
+// --- App Chooser & Routers ---
 import LocalhostChooser from '@/pages/LocalhostChooser';
+import ApplyRoutes from '@/pages/ApplyRoutes';
 
 // --- MainApp Imports ---
 import Index from "@/pages/Index";
@@ -73,7 +74,6 @@ import CardIssuance from './pages/CardIssuance';
 import FraudPrevention from './pages/FraudPrevention';
 import CreditBureau from './pages/CreditBureau';
 import Pricing from './pages/Pricing';
-import PublicOnboardingForm from './pages/PublicOnboardingForm';
 
 const FraudNetwork3D = lazy(() => import('./pages/dashboard/FraudNetwork3D'));
 
@@ -111,7 +111,6 @@ const MainAppRoutes = () => (
     <Route path="/confirm-credit-pull/:token" element={<ConfirmCreditPull />} />
     <Route element={<HostedFormLayout />}><Route path="/checkout/v1/form" element={<HostedPaymentForm />} /></Route>
     <Route path="/pay/:checkoutId" element={<PublicCheckoutPage />} />
-    <Route path="/apply/:formId" element={<PublicOnboardingForm />} />
     <Route path="/onboarding/welcome" element={<Welcome />} />
     <Route path="/onboarding/create-account" element={<CreateAccount />} />
     <Route path="/onboarding/institution-info" element={<InstitutionInfo />} />
@@ -165,7 +164,7 @@ const Q12xAppRoutes = () => (
 const AppContent = () => {
   const [localhostApp, setLocalhostApp] = useState(() => localStorage.getItem('dyad-app-choice'));
 
-  const handleAppChoice = (choice: 'main' | 'q12x') => {
+  const handleAppChoice = (choice: 'main' | 'q12x' | 'apply') => {
     localStorage.setItem('dyad-app-choice', choice);
     setLocalhostApp(choice);
   };
@@ -175,11 +174,16 @@ const AppContent = () => {
   if (hostname === 'localhost') {
     if (localhostApp === 'main') return <MainAppRoutes />;
     if (localhostApp === 'q12x') return <Q12xAppRoutes />;
+    if (localhostApp === 'apply') return <ApplyRoutes />;
     return <LocalhostChooser onChoose={handleAppChoice} />;
   }
 
   const isQ12x = hostname.includes('q12x');
-  return isQ12x ? <Q12xAppRoutes /> : <MainAppRoutes />;
+  const isApply = hostname.includes('apply');
+
+  if (isQ12x) return <Q12xAppRoutes />;
+  if (isApply) return <ApplyRoutes />;
+  return <MainAppRoutes />;
 };
 
 const App = () => {
