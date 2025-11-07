@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { CreditCard, LayoutDashboard, Users, ArrowRightLeft, Settings, FileText, Network } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { useBranding } from '@/context/BrandingContext';
 
 interface SidebarProps {
   className?: string;
@@ -10,6 +11,7 @@ interface SidebarProps {
 
 export const Sidebar = ({ className, onLinkClick }: SidebarProps) => {
   const { t } = useTranslation('dashboard');
+  const { logoUrl } = useBranding();
 
   const navItems = [
     { to: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: t('sidebar.dashboard') },
@@ -25,7 +27,11 @@ export const Sidebar = ({ className, onLinkClick }: SidebarProps) => {
     <aside className={cn("w-64 flex-shrink-0 bg-gray-100 p-4 flex flex-col border-r", className)}>
       <div className="mb-8">
         <NavLink to="/">
-          <img src="/logo-dark.png" alt="Inglis Dominium Logo" className="h-10" />
+          <img 
+            src={logoUrl || "/logo-dark.png"} 
+            alt="Logo" 
+            className="h-10 max-w-full"
+          />
         </NavLink>
       </div>
       <nav className="flex flex-col gap-2">

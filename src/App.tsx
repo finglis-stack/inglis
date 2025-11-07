@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense } from 'react';
+import { BrandingProvider } from '@/context/BrandingContext';
 
 // --- Special Localhost Chooser ---
 import LocalhostChooser from '@/pages/LocalhostChooser';
@@ -63,6 +64,7 @@ import Step3Review from "@/pages/dashboard/accounts/new-transaction/Step3Review"
 import TransactionDetails from "@/pages/dashboard/accounts/TransactionDetails";
 import PendingAuthorizations from "@/pages/dashboard/accounts/PendingAuthorizations";
 import ApiSettings from "@/pages/dashboard/settings/ApiSettings";
+import BrandingSettings from "@/pages/dashboard/settings/BrandingSettings";
 import HostedPaymentForm from "@/pages/HostedPaymentForm";
 import HostedFormLayout from '@/pages/HostedFormLayout';
 import RiskAnalysisDetails from '@/pages/dashboard/risk/RiskAnalysisDetails';
@@ -71,6 +73,7 @@ import CardIssuance from './pages/CardIssuance';
 import FraudPrevention from './pages/FraudPrevention';
 import CreditBureau from './pages/CreditBureau';
 import Pricing from './pages/Pricing';
+import PublicOnboardingForm from './pages/PublicOnboardingForm';
 
 const FraudNetwork3D = lazy(() => import('./pages/dashboard/FraudNetwork3D'));
 
@@ -108,6 +111,7 @@ const MainAppRoutes = () => (
     <Route path="/confirm-credit-pull/:token" element={<ConfirmCreditPull />} />
     <Route element={<HostedFormLayout />}><Route path="/checkout/v1/form" element={<HostedPaymentForm />} /></Route>
     <Route path="/pay/:checkoutId" element={<PublicCheckoutPage />} />
+    <Route path="/apply/:formId" element={<PublicOnboardingForm />} />
     <Route path="/onboarding/welcome" element={<Welcome />} />
     <Route path="/onboarding/create-account" element={<CreateAccount />} />
     <Route path="/onboarding/institution-info" element={<InstitutionInfo />} />
@@ -122,6 +126,7 @@ const MainAppRoutes = () => (
       <Route path="settings" element={<Settings />} />
       <Route path="settings/card-programs" element={<CardPrograms />} />
       <Route path="settings/api" element={<ApiSettings />} />
+      <Route path="settings/branding" element={<BrandingSettings />} />
       <Route path="users" element={<Users />} />
       <Route path="users/profile/:id" element={<UserProfile />} />
       <Route path="fraud-analytics" element={<FraudAnalytics />} />
@@ -181,11 +186,13 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider delayDuration={200}>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
+        <BrandingProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </BrandingProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
