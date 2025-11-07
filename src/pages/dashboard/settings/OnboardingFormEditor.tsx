@@ -81,7 +81,7 @@ const OnboardingFormEditor = () => {
 
       let imageUrl = formData.background_image_url;
       if (imageFile) {
-        const filePath = `public/onboarding_forms/${formId || crypto.randomUUID()}/background-${Date.now()}`;
+        const filePath = `public/${institution.id}/onboarding_forms/${formId || crypto.randomUUID()}/background-${Date.now()}`;
         const { error: uploadError } = await supabase.storage.from('logos').upload(filePath, imageFile, { cacheControl: '3600', upsert: true });
         if (uploadError) throw uploadError;
         const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(filePath);
