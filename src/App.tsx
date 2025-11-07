@@ -65,7 +65,7 @@ import Step3Review from "@/pages/dashboard/accounts/new-transaction/Step3Review"
 import TransactionDetails from "@/pages/dashboard/accounts/TransactionDetails";
 import PendingAuthorizations from "@/pages/dashboard/accounts/PendingAuthorizations";
 import ApiSettings from "@/pages/dashboard/settings/ApiSettings";
-import BrandingSettings from "@/pages/dashboard/settings/BrandingSettings";
+import OnboardingFormsSettings from "@/pages/dashboard/settings/OnboardingFormsSettings";
 import HostedPaymentForm from "@/pages/HostedPaymentForm";
 import HostedFormLayout from '@/pages/HostedFormLayout';
 import RiskAnalysisDetails from '@/pages/dashboard/risk/RiskAnalysisDetails';
@@ -125,7 +125,7 @@ const MainAppRoutes = () => (
       <Route path="settings" element={<Settings />} />
       <Route path="settings/card-programs" element={<CardPrograms />} />
       <Route path="settings/api" element={<ApiSettings />} />
-      <Route path="settings/branding" element={<BrandingSettings />} />
+      <Route path="settings/forms" element={<OnboardingFormsSettings />} />
       <Route path="users" element={<Users />} />
       <Route path="users/profile/:id" element={<UserProfile />} />
       <Route path="fraud-analytics" element={<FraudAnalytics />} />

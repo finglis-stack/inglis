@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CreditCard, KeyRound, Paintbrush } from 'lucide-react';
+import { CreditCard, KeyRound, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const Settings = () => {
@@ -33,14 +33,14 @@ const Settings = () => {
             </CardHeader>
           </Card>
         </Link>
-        <Link to="/dashboard/settings/branding">
+        <Link to="/dashboard/settings/forms">
           <Card className="hover:bg-gray-50 transition-colors h-full">
             <CardHeader className="flex flex-row items-center justify-between">
               <div className="space-y-1">
-                <CardTitle>Branding & Site Web</CardTitle>
-                <CardDescription>Personnalisez l'apparence et créez des formulaires publics.</CardDescription>
+                <CardTitle>Formulaires d'Intégration</CardTitle>
+                <CardDescription>Gérez vos formulaires publics pour l'acquisition de clients.</CardDescription>
               </div>
-              <Paintbrush className="h-8 w-8 text-muted-foreground" />
+              <FileText className="h-8 w-8 text-muted-foreground" />
             </CardHeader>
           </Card>
         </Link>
