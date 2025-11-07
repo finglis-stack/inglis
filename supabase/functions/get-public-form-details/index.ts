@@ -21,30 +21,46 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 1. Valider le formulaire et vérifier s'il est actif
+    // 1. Valider le formulaire et récupérer sa configuration complète
     const { data: form, error: formError } = await supabaseAdmin
       .from('onboarding_forms')
-      .select('institution_id, is_active')
+      .select('*, institutions(name, logo_url)')
       .eq('id', formId)
       .single();
 
-    if (formError || !form || !form.is_active) {
+    if (formError || !form) {
       throw new Error("Ce formulaire d'intégration n'est pas valide ou a expiré.");
     }
-
-    // 2. Récupérer les détails publics de l'institution
-    const { data: institution, error: institutionError } = await supabaseAdmin
-      .from('institutions')
-      .select('name, logo_url')
-      .eq('id', form.institution_id)
-      .single();
-
-    if (institutionError || !institution) {
-      throw new Error("Impossible de récupérer les détails de l'institution associée à ce formulaire.");
+    if (!form.is_active) {
+      throw new Error("Ce formulaire n'est plus actif.");
     }
 
-    // 3. Retourner uniquement les données publiques nécessaires
-    return new Response(JSON.stringify(institution), {
+    // 2. Si des programmes de cartes sont liés, récupérer leurs détails
+    let cardPrograms = [];
+    if (form.linked_card_program_ids && form.linked_card_program_ids.length > 0) {
+      const { data: programsData, error: programsError } = await supabaseAdmin
+        .from('card_programs')
+        .select('id, program_name, card_type, card_color')
+        .in('id', form.linked_card_program_ids);
+      
+      if (programsError) throw programsError;
+      cardPrograms = programsData;
+    }
+
+    // 3. Construire la réponse avec toutes les informations nécessaires
+    const responseData = {
+      formDetails: {
+        name: form.name,
+        description: form.description,
+        is_credit_bureau_enabled: form.is_credit_bureau_enabled,
+        credit_limit_type: form.credit_limit_type,
+        fixed_credit_limit: form.fixed_credit_limit,
+      },
+      institution: form.institutions,
+      cardPrograms: cardPrograms,
+    };
+
+    return new Response(JSON.stringify(responseData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

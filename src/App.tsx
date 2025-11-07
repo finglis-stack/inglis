@@ -68,6 +68,7 @@ import ApiSettings from "@/pages/dashboard/settings/ApiSettings";
 import OnboardingFormsSettings from "@/pages/dashboard/settings/OnboardingFormsSettings";
 import NewOnboardingForm from "@/pages/dashboard/settings/NewOnboardingForm";
 import OnboardingFormLayout from "@/pages/dashboard/settings/OnboardingFormLayout";
+import BrandingSettings from "@/pages/dashboard/settings/BrandingSettings";
 import HostedPaymentForm from "@/pages/HostedPaymentForm";
 import HostedFormLayout from '@/pages/HostedFormLayout';
 import RiskAnalysisDetails from '@/pages/dashboard/risk/RiskAnalysisDetails';
@@ -128,6 +129,7 @@ const MainAppRoutes = () => (
       <Route path="settings/card-programs" element={<CardPrograms />} />
       <Route path="settings/api" element={<ApiSettings />} />
       <Route path="settings/forms" element={<OnboardingFormsSettings />} />
+      <Route path="settings/branding" element={<BrandingSettings />} />
       <Route path="users" element={<Users />} />
       <Route path="users/profile/:id" element={<UserProfile />} />
       <Route path="fraud-analytics" element={<FraudAnalytics />} />

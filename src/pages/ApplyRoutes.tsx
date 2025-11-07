@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import PublicOnboardingForm from '@/pages/PublicOnboardingForm';
+import PublicOnboardingLayout from './public-onboarding/PublicOnboardingLayout';
 import ApplyIdPrompt from './ApplyIdPrompt';
 import NotFound from '@/pages/NotFound';
 
@@ -11,7 +11,9 @@ const ApplyRoutes = () => {
     return (
       <Routes>
         <Route path="/" element={<ApplyIdPrompt />} />
-        <Route path="/apply/:formId" element={<PublicOnboardingForm />} />
+        <Route path="/apply/:formId" element={<PublicOnboardingLayout />}>
+          {/* Les étapes du formulaire seront ajoutées ici */}
+        </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>
     );
@@ -20,7 +22,9 @@ const ApplyRoutes = () => {
   // Logique pour la production sur le sous-domaine apply.*
   return (
     <Routes>
-      <Route path="/:formId" element={<PublicOnboardingForm />} />
+      <Route path="/:formId" element={<PublicOnboardingLayout />}>
+        {/* Les étapes du formulaire seront ajoutées ici */}
+      </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
