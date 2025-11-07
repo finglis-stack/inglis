@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import PublicOnboardingForm from '@/pages/PublicOnboardingForm';
-import ApplyIdPrompt from '@/pages/ApplyIdPrompt';
+import ApplyIdPrompt from './ApplyIdPrompt';
 import NotFound from '@/pages/NotFound';
 
 const ApplyRoutes = () => {
