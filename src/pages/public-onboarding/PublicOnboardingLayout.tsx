@@ -73,6 +73,8 @@ const PublicOnboardingLayout = () => {
     );
   }
 
+  const backgroundImage = formConfig?.formDetails?.background_image_url || '/onboarding-image.jpg';
+
   return (
     <PublicOnboardingProvider formConfig={formConfig}>
       <div className="min-h-screen flex">
@@ -86,14 +88,12 @@ const PublicOnboardingLayout = () => {
             <LanguageSwitcher />
           </header>
           <main className="w-full max-w-2xl flex-grow flex items-center">
-            <Card className="w-full">
-              <CardContent className="p-6 sm:p-8">
-                <Outlet />
-              </CardContent>
-            </Card>
+            <div className="w-full">
+              <Outlet />
+            </div>
           </main>
         </div>
-        <div className="hidden lg:block lg:w-1/2 bg-cover bg-center relative" style={{ backgroundImage: "url('/onboarding-image.jpg')" }}>
+        <div className="hidden lg:block lg:w-1/2 bg-cover bg-center relative" style={{ backgroundImage: `url(${backgroundImage})` }}>
           <div className="absolute inset-0 bg-black/30" />
           <OnboardingStepIndicator steps={steps} currentStep={currentStep} />
         </div>

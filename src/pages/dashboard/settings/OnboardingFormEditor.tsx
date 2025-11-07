@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,11 +10,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { showError, showSuccess } from '@/utils/toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const NewOnboardingForm = () => {
+const OnboardingFormEditor = () => {
   const navigate = useNavigate();
+  const { formId } = useParams();
   const [loading, setLoading] = useState(false);
   const [cardPrograms, setCardPrograms] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -24,42 +25,48 @@ const NewOnboardingForm = () => {
     linked_card_program_ids: [] as string[],
     credit_limit_type: 'dynamic',
     fixed_credit_limit: '',
+    background_image_url: '',
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPrograms = async () => {
       const { data, error } = await supabase.from('card_programs').select('id, program_name');
-      if (error) {
-        showError("Erreur lors de la récupération des programmes de cartes.");
-      } else {
-        setCardPrograms(data);
-      }
+      if (error) showError("Erreur lors de la récupération des programmes de cartes.");
+      else setCardPrograms(data);
     };
     fetchPrograms();
-  }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
-  };
+    if (formId) {
+      const fetchForm = async () => {
+        const { data, error } = await supabase.from('onboarding_forms').select('*').eq('id', formId).single();
+        if (error) {
+          showError("Formulaire non trouvé.");
+          navigate('/dashboard/settings/forms');
+        } else {
+          setFormData({
+            name: data.name || '',
+            description: data.description || '',
+            is_credit_bureau_enabled: data.is_credit_bureau_enabled || false,
+            linked_card_program_ids: data.linked_card_program_ids || [],
+            credit_limit_type: data.credit_limit_type || 'dynamic',
+            fixed_credit_limit: data.fixed_credit_limit || '',
+            background_image_url: data.background_image_url || '',
+          });
+          setImagePreview(data.background_image_url);
+        }
+      };
+      fetchForm();
+    }
+  }, [formId, navigate]);
 
-  const handleSwitchChange = (id: string, checked: boolean) => {
-    setFormData(prev => ({ ...prev, [id]: checked }));
-  };
-
-  const handleRadioChange = (value: string) => {
-    setFormData(prev => ({ ...prev, credit_limit_type: value }));
-  };
-
-  const handleProgramSelection = (programId: string, checked: boolean) => {
-    setFormData(prev => {
-      const currentIds = prev.linked_card_program_ids;
-      if (checked) {
-        return { ...prev, linked_card_program_ids: [...currentIds, programId] };
-      } else {
-        return { ...prev, linked_card_program_ids: currentIds.filter(id => id !== programId) };
-      }
-    });
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,14 +76,19 @@ const NewOnboardingForm = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Utilisateur non authentifié.");
 
-      const { data: institution, error: institutionError } = await supabase
-        .from('institutions')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      const { data: institution, error: institutionError } = await supabase.from('institutions').select('id').eq('user_id', user.id).single();
       if (institutionError) throw institutionError;
 
-      const { error: insertError } = await supabase.from('onboarding_forms').insert({
+      let imageUrl = formData.background_image_url;
+      if (imageFile) {
+        const filePath = `public/onboarding_forms/${formId || crypto.randomUUID()}/background-${Date.now()}`;
+        const { error: uploadError } = await supabase.storage.from('logos').upload(filePath, imageFile, { cacheControl: '3600', upsert: true });
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(filePath);
+        imageUrl = publicUrl;
+      }
+
+      const dataToSave = {
         institution_id: institution.id,
         name: formData.name,
         description: formData.description,
@@ -84,11 +96,18 @@ const NewOnboardingForm = () => {
         linked_card_program_ids: formData.linked_card_program_ids,
         credit_limit_type: formData.credit_limit_type,
         fixed_credit_limit: formData.credit_limit_type === 'fixed' ? parseFloat(formData.fixed_credit_limit) : null,
-      });
+        background_image_url: imageUrl,
+      };
 
-      if (insertError) throw insertError;
-
-      showSuccess("Formulaire d'intégration créé avec succès !");
+      if (formId) {
+        const { error } = await supabase.from('onboarding_forms').update(dataToSave).eq('id', formId);
+        if (error) throw error;
+        showSuccess("Formulaire mis à jour avec succès !");
+      } else {
+        const { error } = await supabase.from('onboarding_forms').insert(dataToSave);
+        if (error) throw error;
+        showSuccess("Formulaire créé avec succès !");
+      }
       navigate('/dashboard/settings/forms');
     } catch (error) {
       showError(error.message);
@@ -97,10 +116,22 @@ const NewOnboardingForm = () => {
     }
   };
 
+  // ... (autres handlers inchangés)
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
+  const handleSwitchChange = (id: string, checked: boolean) => setFormData(prev => ({ ...prev, [id]: checked }));
+  const handleRadioChange = (value: string) => setFormData(prev => ({ ...prev, credit_limit_type: value }));
+  const handleProgramSelection = (programId: string, checked: boolean) => {
+    setFormData(prev => {
+      const currentIds = prev.linked_card_program_ids;
+      if (checked) return { ...prev, linked_card_program_ids: [...currentIds, programId] };
+      else return { ...prev, linked_card_program_ids: currentIds.filter(id => id !== programId) };
+    });
+  };
+
   return (
     <Card className="max-w-3xl mx-auto">
       <CardHeader>
-        <CardTitle>Créer un Formulaire d'Intégration</CardTitle>
+        <CardTitle>{formId ? "Modifier le Formulaire" : "Créer un Formulaire"}</CardTitle>
         <CardDescription>Configurez les modules et les options pour votre formulaire de demande de carte public.</CardDescription>
       </CardHeader>
       <CardContent>
@@ -114,8 +145,14 @@ const NewOnboardingForm = () => {
               <Label htmlFor="description">Description (optionnel)</Label>
               <Textarea id="description" value={formData.description} onChange={handleChange} />
             </div>
+            <div className="grid gap-2">
+              <Label>Image de fond</Label>
+              <div className="flex items-center gap-4">
+                {imagePreview && <img src={imagePreview} alt="Aperçu" className="h-16 w-32 object-cover rounded-md bg-gray-100 p-1" />}
+                <Input id="logo-upload" type="file" accept="image/*" onChange={handleFileChange} className="max-w-xs" />
+              </div>
+            </div>
           </div>
-
           <div className="space-y-4">
             <h3 className="font-semibold">Modules</h3>
             <div className="flex items-center justify-between p-4 border rounded-md">
@@ -126,7 +163,6 @@ const NewOnboardingForm = () => {
               <Switch id="is_credit_bureau_enabled" checked={formData.is_credit_bureau_enabled} onCheckedChange={(checked) => handleSwitchChange('is_credit_bureau_enabled', checked)} />
             </div>
           </div>
-
           <div className="space-y-4">
             <h3 className="font-semibold">Programmes de Cartes</h3>
             <p className="text-sm text-muted-foreground">Sélectionnez les programmes de cartes qui seront proposés dans ce formulaire.</p>
@@ -134,28 +170,18 @@ const NewOnboardingForm = () => {
               <div className="space-y-2">
                 {cardPrograms.map(program => (
                   <div key={program.id} className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={`program-${program.id}`} 
-                      onCheckedChange={(checked) => handleProgramSelection(program.id, checked as boolean)}
-                    />
+                    <Checkbox id={`program-${program.id}`} checked={formData.linked_card_program_ids.includes(program.id)} onCheckedChange={(checked) => handleProgramSelection(program.id, checked as boolean)} />
                     <Label htmlFor={`program-${program.id}`}>{program.program_name}</Label>
                   </div>
                 ))}
               </div>
             </ScrollArea>
           </div>
-
           <div className="space-y-4">
             <h3 className="font-semibold">Limite de Crédit</h3>
             <RadioGroup value={formData.credit_limit_type} onValueChange={handleRadioChange}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="dynamic" id="dynamic" />
-                <Label htmlFor="dynamic">Dynamique (basée sur le dossier de crédit)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="fixed" id="fixed" />
-                <Label htmlFor="fixed">Fixe</Label>
-              </div>
+              <div className="flex items-center space-x-2"><RadioGroupItem value="dynamic" id="dynamic" /><Label htmlFor="dynamic">Dynamique (basée sur le dossier de crédit)</Label></div>
+              <div className="flex items-center space-x-2"><RadioGroupItem value="fixed" id="fixed" /><Label htmlFor="fixed">Fixe</Label></div>
             </RadioGroup>
             {formData.credit_limit_type === 'fixed' && (
               <div className="grid gap-2 pl-6 pt-2">
@@ -164,11 +190,10 @@ const NewOnboardingForm = () => {
               </div>
             )}
           </div>
-
           <div className="flex justify-end">
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Créer le formulaire
+              {formId ? "Sauvegarder les modifications" : "Créer le formulaire"}
             </Button>
           </div>
         </form>
@@ -177,4 +202,4 @@ const NewOnboardingForm = () => {
   );
 };
 
-export default NewOnboardingForm;
+export default OnboardingFormEditor;

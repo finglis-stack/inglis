@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Copy, Check, Trash2, Loader2 } from 'lucide-react';
+import { PlusCircle, Copy, Check, Trash2, Loader2, Edit } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { showError, showSuccess } from '@/utils/toast';
 import { Badge } from '@/components/ui/badge';
@@ -99,6 +99,11 @@ const OnboardingFormsSettings = () => {
                       </Button>
                     </TableCell>
                     <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" asChild>
+                        <Link to={`/dashboard/settings/forms/edit/${form.id}`}>
+                          <Edit className="h-4 w-4" />
+                        </Link>
+                      </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" disabled={deletingId === form.id}>

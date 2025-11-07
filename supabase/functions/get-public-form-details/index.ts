@@ -67,6 +67,7 @@ serve(async (req) => {
         is_credit_bureau_enabled: form.is_credit_bureau_enabled,
         credit_limit_type: form.credit_limit_type,
         fixed_credit_limit: form.fixed_credit_limit,
+        background_image_url: form.background_image_url,
       },
       institution: institution,
       cardPrograms: cardPrograms,
