@@ -1,17 +1,34 @@
 import { useState, useEffect } from 'react';
-import { useParams, Outlet, useNavigate } from 'react-router-dom';
+import { useParams, Outlet, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { PublicOnboardingProvider } from '@/context/PublicOnboardingContext';
+import { OnboardingStepIndicator } from '@/components/OnboardingStepIndicator';
+import { useTranslation } from 'react-i18next';
 
 const PublicOnboardingLayout = () => {
   const { formId } = useParams();
-  const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation('public-onboarding');
   const [formConfig, setFormConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const steps = [
+    t('steps.welcome'),
+    t('steps.card_selection'),
+    t('steps.personal_info'),
+    t('steps.review'),
+    t('steps.confirmation'),
+  ];
+
+  let currentStep = 1;
+  if (location.pathname.includes('step-2')) currentStep = 2;
+  else if (location.pathname.includes('step-3')) currentStep = 3;
+  else if (location.pathname.includes('step-4')) currentStep = 4;
+  else if (location.pathname.includes('step-5')) currentStep = 5;
 
   useEffect(() => {
     const fetchFormDetails = async () => {
@@ -58,22 +75,28 @@ const PublicOnboardingLayout = () => {
 
   return (
     <PublicOnboardingProvider formConfig={formConfig}>
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center p-4 sm:p-8">
-        <header className="w-full max-w-4xl flex justify-between items-center mb-6">
-          {formConfig.institution.logo_url ? (
-            <img src={formConfig.institution.logo_url} alt={formConfig.institution.name} className="h-10 w-auto" />
-          ) : (
-            <h1 className="text-xl font-bold">{formConfig.institution.name}</h1>
-          )}
-          <LanguageSwitcher />
-        </header>
-        <main className="w-full max-w-4xl">
-          <Card>
-            <CardContent className="p-6 sm:p-8">
-              <Outlet />
-            </CardContent>
-          </Card>
-        </main>
+      <div className="min-h-screen flex">
+        <div className="w-full lg:w-1/2 flex flex-col items-center p-4 sm:p-8">
+          <header className="w-full max-w-2xl flex justify-between items-center mb-6">
+            {formConfig.institution.logo_url ? (
+              <img src={formConfig.institution.logo_url} alt={formConfig.institution.name} className="h-10 w-auto" />
+            ) : (
+              <h1 className="text-xl font-bold">{formConfig.institution.name}</h1>
+            )}
+            <LanguageSwitcher />
+          </header>
+          <main className="w-full max-w-2xl flex-grow flex items-center">
+            <Card className="w-full">
+              <CardContent className="p-6 sm:p-8">
+                <Outlet />
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+        <div className="hidden lg:block lg:w-1/2 bg-cover bg-center relative" style={{ backgroundImage: "url('/onboarding-image.jpg')" }}>
+          <div className="absolute inset-0 bg-black/30" />
+          <OnboardingStepIndicator steps={steps} currentStep={currentStep} />
+        </div>
       </div>
     </PublicOnboardingProvider>
   );

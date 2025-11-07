@@ -21,5 +21,12 @@
     "dob": "Date of Birth",
     "previous_button": "Previous",
     "next_button": "Next"
+  },
+  "steps": {
+    "welcome": "Welcome",
+    "card_selection": "Selection",
+    "personal_info": "Information",
+    "review": "Review",
+    "confirmation": "Confirmation"
   }
 }
