@@ -29,18 +29,23 @@ const PublicOnboardingForm = () => {
         setLoading(false);
         return;
       }
-      const { data, error } = await supabase
-        .from('onboarding_forms')
-        .select('institutions(id, name, logo_url)')
-        .eq('id', formId)
-        .single();
+      setLoading(true);
+      try {
+        const { data, error: functionError } = await supabase.functions.invoke('get-public-form-details', {
+          body: { formId }
+        });
 
-      if (error || !data) {
-        setError("Ce formulaire d'intégration n'est pas valide ou a expiré.");
-      } else {
-        setInstitution(data.institutions);
+        if (functionError) {
+          const errorDetails = await functionError.context.json();
+          throw new Error(errorDetails.error || "Ce formulaire d'intégration n'est pas valide ou a expiré.");
+        }
+        
+        setInstitution(data);
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     fetchFormDetails();
   }, [formId]);
