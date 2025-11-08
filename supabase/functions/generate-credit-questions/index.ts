@@ -27,7 +27,7 @@ const generateQuestions = (creditHistory) => {
   for (const type of accountTypes) {
     const entry = creditHistory.find(item => item.type === type && !usedEntries.has(item.details));
     if (entry) {
-      const match = entry.details.match(/Issuer: (.*?)(,|$)/);
+      const match = entry.details.match(/Issuer: (.*?)(,|$)/) || entry.details.match(/Émetteur: (.*?)(,|$)/);
       if (match) {
         const correctAnswer = match[1].trim();
         const distractors = ['RBC', 'TD', 'BMO', 'CIBC', 'Scotiabank', 'Desjardins'].filter(b => b !== correctAnswer).slice(0, 3);
@@ -44,9 +44,9 @@ const generateQuestions = (creditHistory) => {
   }
 
   // Question 2: Approximate credit limit
-  const ccEntry = creditHistory.find(item => item.type === 'Credit Card' && item.details.includes('Limit:') && !usedEntries.has(item.details));
+  const ccEntry = creditHistory.find(item => item.type === 'Credit Card' && (item.details.includes('Limit:') || item.details.includes('Limite:')) && !usedEntries.has(item.details));
   if (ccEntry) {
-    const limitMatch = ccEntry.details.match(/Limit: \$([\d,]+\.\d{2})/);
+    const limitMatch = ccEntry.details.match(/(?:Limit|Limite): \$([\d,]+\.\d{2})/);
     if (limitMatch) {
       const limit = parseFloat(limitMatch[1].replace(',', ''));
       const ranges = [
@@ -69,7 +69,7 @@ const generateQuestions = (creditHistory) => {
 
   // Question 3: Number of active accounts
   if (creditHistory.length > 0) {
-    const activeAccounts = creditHistory.filter(item => item.status === 'Active').length;
+    const activeAccounts = creditHistory.filter(item => item.status === 'Active' || item.status === 'Actif').length;
     const options = shuffle([activeAccounts, activeAccounts + 2, activeAccounts - 1 > 0 ? activeAccounts - 1 : 0, activeAccounts + 5].filter((v, i, a) => a.indexOf(v) === i)).slice(0, 4);
     questions.push({
       id: 'q3',
@@ -91,8 +91,16 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
 
-    const { data: report, error: reportError } = await supabaseAdmin.from('credit_reports').select('credit_history').eq('ssn', sin).single();
-    if (reportError || !report || !report.credit_history) {
+    const formattedSin = `${sin.slice(0, 3)}-${sin.slice(3, 6)}-${sin.slice(6, 9)}`;
+
+    const { data: report, error: reportError } = await supabaseAdmin
+      .from('credit_reports')
+      .select('credit_history')
+      .or(`ssn.eq.${sin},ssn.eq.${formattedSin}`)
+      .limit(1)
+      .single();
+
+    if (reportError || !report || !report.credit_history || report.credit_history.length === 0) {
       return new Response(JSON.stringify({ status: 'no_report' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
 
