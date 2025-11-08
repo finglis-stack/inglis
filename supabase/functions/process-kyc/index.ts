@@ -53,7 +53,7 @@ serve(async (req) => {
       throw new Error("La clé API Gemini n'est pas configurée.");
     }
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${GEMINI_API_KEY}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`;
 
     const prompt = `
       Analyze these two images of an ID card (front and back). 
