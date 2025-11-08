@@ -56,7 +56,7 @@ serve(async (req) => {
     }
 
     const genAI = new GoogleGenAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
 
     const prompt = `
       Analyze these two images of an ID card (front and back). 
@@ -78,7 +78,7 @@ serve(async (req) => {
 
     let result;
     try {
-      await logProgress(applicationId, "Appel à l'API Gemini 2.5 Pro...", "info");
+      await logProgress(applicationId, "Appel à l'API Gemini Pro Vision...", "info");
       result = await model.generateContent([prompt, ...imageParts]);
     } catch (geminiError) {
       await logProgress(applicationId, `Erreur directe de l'API Gemini: ${geminiError.message}`, "error");
