@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2, AlertTriangle, UploadCloud } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
+import { resizeImage } from '@/utils/imageResizer';
 
 const acceptedIDs = [
   "Permis de conduire ou d'apprenti conducteur",
@@ -30,15 +31,22 @@ const Step7KYC = () => {
   const fileInputFrontRef = useRef<HTMLInputElement>(null);
   const fileInputBackRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (side === 'front') setImageFront(reader.result as string);
-        else setImageBack(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setLoading(true);
+      setError(null);
+      try {
+        // Redimensionner l'image à une largeur/hauteur max de 1024px
+        const resizedDataUrl = await resizeImage(file, 1024, 1024);
+        if (side === 'front') setImageFront(resizedDataUrl);
+        else setImageBack(resizedDataUrl);
+      } catch (err) {
+        setError("Erreur lors du traitement de l'image. Veuillez réessayer.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -63,7 +71,8 @@ const Step7KYC = () => {
           if(fileInputFrontRef.current) fileInputFrontRef.current.value = '';
           if(fileInputBackRef.current) fileInputBackRef.current.value = '';
         } else {
-          throw new Error(data?.message || "Une erreur est survenue lors de la vérification.");
+          const errorMessage = data?.message || "Une erreur est survenue lors de la vérification.";
+          throw new Error(errorMessage);
         }
       } else {
         navigate(`../step-8`);
