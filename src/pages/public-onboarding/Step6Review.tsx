@@ -54,25 +54,26 @@ const Step6Review = () => {
                   setDecisionData(payload.new);
                   setProcessingState(payload.new.status);
                   channel.unsubscribe();
-                  resetData();
+                  if (payload.new.status !== 'approved') {
+                    resetData();
+                  }
                 }, 3000);
               }
             }
           )
           .subscribe();
         
-        // Fallback au cas où le temps de traitement est trop long
         setTimeout(() => {
           if (processingState === 'processing') {
             channel.unsubscribe();
             resetData();
-            navigate('../step-7'); // Page de confirmation générique
+            navigate('../step-8');
           }
         }, 45000);
 
       } else {
         resetData();
-        navigate('../step-7');
+        navigate('../step-8');
       }
     } catch (err) {
       showError(err.message);
@@ -95,14 +96,14 @@ const Step6Review = () => {
       <div className="text-center">
         <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
         <h1 className="text-2xl font-bold tracking-tight">{t('review.approved_title')}</h1>
-        <p className="mt-2 text-muted-foreground">{t('review.approved_desc')}</p>
+        <p className="mt-2 text-muted-foreground">Presque terminé ! Une dernière étape pour vérifier votre identité.</p>
         {decisionData.approved_credit_limit > 0 && (
           <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-sm text-green-800">{t('review.credit_limit_approved')}</p>
             <p className="text-2xl font-bold text-green-900">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(decisionData.approved_credit_limit)}</p>
           </div>
         )}
-        <Button onClick={() => window.location.reload()} className="mt-8">{t('confirmation.close_button')}</Button>
+        <Button onClick={() => navigate(`../step-7/${decisionData.id}`)} className="mt-8">Continuer la demande</Button>
       </div>
     );
   }
