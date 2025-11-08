@@ -56,13 +56,10 @@ const ErrorDisplay = ({ message, latitude, longitude }: { message: string, latit
   </div>
 );
 
-const libraries: "places"[] = ["places"];
-
 const MapWithKey = ({ apiKey, latitude, longitude }: { apiKey: string, latitude: number, longitude: number }) => {
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: apiKey,
-    libraries,
     preventGoogleFontsLoading: true,
   });
 

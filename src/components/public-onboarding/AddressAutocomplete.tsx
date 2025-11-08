@@ -25,7 +25,6 @@ const libraries: "places"[] = ["places"];
 const MapAutocomplete = ({ apiKey, onAddressSelect, initialAddress }) => {
   const { t } = useTranslation('public-onboarding');
   const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-map-autocomplete-script',
     googleMapsApiKey: apiKey,
     libraries,
     preventGoogleFontsLoading: true,

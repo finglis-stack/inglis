@@ -2,12 +2,10 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { usePublicOnboarding } from '@/context/PublicOnboardingContext';
-import { useNavigate } from 'react-router-dom';
 
-const Step8Confirmation = () => {
+const Step7Confirmation = () => {
   const { t } = useTranslation('public-onboarding');
   const { formConfig } = usePublicOnboarding();
-  const navigate = useNavigate();
 
   return (
     <div className="text-center">
@@ -16,11 +14,11 @@ const Step8Confirmation = () => {
       <p className="mt-2 text-muted-foreground">
         {t('confirmation.description', { institutionName: formConfig.institution.name })}
       </p>
-      <Button onClick={() => navigate('/')} className="mt-8">
+      <Button onClick={() => window.location.reload()} className="mt-8">
         {t('confirmation.close_button')}
       </Button>
     </div>
   );
 };
 
-export default Step8Confirmation;
+export default Step7Confirmation;
