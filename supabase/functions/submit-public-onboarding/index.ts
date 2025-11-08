@@ -46,7 +46,7 @@ serve(async (req) => {
       address: profileData.address,
       sin: profileData.sin || null,
       pin: hashedPin,
-      status: 'pending', // Le statut sera 'active' après approbation
+      status: 'inactive', // Le statut sera 'active' après approbation
     };
 
     const { data: newProfile, error: insertProfileError } = await supabaseAdmin
