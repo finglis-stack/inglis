@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+import { GoogleGenerativeAI } from 'https://esm.sh/@google/generative-ai'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -53,7 +54,8 @@ serve(async (req) => {
       throw new Error("La clé API Gemini n'est pas configurée.");
     }
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${GEMINI_API_KEY}`;
+    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
 
     const prompt = `
       Analyze these two images of an ID card (front and back). 
@@ -68,30 +70,15 @@ serve(async (req) => {
       If you cannot extract a piece of information, set its value to null.
     `;
 
-    const geminiResponse = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: 'image/jpeg', data: imageFront.split(',')[1] } },
-            { inline_data: { mime_type: 'image/jpeg', data: imageBack.split(',')[1] } }
-          ]
-        }]
-      })
-    });
+    const imageParts = [
+      { inlineData: { mimeType: 'image/jpeg', data: imageFront.split(',')[1] } },
+      { inlineData: { mimeType: 'image/jpeg', data: imageBack.split(',')[1] } }
+    ];
 
-    if (!geminiResponse.ok) {
-      const errorBody = await geminiResponse.text();
-      await logProgress(applicationId, `Erreur de l'API Gemini: ${errorBody}`, "error");
-      throw new Error("Erreur lors de l'analyse de l'image.");
-    }
-
-    const geminiResult = await geminiResponse.json();
-    const analysisText = geminiResult.candidates[0].content.parts[0].text;
+    const result = await model.generateContent([prompt, ...imageParts]);
+    const response = await result.response;
+    const analysisText = response.text();
     const analysisResult = JSON.parse(analysisText.replace(/```json\n?/, '').replace(/```$/, ''));
-
 
     await logProgress(applicationId, `Analyse Gemini terminée. Qualité: ${analysisResult.quality}.`, "info");
 
