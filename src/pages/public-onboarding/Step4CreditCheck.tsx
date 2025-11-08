@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { usePublicOnboarding } from '@/context/PublicOnboardingContext';
 import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from '@/components/ui/input-otp';
@@ -13,8 +13,9 @@ import { useTranslation } from 'react-i18next';
 
 const Step4CreditCheck = () => {
   const navigate = useNavigate();
+  const { formId } = useParams(); // Récupérer l'ID directement depuis l'URL
   const { t } = useTranslation('public-onboarding');
-  const { formConfig, updateData } = usePublicOnboarding();
+  const { updateData } = usePublicOnboarding();
   
   const [step, setStep] = useState<'enter_sin' | 'answer_questions' | 'no_report' | 'failed'>('enter_sin');
   const [sin, setSin] = useState('');
@@ -27,7 +28,7 @@ const Step4CreditCheck = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-credit-questions', {
-        body: { sin, formId: formConfig.formDetails.id },
+        body: { sin, formId: formId }, // Utiliser l'ID de l'URL
       });
       if (error) throw error;
 
