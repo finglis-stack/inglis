@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useTranslation } from 'react-i18next';
 import { AddressAutocomplete } from '@/components/public-onboarding/AddressAutocomplete';
 import { showError } from '@/utils/toast';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 const Step3PersonalInfo = () => {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ const Step3PersonalInfo = () => {
     dob: formData.dob || '',
   });
   const [address, setAddress] = useState(formData.address || null);
+  const [pin, setPin] = useState(formData.pin || '');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalData({ ...localData, [e.target.id]: e.target.value });
@@ -31,13 +33,16 @@ const Step3PersonalInfo = () => {
       showError(t('personal_info.address_required'));
       return;
     }
-    updateData({ ...localData, address });
+    if (pin.length !== 4) {
+      showError(t('personal_info.pin_required'));
+      return;
+    }
+    updateData({ ...localData, address, pin });
     
     if (formConfig.formDetails.is_credit_bureau_enabled) {
       navigate('../step-4');
     } else {
-      // TODO: Navigate to review step when it exists
-      alert("Prochaine étape à implémenter !");
+      navigate('../step-6'); // Skip to review if no credit check
     }
   };
 
@@ -74,6 +79,20 @@ const Step3PersonalInfo = () => {
         <div className="grid gap-2">
           <Label>{t('personal_info.address')}</Label>
           <AddressAutocomplete initialAddress={address} onAddressSelect={setAddress} />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="pin">{t('personal_info.pin_label')}</Label>
+          <div className="flex justify-center">
+            <InputOTP id="pin" maxLength={4} value={pin} onChange={setPin}>
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+                <InputOTPSlot index={3} />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+          <p className="text-xs text-muted-foreground text-center">{t('personal_info.pin_desc')}</p>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
+import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,6 +34,8 @@ serve(async (req) => {
     if (!form) throw new Error("Ce formulaire n'est pas valide.");
     if (!form.is_active) throw new Error("Ce formulaire n'est plus actif.");
 
+    const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, 10) : null;
+
     const profileToInsert = {
       institution_id: form.institution_id,
       type: 'personal',
@@ -42,7 +45,8 @@ serve(async (req) => {
       dob: profileData.dob,
       address: profileData.address,
       sin: profileData.sin || null,
-      status: 'active', // Correction: Le statut doit être 'active' pour passer la contrainte.
+      pin: hashedPin,
+      status: 'pending', // Le statut sera 'active' après approbation
     };
 
     const { data: newProfile, error: insertProfileError } = await supabaseAdmin
@@ -79,14 +83,17 @@ serve(async (req) => {
     
     if (insertApplicationError) throw insertApplicationError;
 
-    // If auto-approve is enabled, invoke the processing function asynchronously
     if (form.auto_approve_enabled) {
-      await supabaseAdmin.functions.invoke('process-onboarding-application', {
+      // Ne pas attendre la fin, laisser tourner en arrière-plan
+      supabaseAdmin.functions.invoke('process-onboarding-application', {
         body: { applicationId: newApplication.id },
       });
     }
 
-    return new Response(JSON.stringify({ message: "Candidature soumise avec succès." }), {
+    return new Response(JSON.stringify({ 
+      message: "Candidature soumise avec succès.",
+      applicationId: newApplication.id
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

@@ -23,6 +23,9 @@
     "address_placeholder": "Start typing your address...",
     "change_address": "Change address",
     "address_required": "Please select a valid address.",
+    "pin_label": "Profile PIN",
+    "pin_desc": "Choose a 4-digit PIN. It will be used to verify your identity when communicating with support.",
+    "pin_required": "Please enter a 4-digit PIN.",
     "previous_button": "Previous",
     "next_button": "Next"
   },
@@ -80,7 +83,15 @@
     "consent_biometric_desc": "I accept the processing of my behavioral data (typing habits, mouse movements, etc.) for fraud prevention.",
     "previous_button": "Previous",
     "submit_button": "Submit My Application",
-    "success_message": "Your application has been submitted successfully!"
+    "success_message": "Your application has been submitted successfully!",
+    "processing_title": "Processing your application...",
+    "processing_desc": "Our system is analyzing your application. Please wait a moment.",
+    "approved_title": "Congratulations, your application is approved!",
+    "approved_desc": "Your new card has been issued and an activation email has been sent to you.",
+    "credit_limit_approved": "Approved Credit Limit",
+    "rejected_title": "Application Not Approved",
+    "rejected_desc": "Unfortunately, we cannot approve your application at this time.",
+    "rejection_reasons": "Reasons"
   },
   "confirmation": {
     "title": "Application Submitted!",

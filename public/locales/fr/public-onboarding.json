@@ -23,6 +23,9 @@
     "address_placeholder": "Commencez à taper votre adresse...",
     "change_address": "Modifier l'adresse",
     "address_required": "Veuillez sélectionner une adresse valide.",
+    "pin_label": "NIP de profil",
+    "pin_desc": "Choisissez un NIP à 4 chiffres. Il sera utilisé pour vérifier votre identité lors des communications avec le support.",
+    "pin_required": "Veuillez entrer un NIP à 4 chiffres.",
     "previous_button": "Précédent",
     "next_button": "Suivant"
   },
@@ -80,7 +83,15 @@
     "consent_biometric_desc": "J'accepte le traitement de mes données comportementales (habitudes de frappe, mouvements de souris, etc.) pour la prévention de la fraude.",
     "previous_button": "Précédent",
     "submit_button": "Soumettre ma demande",
-    "success_message": "Votre demande a été soumise avec succès !"
+    "success_message": "Votre demande a été soumise avec succès !",
+    "processing_title": "Traitement de votre demande...",
+    "processing_desc": "Notre système analyse votre demande. Veuillez patienter quelques instants.",
+    "approved_title": "Félicitations, votre demande est approuvée !",
+    "approved_desc": "Votre nouvelle carte a été émise et un e-mail d'activation vous a été envoyé.",
+    "credit_limit_approved": "Limite de crédit approuvée",
+    "rejected_title": "Demande non approuvée",
+    "rejected_desc": "Nous ne pouvons malheureusement pas approuver votre demande pour le moment.",
+    "rejection_reasons": "Raisons"
   },
   "confirmation": {
     "title": "Demande Soumise !",
