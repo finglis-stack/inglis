@@ -27,6 +27,8 @@ interface FormData {
   default_cash_advance_rate: string;
   min_cash_advance_rate: string;
   max_cash_advance_rate: string;
+  min_income_requirement: string;
+  min_credit_score_requirement: string;
   feeModel: 'none' | 'annual_user' | 'per_transaction_user' | 'custom';
   issuanceFee: string;
   merchantTransactionFee: string;
@@ -52,6 +54,8 @@ const NewCardProgram = () => {
     default_cash_advance_rate: '22.99',
     min_cash_advance_rate: '14.99',
     max_cash_advance_rate: '29.99',
+    min_income_requirement: '',
+    min_credit_score_requirement: '',
     feeModel: 'none',
     issuanceFee: '',
     merchantTransactionFee: '',
@@ -132,6 +136,8 @@ const NewCardProgram = () => {
         default_cash_advance_rate: formData.cardType === 'credit' ? parseFloat(formData.default_cash_advance_rate) : null,
         min_cash_advance_rate: formData.cardType === 'credit' ? parseFloat(formData.min_cash_advance_rate) : null,
         max_cash_advance_rate: formData.cardType === 'credit' ? parseFloat(formData.max_cash_advance_rate) : null,
+        min_income_requirement: formData.cardType === 'credit' && formData.min_income_requirement ? parseFloat(formData.min_income_requirement) : null,
+        min_credit_score_requirement: formData.cardType === 'credit' && formData.min_credit_score_requirement ? parseInt(formData.min_credit_score_requirement) : null,
         fee_model: formData.feeModel,
         issuance_fee: formData.issuanceFee ? parseFloat(formData.issuanceFee) : null,
         merchant_transaction_fee: formData.merchantTransactionFee ? parseFloat(formData.merchantTransactionFee) : null,
@@ -256,6 +262,20 @@ const NewCardProgram = () => {
                       <div className="grid gap-1"><Label htmlFor="min_cash_advance_rate" className="text-xs text-muted-foreground">Min.</Label><Input id="min_cash_advance_rate" type="number" step="0.01" value={formData.min_cash_advance_rate} onChange={handleChange} /></div>
                       <div className="grid gap-1"><Label htmlFor="default_cash_advance_rate" className="text-xs text-muted-foreground">Défaut</Label><Input id="default_cash_advance_rate" type="number" step="0.01" value={formData.default_cash_advance_rate} onChange={handleChange} /></div>
                       <div className="grid gap-1"><Label htmlFor="max_cash_advance_rate" className="text-xs text-muted-foreground">Max.</Label><Input id="max_cash_advance_rate" type="number" step="0.01" value={formData.max_cash_advance_rate} onChange={handleChange} /></div>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div>
+                    <Label>Exigences d'admissibilité</Label>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div className="grid gap-1">
+                        <Label htmlFor="min_income_requirement" className="text-xs text-muted-foreground">Revenu minimum requis</Label>
+                        <Input id="min_income_requirement" type="number" placeholder="35000" value={formData.min_income_requirement} onChange={handleChange} />
+                      </div>
+                      <div className="grid gap-1">
+                        <Label htmlFor="min_credit_score_requirement" className="text-xs text-muted-foreground">Score de crédit minimum</Label>
+                        <Input id="min_credit_score_requirement" type="number" placeholder="650" value={formData.min_credit_score_requirement} onChange={handleChange} />
+                      </div>
                     </div>
                   </div>
                 </div>

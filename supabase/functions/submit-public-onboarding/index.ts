@@ -33,28 +33,50 @@ serve(async (req) => {
     if (formError || !form) throw new Error("Ce formulaire n'est pas valide.");
     if (!form.is_active) throw new Error("Ce formulaire n'est plus actif.");
 
-    // 2. Préparer les données du profil
-    const recordToInsert = {
+    // 2. Créer le profil
+    const profileToInsert = {
       institution_id: form.institution_id,
       type: 'personal',
       full_name: `${profileData.firstName} ${profileData.lastName}`,
       email: profileData.email,
       phone: profileData.phone,
       dob: profileData.dob,
-      address: profileData.address, // Ajout de l'objet d'adresse
-      status: 'pending', // Le profil est en attente de validation par l'institution
+      address: profileData.address,
+      sin: profileData.sin || null,
+      status: 'pending',
     };
 
-    // 3. Insérer le nouveau profil
-    const { error: insertError } = await supabaseAdmin.from('profiles').insert(recordToInsert);
-    if (insertError) {
-      if (insertError.code === '23505') { // unique_violation
-        throw new Error("Un profil avec cet e-mail existe déjà.");
-      }
-      throw insertError;
+    const { data: newProfile, error: insertProfileError } = await supabaseAdmin
+      .from('profiles')
+      .insert(profileToInsert)
+      .select('id')
+      .single();
+
+    if (insertProfileError) {
+      if (insertProfileError.code === '23505') throw new Error("Un profil avec cet e-mail existe déjà.");
+      throw insertProfileError;
     }
 
-    return new Response(JSON.stringify({ message: "Profil créé avec succès." }), {
+    // 3. Créer l'enregistrement de la candidature
+    const applicationToInsert = {
+      form_id: formId,
+      profile_id: newProfile.id,
+      selected_card_program_id: profileData.selectedProgramId,
+      employment_status: profileData.employmentStatus,
+      employer: profileData.employer,
+      annual_income: profileData.annualIncome,
+      t4_income: profileData.hasT4 ? profileData.t4Income : null,
+      credit_bureau_verification_status: profileData.creditBureauVerification,
+      status: 'pending',
+    };
+
+    const { error: insertApplicationError } = await supabaseAdmin
+      .from('onboarding_applications')
+      .insert(applicationToInsert);
+    
+    if (insertApplicationError) throw insertApplicationError;
+
+    return new Response(JSON.stringify({ message: "Candidature soumise avec succès." }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

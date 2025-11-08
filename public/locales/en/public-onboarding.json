@@ -42,11 +42,53 @@
     "failed_title": "Verification Failed",
     "failed_desc": "The answers provided do not match our records. For security reasons, you cannot continue this application online."
   },
+  "financial_info": {
+    "title": "Financial Information",
+    "subtitle": "This information helps us determine your eligibility.",
+    "requirements_title": "Requirements for the selected card",
+    "min_income": "Minimum annual income of {{amount}}.",
+    "min_score": "Minimum credit score of {{score}}.",
+    "employment_status": "Employment Status",
+    "select_status": "Select your status",
+    "status": {
+      "employed": "Employed",
+      "self_employed": "Self-Employed",
+      "student": "Student",
+      "retired": "Retired",
+      "unemployed": "Unemployed"
+    },
+    "employer": "Employer's Name",
+    "annual_income": "Gross Annual Income",
+    "has_t4": "I can provide my latest T4 slip (federal).",
+    "t4_income": "Total income from box 14 of your T4",
+    "previous_button": "Previous",
+    "next_button": "Next"
+  },
+  "review": {
+    "title": "Review Your Application",
+    "subtitle": "Please ensure all information is accurate before submitting.",
+    "card_selected": "Card Selected",
+    "name": "Name",
+    "contact": "Contact",
+    "address": "Address",
+    "income": "Income",
+    "consent_label": "Consent",
+    "consent_desc": "I certify that the information provided is accurate and I authorize the institution to verify this information.",
+    "previous_button": "Previous",
+    "submit_button": "Submit My Application",
+    "success_message": "Your application has been submitted successfully!"
+  },
+  "confirmation": {
+    "title": "Application Submitted!",
+    "description": "Thank you. Your application has been sent to {{institutionName}} for review. You will receive a communication from them shortly.",
+    "close_button": "Close"
+  },
   "steps": {
     "welcome": "Welcome",
     "card_selection": "Selection",
-    "personal_info": "Information",
-    "credit_check": "Verification",
+    "personal_info": "Info",
+    "credit_check": "Identity",
+    "financial_info": "Finances",
     "review": "Review",
     "confirmation": "Confirmation"
   }

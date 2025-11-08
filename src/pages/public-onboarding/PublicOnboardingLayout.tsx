@@ -20,6 +20,8 @@ const PublicOnboardingLayout = () => {
     t('steps.welcome'),
     t('steps.card_selection'),
     t('steps.personal_info'),
+    t('steps.credit_check'),
+    t('steps.financial_info'),
     t('steps.review'),
     t('steps.confirmation'),
   ];
@@ -29,6 +31,8 @@ const PublicOnboardingLayout = () => {
   else if (location.pathname.includes('step-3')) currentStep = 3;
   else if (location.pathname.includes('step-4')) currentStep = 4;
   else if (location.pathname.includes('step-5')) currentStep = 5;
+  else if (location.pathname.includes('step-6')) currentStep = 6;
+  else if (location.pathname.includes('step-7')) currentStep = 7;
 
   useEffect(() => {
     const fetchFormDetails = async () => {

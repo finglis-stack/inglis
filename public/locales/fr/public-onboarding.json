@@ -42,11 +42,53 @@
     "failed_title": "Échec de la vérification",
     "failed_desc": "Les réponses fournies ne correspondent pas à nos dossiers. Pour des raisons de sécurité, vous ne pouvez pas continuer cette demande en ligne."
   },
+  "financial_info": {
+    "title": "Informations Financières",
+    "subtitle": "Ces informations nous aident à déterminer votre admissibilité.",
+    "requirements_title": "Prérequis pour la carte sélectionnée",
+    "min_income": "Revenu annuel minimum de {{amount}}.",
+    "min_score": "Score de crédit minimum de {{score}}.",
+    "employment_status": "Statut d'emploi",
+    "select_status": "Sélectionnez votre statut",
+    "status": {
+      "employed": "Employé(e)",
+      "self_employed": "Travailleur(se) autonome",
+      "student": "Étudiant(e)",
+      "retired": "Retraité(e)",
+      "unemployed": "Sans emploi"
+    },
+    "employer": "Nom de l'employeur",
+    "annual_income": "Revenu annuel brut",
+    "has_t4": "Je peux fournir ma dernière déclaration T4 (fédéral).",
+    "t4_income": "Revenu total de la case 14 de votre T4",
+    "previous_button": "Précédent",
+    "next_button": "Suivant"
+  },
+  "review": {
+    "title": "Vérifiez votre demande",
+    "subtitle": "Veuillez vous assurer que toutes les informations sont exactes avant de soumettre.",
+    "card_selected": "Carte sélectionnée",
+    "name": "Nom",
+    "contact": "Contact",
+    "address": "Adresse",
+    "income": "Revenu",
+    "consent_label": "Consentement",
+    "consent_desc": "Je certifie que les informations fournies sont exactes et j'autorise l'institution à vérifier ces informations.",
+    "previous_button": "Précédent",
+    "submit_button": "Soumettre ma demande",
+    "success_message": "Votre demande a été soumise avec succès !"
+  },
+  "confirmation": {
+    "title": "Demande Soumise !",
+    "description": "Merci. Votre demande a été envoyée à {{institutionName}} pour examen. Vous recevrez une communication de leur part sous peu.",
+    "close_button": "Fermer"
+  },
   "steps": {
     "welcome": "Accueil",
     "card_selection": "Sélection",
-    "personal_info": "Informations",
-    "credit_check": "Vérification",
+    "personal_info": "Infos",
+    "credit_check": "Identité",
+    "financial_info": "Finances",
     "review": "Vérification",
     "confirmation": "Confirmation"
   }
