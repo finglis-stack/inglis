@@ -5,12 +5,30 @@
   "welcome": "Bienvenue sur votre tableau de bord.",
   "sidebar": {
     "dashboard": "Tableau de bord",
+    "applications": "Demandes",
     "cards": "Liste des cartes",
     "users": "Utilisateurs",
     "transactions": "Transactions",
     "creditFiles": "Dossier de crédit",
     "fraudNetwork": "Réseau de Fraude",
     "settings": "Paramètres"
+  },
+  "applications": {
+    "title": "Demandes d'Intégration",
+    "subtitle": "Examinez et traitez les nouvelles demandes de clients.",
+    "listTitle": "Liste des Demandes",
+    "listDesc": "Les demandes nécessitant une attention sont affichées en premier.",
+    "colApplicant": "Demandeur",
+    "colProgram": "Programme Demandé",
+    "colDate": "Date de Soumission",
+    "colStatus": "Statut",
+    "colActions": "Actions",
+    "noApplications": "Aucune demande pour le moment.",
+    "status": {
+      "pending": "Besoin d'attention",
+      "approved": "Approuvée",
+      "rejected": "Rejetée"
+    }
   },
   "sharedSteps": {
     "next": "Suivant",

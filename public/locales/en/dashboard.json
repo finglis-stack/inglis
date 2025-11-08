@@ -5,12 +5,30 @@
   "welcome": "Welcome to your dashboard.",
   "sidebar": {
     "dashboard": "Dashboard",
+    "applications": "Applications",
     "cards": "Card List",
     "users": "Users",
     "transactions": "Transactions",
     "creditFiles": "Credit Files",
     "fraudNetwork": "Fraud Network",
     "settings": "Settings"
+  },
+  "applications": {
+    "title": "Onboarding Applications",
+    "subtitle": "Review and process new customer applications.",
+    "listTitle": "Application List",
+    "listDesc": "Applications requiring attention are shown first.",
+    "colApplicant": "Applicant",
+    "colProgram": "Requested Program",
+    "colDate": "Submission Date",
+    "colStatus": "Status",
+    "colActions": "Actions",
+    "noApplications": "No applications at this time.",
+    "status": {
+      "pending": "Needs Attention",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
   },
   "sharedSteps": {
     "next": "Next",
@@ -258,10 +276,10 @@
     "selection_prompt": "Select the profile type to create to continue.",
     "personalTitle": "Personal",
     "personalDesc": "For individuals and retail clients.",
-    "select": "Select",
     "corporateTitle": "Corporate",
     "corporateDesc": "For businesses, companies, and organizations.",
-    "cancel": "Cancel and return to list"
+    "cancel": "Cancel and return to list",
+    "select": "Select"
   },
   "personalSteps": {
     "step1_title": "Identity",
@@ -412,7 +430,7 @@
     "accountActionsDesc": "Perform operations on this account.",
     "makePayment": "Make a Payment",
     "pay": "Pay",
-    "otherActions": "Other Actions",
+    "otherActions": "Other actions",
     "addDebit": "Add Debit",
     "pendingAuthorizations": "Pending Authorizations",
     "blockAccount": "Block Account",
@@ -517,5 +535,8 @@
     "incorrectSecurityCode": "The security code is incorrect.",
     "invalidAmount": "Please enter a valid amount.",
     "invalidDescription": "Please enter a valid description."
+  },
+  "dashboardLayout": {
+    "navFraudAnalytics": "Fraud Analytics"
   }
 }

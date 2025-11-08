@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { CreditCard, LayoutDashboard, Users, ArrowRightLeft, Settings, FileText, Network } from 'lucide-react';
+import { CreditCard, LayoutDashboard, Users, ArrowRightLeft, Settings, FileText, Network, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { useBranding } from '@/context/BrandingContext';
@@ -15,6 +15,7 @@ export const Sidebar = ({ className, onLinkClick }: SidebarProps) => {
 
   const navItems = [
     { to: '/dashboard', icon: <LayoutDashboard className="h-5 w-5" />, label: t('sidebar.dashboard') },
+    { to: '/dashboard/applications', icon: <ClipboardList className="h-5 w-5" />, label: t('sidebar.applications') },
     { to: '/dashboard/cards', icon: <CreditCard className="h-5 w-5" />, label: t('sidebar.cards') },
     { to: '/dashboard/users', icon: <Users className="h-5 w-5" />, label: t('sidebar.users') },
     { to: '/dashboard/transactions', icon: <ArrowRightLeft className="h-5 w-5" />, label: t('sidebar.transactions') },
