@@ -91,20 +91,17 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
 
-    const formattedSin = `${sin.slice(0, 3)}-${sin.slice(3, 6)}-${sin.slice(6, 9)}`;
-
-    const { data: report, error: reportError } = await supabaseAdmin
-      .from('credit_reports')
-      .select('credit_history')
-      .or(`ssn.eq.${sin},ssn.eq.${formattedSin}`)
-      .limit(1)
+    const { data: reportData, error: reportError } = await supabaseAdmin
+      .rpc('get_credit_report_by_sin', { p_sin: sin })
       .single();
 
-    if (reportError || !report || !report.credit_history || report.credit_history.length === 0) {
+    const creditHistory = reportData?.credit_history;
+
+    if (reportError || !creditHistory || creditHistory.length === 0) {
       return new Response(JSON.stringify({ status: 'no_report' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
 
-    const questions = generateQuestions(report.credit_history);
+    const questions = generateQuestions(creditHistory);
     if (questions.length < 3) {
       return new Response(JSON.stringify({ status: 'insufficient_data' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
     }
