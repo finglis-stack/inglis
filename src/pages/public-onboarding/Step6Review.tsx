@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePublicOnboarding } from '@/context/PublicOnboardingContext';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,11 @@ const Step6Review = () => {
   const [consentFinancial, setConsentFinancial] = useState(false);
   const [consentBiometric, setConsentBiometric] = useState(false);
   const [animationData, setAnimationData] = useState(null);
+
+  const processingStateRef = useRef(processingState);
+  useEffect(() => {
+    processingStateRef.current = processingState;
+  }, [processingState]);
 
   useEffect(() => {
     fetch('/animations/ai-loading-model.json')
@@ -64,7 +69,7 @@ const Step6Review = () => {
           .subscribe();
         
         setTimeout(() => {
-          if (processingState === 'processing') {
+          if (processingStateRef.current === 'processing') {
             channel.unsubscribe();
             resetData();
             navigate('../step-8');
@@ -124,7 +129,7 @@ const Step6Review = () => {
             </ul>
           </div>
         )}
-        <Button onClick={() => window.location.reload()} className="mt-8">{t('confirmation.close_button')}</Button>
+        <Button onClick={() => navigate('/')} className="mt-8">{t('confirmation.close_button')}</Button>
       </div>
     );
   }
