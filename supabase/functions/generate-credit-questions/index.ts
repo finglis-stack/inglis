@@ -92,37 +92,59 @@ serve(async (req) => {
     const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
 
     const { data: reportData, error: reportError } = await supabaseAdmin
-      .rpc('get_credit_report_by_sin', { p_sin: sin })
+      .from('credit_reports')
+      .select('credit_history')
+      .eq('ssn', sin)
       .single();
 
     const creditHistory = reportData?.credit_history;
 
     if (reportError || !creditHistory || creditHistory.length === 0) {
-      return new Response(JSON.stringify({ status: 'no_report' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+      // Si aucune correspondance exacte n'est trouvée, essayez avec des tirets pour plus de robustesse
+      const formattedSin = `${sin.slice(0, 3)}-${sin.slice(3, 6)}-${sin.slice(6, 9)}`;
+      const { data: reportDataRetry, error: reportErrorRetry } = await supabaseAdmin
+        .from('credit_reports')
+        .select('credit_history')
+        .eq('ssn', formattedSin)
+        .single();
+      
+      const creditHistoryRetry = reportDataRetry?.credit_history;
+
+      if (reportErrorRetry || !creditHistoryRetry || creditHistoryRetry.length === 0) {
+        return new Response(JSON.stringify({ status: 'no_report' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+      }
+      
+      // Si la deuxième tentative a fonctionné, utilisez ces données
+      return processReport(creditHistoryRetry, formId, supabaseAdmin);
     }
 
-    const questions = generateQuestions(creditHistory);
-    if (questions.length < 3) {
-      return new Response(JSON.stringify({ status: 'insufficient_data' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
-    }
+    return processReport(creditHistory, formId, supabaseAdmin);
 
-    const correctAnswers = questions.map(q => q.answer);
-    const encryptedAnswers = bcrypt.hashSync(JSON.stringify(correctAnswers), 10);
-    const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes expiry
-
-    const { data: verification, error: insertError } = await supabaseAdmin
-      .from('credit_verifications')
-      .insert({ form_id: formId, encrypted_answers: encryptedAnswers, expires_at })
-      .select('id')
-      .single();
-    if (insertError) throw insertError;
-
-    const publicQuestions = questions.map(({ answer, values, ...q }) => ({ ...q, options: values ? q.options : shuffle(q.options) }));
-
-    return new Response(JSON.stringify({ status: 'questions_generated', verificationId: verification.id, questions: publicQuestions }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200,
-    });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
   }
 });
+
+async function processReport(creditHistory, formId, supabaseAdmin) {
+  const questions = generateQuestions(creditHistory);
+  if (questions.length < 3) {
+    return new Response(JSON.stringify({ status: 'insufficient_data' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+  }
+
+  const correctAnswers = questions.map(q => q.answer);
+  const encryptedAnswers = bcrypt.hashSync(JSON.stringify(correctAnswers), 10);
+  const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes expiry
+
+  const { data: verification, error: insertError } = await supabaseAdmin
+    .from('credit_verifications')
+    .insert({ form_id: formId, encrypted_answers: encryptedAnswers, expires_at })
+    .select('id')
+    .single();
+  if (insertError) throw insertError;
+
+  const publicQuestions = questions.map(({ answer, values, ...q }) => ({ ...q, options: values ? q.options : shuffle(q.options) }));
+
+  return new Response(JSON.stringify({ status: 'questions_generated', verificationId: verification.id, questions: publicQuestions }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200,
+  });
+}
