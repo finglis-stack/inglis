@@ -8,12 +8,16 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log("--- Invocation de submit-public-onboarding ---");
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
     const { formId, profileData } = await req.json();
+    console.log("Données reçues:", { formId, profileData });
+
     if (!formId || !profileData) {
       throw new Error("ID de formulaire et données de profil requis.");
     }
@@ -24,14 +28,17 @@ serve(async (req) => {
     );
 
     // 1. Valider le formulaire
+    console.log(`Validation du formulaire ID: ${formId}`);
     const { data: form, error: formError } = await supabaseAdmin
       .from('onboarding_forms')
       .select('institution_id, is_active')
       .eq('id', formId)
       .single();
 
-    if (formError || !form) throw new Error("Ce formulaire n'est pas valide.");
+    if (formError) throw formError;
+    if (!form) throw new Error("Ce formulaire n'est pas valide.");
     if (!form.is_active) throw new Error("Ce formulaire n'est plus actif.");
+    console.log("Formulaire validé. Institution ID:", form.institution_id);
 
     // 2. Créer le profil
     const profileToInsert = {
@@ -45,6 +52,7 @@ serve(async (req) => {
       sin: profileData.sin || null,
       status: 'pending',
     };
+    console.log("Préparation de l'insertion du profil:", profileToInsert);
 
     const { data: newProfile, error: insertProfileError } = await supabaseAdmin
       .from('profiles')
@@ -56,10 +64,12 @@ serve(async (req) => {
       if (insertProfileError.code === '23505') throw new Error("Un profil avec cet e-mail existe déjà.");
       throw insertProfileError;
     }
+    console.log("Profil créé avec succès. ID:", newProfile.id);
 
     // 3. Créer l'enregistrement de la candidature
     const annualIncomeValue = profileData.annualIncome && !isNaN(parseFloat(profileData.annualIncome)) ? parseFloat(profileData.annualIncome) : null;
     const t4IncomeValue = profileData.hasT4 && profileData.t4Income && !isNaN(parseFloat(profileData.t4Income)) ? parseFloat(profileData.t4Income) : null;
+    console.log("Revenus parsés:", { annualIncomeValue, t4IncomeValue });
 
     const applicationToInsert = {
       form_id: formId,
@@ -72,18 +82,23 @@ serve(async (req) => {
       credit_bureau_verification_status: profileData.creditBureauVerification,
       status: 'pending',
     };
+    console.log("Préparation de l'insertion de la candidature:", applicationToInsert);
 
     const { error: insertApplicationError } = await supabaseAdmin
       .from('onboarding_applications')
       .insert(applicationToInsert);
     
     if (insertApplicationError) throw insertApplicationError;
+    console.log("Candidature créée avec succès.");
 
     return new Response(JSON.stringify({ message: "Candidature soumise avec succès." }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error) {
+    console.error("--- ERREUR DANS LA FONCTION ---");
+    console.error("Message:", error.message);
+    console.error("Stack:", error.stack);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
