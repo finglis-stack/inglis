@@ -69,6 +69,7 @@ serve(async (req) => {
         credit_limit_type: form.credit_limit_type,
         fixed_credit_limit: form.fixed_credit_limit,
         background_image_url: form.background_image_url,
+        auto_approve_enabled: form.auto_approve_enabled,
       },
       institution: institution,
       cardPrograms: cardPrograms,
