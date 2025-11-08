@@ -58,14 +58,17 @@ serve(async (req) => {
     }
 
     // 3. Créer l'enregistrement de la candidature
+    const annualIncomeValue = profileData.annualIncome && !isNaN(parseFloat(profileData.annualIncome)) ? parseFloat(profileData.annualIncome) : null;
+    const t4IncomeValue = profileData.hasT4 && profileData.t4Income && !isNaN(parseFloat(profileData.t4Income)) ? parseFloat(profileData.t4Income) : null;
+
     const applicationToInsert = {
       form_id: formId,
       profile_id: newProfile.id,
       selected_card_program_id: profileData.selectedProgramId,
       employment_status: profileData.employmentStatus,
       employer: profileData.employer,
-      annual_income: profileData.annualIncome ? parseFloat(profileData.annualIncome) : null,
-      t4_income: profileData.hasT4 && profileData.t4Income ? parseFloat(profileData.t4Income) : null,
+      annual_income: annualIncomeValue,
+      t4_income: t4IncomeValue,
       credit_bureau_verification_status: profileData.creditBureauVerification,
       status: 'pending',
     };
