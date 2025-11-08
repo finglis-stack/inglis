@@ -3,11 +3,12 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, User, CreditCard, FileText, DollarSign, Briefcase, Check, X } from 'lucide-react';
+import { ArrowLeft, User, CreditCard, FileText, DollarSign, Briefcase, Check, X, Bot, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import { showError, showSuccess } from '@/utils/toast';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const ApplicationDetails = () => {
   const { id } = useParams();
@@ -26,7 +27,8 @@ const ApplicationDetails = () => {
         .select(`
           *,
           profiles(*),
-          card_programs(*)
+          card_programs(*),
+          onboarding_forms(*)
         `)
         .eq('id', id)
         .single();
@@ -101,6 +103,48 @@ const ApplicationDetails = () => {
           </div>
         )}
       </div>
+
+      {application.onboarding_forms?.auto_approve_enabled && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Bot className="h-5 w-5" /> Traitement Automatisé</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {application.status === 'pending' && (
+              <Alert>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <AlertTitle>Traitement en attente ou échoué</AlertTitle>
+                <AlertDescription>
+                  L'approbation automatique est activée pour ce formulaire. Si la demande reste en attente, le processus a peut-être rencontré une erreur. Vous pouvez procéder à une évaluation manuelle.
+                </AlertDescription>
+              </Alert>
+            )}
+            {application.status === 'approved' && (
+              <Alert className="border-green-500 text-green-700">
+                <Check className="h-4 w-4 text-green-500" />
+                <AlertTitle>Demande Approuvée Automatiquement</AlertTitle>
+                <AlertDescription>
+                  La carte a été émise avec une limite de crédit de {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(application.approved_credit_limit)}.
+                </AlertDescription>
+              </Alert>
+            )}
+            {application.status === 'rejected' && (
+              <Alert variant="destructive">
+                <X className="h-4 w-4" />
+                <AlertTitle>Demande Rejetée Automatiquement</AlertTitle>
+                <AlertDescription>
+                  Raisons du rejet :
+                  <ul className="list-disc pl-5 mt-2">
+                    {(application.rejection_reason || "Raison non spécifiée.").split('; ').map((reason, i) => (
+                      <li key={i}>{reason}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
