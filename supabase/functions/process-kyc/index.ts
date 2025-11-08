@@ -53,7 +53,7 @@ serve(async (req) => {
       throw new Error("La clé API Gemini n'est pas configurée.");
     }
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${GEMINI_API_KEY}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${GEMINI_API_KEY}`;
 
     const prompt = `
       Analyze these two images of an ID card (front and back). 
@@ -88,10 +88,10 @@ serve(async (req) => {
       throw new Error("Erreur lors de l'analyse de l'image.");
     }
 
-    const geminiResultText = await geminiResponse.text();
-    const jsonString = geminiResultText.match(/```json\n([\s\S]*?)\n```/)?.[1] || geminiResultText;
-    const analysis = JSON.parse(jsonString).candidates[0].content.parts[0].text;
-    const analysisResult = JSON.parse(analysis);
+    const geminiResult = await geminiResponse.json();
+    const analysisText = geminiResult.candidates[0].content.parts[0].text;
+    const analysisResult = JSON.parse(analysisText.replace(/```json\n?/, '').replace(/```$/, ''));
+
 
     await logProgress(applicationId, `Analyse Gemini terminée. Qualité: ${analysisResult.quality}.`, "info");
 
