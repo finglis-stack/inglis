@@ -41,8 +41,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  const { applicationId, imageFront, imageBack } = await req.json();
+
   try {
-    const { applicationId, imageFront, imageBack } = await req.json();
     if (!applicationId || !imageFront || !imageBack) {
       throw new Error("ID de demande et les deux images sont requis.");
     }
@@ -55,7 +56,7 @@ serve(async (req) => {
     }
 
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
     const prompt = `
       Analyze these two images of an ID card (front and back). 
@@ -75,7 +76,15 @@ serve(async (req) => {
       { inlineData: { mimeType: 'image/jpeg', data: imageBack.split(',')[1] } }
     ];
 
-    const result = await model.generateContent([prompt, ...imageParts]);
+    let result;
+    try {
+      await logProgress(applicationId, "Appel à l'API Gemini 2.5 Pro...", "info");
+      result = await model.generateContent([prompt, ...imageParts]);
+    } catch (geminiError) {
+      await logProgress(applicationId, `Erreur directe de l'API Gemini: ${geminiError.message}`, "error");
+      throw new Error(`L'appel à l'API Gemini a échoué: ${geminiError.message}`);
+    }
+
     const response = await result.response;
     const analysisText = response.text();
     const analysisResult = JSON.parse(analysisText.replace(/```json\n?/, '').replace(/```$/, ''));
@@ -112,6 +121,9 @@ serve(async (req) => {
     }
 
   } catch (error) {
+    if (applicationId) {
+      await logProgress(applicationId, `Erreur inattendue: ${error.message}`, "error");
+    }
     return new Response(JSON.stringify({ success: false, error: 'server_error', message: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
