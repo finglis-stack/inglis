@@ -64,8 +64,8 @@ serve(async (req) => {
       selected_card_program_id: profileData.selectedProgramId,
       employment_status: profileData.employmentStatus,
       employer: profileData.employer,
-      annual_income: profileData.annualIncome,
-      t4_income: profileData.hasT4 ? profileData.t4Income : null,
+      annual_income: profileData.annualIncome ? parseFloat(profileData.annualIncome) : null,
+      t4_income: profileData.hasT4 && profileData.t4Income ? parseFloat(profileData.t4Income) : null,
       credit_bureau_verification_status: profileData.creditBureauVerification,
       status: 'pending',
     };

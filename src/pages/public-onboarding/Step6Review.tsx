@@ -15,7 +15,9 @@ const Step6Review = () => {
   const { t } = useTranslation('public-onboarding');
   const { formConfig, formData, resetData } = usePublicOnboarding();
   const [loading, setLoading] = useState(false);
-  const [consent, setConsent] = useState(false);
+  const [consentPI, setConsentPI] = useState(false);
+  const [consentFinancial, setConsentFinancial] = useState(false);
+  const [consentBiometric, setConsentBiometric] = useState(false);
 
   const selectedProgram = formConfig.cardPrograms.find(p => p.id === formData.selectedProgramId);
 
@@ -52,17 +54,33 @@ const Step6Review = () => {
         </CardContent>
       </Card>
 
-      <div className="flex items-start space-x-3">
-        <Checkbox id="consent" checked={consent} onCheckedChange={(checked) => setConsent(checked === true)} />
-        <div className="grid gap-1.5 leading-none">
-          <Label htmlFor="consent">{t('review.consent_label')}</Label>
-          <p className="text-sm text-muted-foreground">{t('review.consent_desc')}</p>
+      <div className="space-y-4">
+        <div className="flex items-start space-x-3">
+          <Checkbox id="consentPI" checked={consentPI} onCheckedChange={(checked) => setConsentPI(checked === true)} />
+          <div className="grid gap-1.5 leading-none">
+            <Label htmlFor="consentPI">{t('review.consent_pi_label')}</Label>
+            <p className="text-sm text-muted-foreground">{t('review.consent_pi_desc')}</p>
+          </div>
+        </div>
+        <div className="flex items-start space-x-3">
+          <Checkbox id="consentFinancial" checked={consentFinancial} onCheckedChange={(checked) => setConsentFinancial(checked === true)} />
+          <div className="grid gap-1.5 leading-none">
+            <Label htmlFor="consentFinancial">{t('review.consent_financial_label')}</Label>
+            <p className="text-sm text-muted-foreground">{t('review.consent_financial_desc')}</p>
+          </div>
+        </div>
+        <div className="flex items-start space-x-3">
+          <Checkbox id="consentBiometric" checked={consentBiometric} onCheckedChange={(checked) => setConsentBiometric(checked === true)} />
+          <div className="grid gap-1.5 leading-none">
+            <Label htmlFor="consentBiometric">{t('review.consent_biometric_label')}</Label>
+            <p className="text-sm text-muted-foreground">{t('review.consent_biometric_desc')}</p>
+          </div>
         </div>
       </div>
 
       <div className="flex justify-between mt-8">
         <Button variant="outline" type="button" onClick={() => navigate('../step-5')} disabled={loading}>{t('review.previous_button')}</Button>
-        <Button onClick={handleSubmit} disabled={loading || !consent}>
+        <Button onClick={handleSubmit} disabled={loading || !consentPI || !consentFinancial || !consentBiometric}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {t('review.submit_button')}
         </Button>
