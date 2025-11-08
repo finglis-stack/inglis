@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
-import { GoogleGenerativeAI } from 'https://esm.sh/@google/genai'
+import { GoogleGenerativeAI } from 'https://esm.sh/@google/generative-ai'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,7 +56,7 @@ serve(async (req) => {
     }
 
     const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
 
     const prompt = `
       Analyze these two images of an ID card (front and back). 
@@ -78,7 +78,7 @@ serve(async (req) => {
 
     let result;
     try {
-      await logProgress(applicationId, "Appel à l'API Gemini 2.5 Pro...", "info");
+      await logProgress(applicationId, "Appel à l'API Gemini 1.5 Pro...", "info");
       result = await model.generateContent([prompt, ...imageParts]);
     } catch (geminiError) {
       await logProgress(applicationId, `Erreur directe de l'API Gemini: ${geminiError.message}`, "error");
