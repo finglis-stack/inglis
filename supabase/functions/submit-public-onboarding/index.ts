@@ -42,7 +42,7 @@ serve(async (req) => {
       dob: profileData.dob,
       address: profileData.address,
       sin: profileData.sin || null,
-      status: 'pending', // Start as pending, will be activated if approved
+      status: 'active', // Correction: Le statut doit être 'active' pour passer la contrainte.
     };
 
     const { data: newProfile, error: insertProfileError } = await supabaseAdmin
