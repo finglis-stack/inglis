@@ -3,7 +3,6 @@ import { useJsApiLoader, Autocomplete } from '@react-google-maps/api';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, MapPin } from 'lucide-react';
@@ -23,17 +22,10 @@ interface AddressAutocompleteProps {
 
 const libraries: "places"[] = ["places"];
 
-export const AddressAutocomplete = ({ onAddressSelect, initialAddress }: AddressAutocompleteProps) => {
+const MapAutocomplete = ({ apiKey, onAddressSelect, initialAddress }) => {
   const { t } = useTranslation('public-onboarding');
-  const { data: apiKey, isError, error } = useQuery({
-    queryKey: ['google-maps-api-key'],
-    queryFn: fetchMapsApiKey,
-    staleTime: Infinity,
-    gcTime: Infinity,
-  });
-
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: apiKey || '',
+    googleMapsApiKey: apiKey,
     libraries,
     preventGoogleFontsLoading: true,
   });
@@ -68,16 +60,12 @@ export const AddressAutocomplete = ({ onAddressSelect, initialAddress }: Address
     onAddressSelect(null);
   };
 
-  if (isError) {
-    return <div className="text-sm text-destructive">{error.message}</div>;
-  }
-
-  if (!isLoaded || !apiKey) {
-    return <Skeleton className="h-10 w-full" />;
-  }
-
   if (loadError) {
     return <div className="text-sm text-destructive">Erreur de chargement de Google Maps.</div>;
+  }
+
+  if (!isLoaded) {
+    return <Skeleton className="h-10 w-full" />;
   }
 
   if (selectedAddress) {
@@ -110,4 +98,28 @@ export const AddressAutocomplete = ({ onAddressSelect, initialAddress }: Address
       />
     </Autocomplete>
   );
+};
+
+export const AddressAutocomplete = ({ onAddressSelect, initialAddress }: AddressAutocompleteProps) => {
+  const { data: apiKey, isLoading, isError, error } = useQuery({
+    queryKey: ['google-maps-api-key'],
+    queryFn: fetchMapsApiKey,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
+
+  if (isLoading) {
+    return <Skeleton className="h-10 w-full" />;
+  }
+
+  if (isError) {
+    return (
+      <div className="text-sm text-destructive flex items-center gap-2">
+        <AlertCircle className="h-4 w-4" />
+        {error.message}
+      </div>
+    );
+  }
+
+  return <MapAutocomplete apiKey={apiKey} onAddressSelect={onAddressSelect} initialAddress={initialAddress} />;
 };
