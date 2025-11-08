@@ -23,6 +23,7 @@
     "address_placeholder": "Start typing your address...",
     "change_address": "Change address",
     "address_required": "Please select a valid address.",
+    "pin_title": "Profile Security",
     "pin_label": "Profile PIN",
     "pin_desc": "Choose a 4-digit PIN. It will be used to verify your identity when communicating with support.",
     "pin_required": "Please enter a 4-digit PIN.",

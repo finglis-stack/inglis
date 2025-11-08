@@ -23,6 +23,7 @@
     "address_placeholder": "Commencez à taper votre adresse...",
     "change_address": "Modifier l'adresse",
     "address_required": "Veuillez sélectionner une adresse valide.",
+    "pin_title": "Sécurité du Profil",
     "pin_label": "NIP de profil",
     "pin_desc": "Choisissez un NIP à 4 chiffres. Il sera utilisé pour vérifier votre identité lors des communications avec le support.",
     "pin_required": "Veuillez entrer un NIP à 4 chiffres.",
