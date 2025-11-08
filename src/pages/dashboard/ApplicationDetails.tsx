@@ -3,12 +3,13 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, User, CreditCard, FileText, DollarSign, Briefcase, Check, X, Bot, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, CreditCard, FileText, DollarSign, Briefcase, Check, X, Bot, Loader2, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import { showError, showSuccess } from '@/utils/toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ProcessingLogConsole } from '@/components/dashboard/applications/ProcessingLogConsole';
 
 const ApplicationDetails = () => {
   const { id } = useParams();
@@ -17,6 +18,8 @@ const ApplicationDetails = () => {
   const [application, setApplication] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [relaunching, setRelaunching] = useState(false);
+  const [processingLogs, setProcessingLogs] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchApplication = async () => {
@@ -24,12 +27,7 @@ const ApplicationDetails = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('onboarding_applications')
-        .select(`
-          *,
-          profiles(*),
-          card_programs(*),
-          onboarding_forms(*)
-        `)
+        .select(`*, profiles(*), card_programs(*), onboarding_forms(*)`)
         .eq('id', id)
         .single();
 
@@ -38,32 +36,37 @@ const ApplicationDetails = () => {
         navigate('/dashboard/applications');
       } else {
         setApplication(data);
+        setProcessingLogs(data.processing_log || []);
       }
       setLoading(false);
     };
     fetchApplication();
+
+    const channel = supabase.channel(`application-${id}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'onboarding_applications', filter: `id=eq.${id}` },
+        (payload) => {
+          setApplication(payload.new);
+          setProcessingLogs(payload.new.processing_log || []);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [id, navigate]);
 
   const handleStatusChange = async (newStatus: 'approved' | 'rejected') => {
     setProcessing(true);
     try {
-      const { error } = await supabase
-        .from('onboarding_applications')
-        .update({ status: newStatus })
-        .eq('id', id);
-      
+      const { error } = await supabase.from('onboarding_applications').update({ status: newStatus }).eq('id', id);
       if (error) throw error;
-
-      // If approved, also update the profile status
       if (newStatus === 'approved') {
-        await supabase
-          .from('profiles')
-          .update({ status: 'active' })
-          .eq('id', application.profile_id);
+        await supabase.from('profiles').update({ status: 'active' }).eq('id', application.profile_id);
       }
-
       showSuccess(`Demande ${newStatus === 'approved' ? 'approuvée' : 'rejetée'}.`);
-      setApplication({ ...application, status: newStatus });
     } catch (err) {
       showError(err.message);
     } finally {
@@ -71,14 +74,29 @@ const ApplicationDetails = () => {
     }
   };
 
-  if (loading) {
-    return <Skeleton className="h-screen w-full" />;
-  }
+  const handleRelaunch = async () => {
+    setRelaunching(true);
+    try {
+      await supabase.from('onboarding_applications').update({ processing_log: [] }).eq('id', id);
+      const { error } = await supabase.functions.invoke('process-onboarding-application', {
+        body: { applicationId: id },
+      });
+      if (error) throw error;
+      showSuccess("Le traitement automatique a été relancé.");
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      setRelaunching(false);
+    }
+  };
 
+  if (loading) return <Skeleton className="h-screen w-full" />;
   if (!application) return null;
 
   const profile = application.profiles;
   const program = application.card_programs;
+  const lastLog = processingLogs[processingLogs.length - 1];
+  const hasFailed = lastLog?.status === 'error';
 
   return (
     <div className="space-y-6">
@@ -106,42 +124,20 @@ const ApplicationDetails = () => {
 
       {application.onboarding_forms?.auto_approve_enabled && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Bot className="h-5 w-5" /> Traitement Automatisé</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div className="space-y-1">
+              <CardTitle className="flex items-center gap-2"><Bot className="h-5 w-5" /> Traitement Automatisé</CardTitle>
+              <CardDescription>Journal des opérations effectuées par le système.</CardDescription>
+            </div>
+            {(application.status === 'pending' || hasFailed) && (
+              <Button variant="outline" onClick={handleRelaunch} disabled={relaunching}>
+                {relaunching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                Relancer le traitement
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
-            {application.status === 'pending' && (
-              <Alert>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <AlertTitle>Traitement en attente ou échoué</AlertTitle>
-                <AlertDescription>
-                  L'approbation automatique est activée pour ce formulaire. Si la demande reste en attente, le processus a peut-être rencontré une erreur. Vous pouvez procéder à une évaluation manuelle.
-                </AlertDescription>
-              </Alert>
-            )}
-            {application.status === 'approved' && (
-              <Alert className="border-green-500 text-green-700">
-                <Check className="h-4 w-4 text-green-500" />
-                <AlertTitle>Demande Approuvée Automatiquement</AlertTitle>
-                <AlertDescription>
-                  La carte a été émise avec une limite de crédit de {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(application.approved_credit_limit)}.
-                </AlertDescription>
-              </Alert>
-            )}
-            {application.status === 'rejected' && (
-              <Alert variant="destructive">
-                <X className="h-4 w-4" />
-                <AlertTitle>Demande Rejetée Automatiquement</AlertTitle>
-                <AlertDescription>
-                  Raisons du rejet :
-                  <ul className="list-disc pl-5 mt-2">
-                    {(application.rejection_reason || "Raison non spécifiée.").split('; ').map((reason, i) => (
-                      <li key={i}>{reason}</li>
-                    ))}
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            )}
+            <ProcessingLogConsole logs={processingLogs} />
           </CardContent>
         </Card>
       )}

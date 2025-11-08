@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Eye, AlertCircle } from 'lucide-react';
+import { Eye, AlertCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { showError } from '@/utils/toast';
@@ -32,6 +32,9 @@ const Applications = () => {
           ),
           card_programs (
             program_name
+          ),
+          onboarding_forms (
+            auto_approve_enabled
           )
         `)
         .order('created_at', { ascending: false });
@@ -39,11 +42,10 @@ const Applications = () => {
       if (error) {
         showError(error.message);
       } else {
-        // Sort to put 'pending' at the top
         const sortedData = data.sort((a, b) => {
           if (a.status === 'pending' && b.status !== 'pending') return -1;
           if (a.status !== 'pending' && b.status === 'pending') return 1;
-          return 0; // Keep original date order for same statuses
+          return 0;
         });
         setApplications(sortedData);
       }
@@ -52,8 +54,16 @@ const Applications = () => {
     fetchApplications();
   }, []);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
+  const getStatusBadge = (app: any) => {
+    if (app.status === 'pending' && app.onboarding_forms?.auto_approve_enabled) {
+      return (
+        <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          En traitement
+        </Badge>
+      );
+    }
+    switch (app.status) {
       case 'pending':
         return (
           <Badge variant="destructive" className="flex items-center gap-1 w-fit">
@@ -66,7 +76,7 @@ const Applications = () => {
       case 'rejected':
         return <Badge variant="secondary">{t('applications.status.rejected')}</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline">{app.status}</Badge>;
     }
   };
 
@@ -105,7 +115,7 @@ const Applications = () => {
                     <TableCell className="font-medium">{app.profiles?.full_name || app.profiles?.legal_name || 'N/A'}</TableCell>
                     <TableCell>{app.card_programs?.program_name || 'N/A'}</TableCell>
                     <TableCell>{new Date(app.created_at).toLocaleString('fr-CA')}</TableCell>
-                    <TableCell>{getStatusBadge(app.status)}</TableCell>
+                    <TableCell>{getStatusBadge(app)}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={() => navigate(`/dashboard/applications/${app.id}`)}>
                         <Eye className="h-4 w-4" />
