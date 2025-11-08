@@ -11,7 +11,7 @@ import { showError } from '@/utils/toast';
 const Step3PersonalInfo = () => {
   const navigate = useNavigate();
   const { t } = useTranslation('public-onboarding');
-  const { formData, updateData } = usePublicOnboarding();
+  const { formConfig, formData, updateData } = usePublicOnboarding();
   const [localData, setLocalData] = useState({
     firstName: formData.firstName || '',
     lastName: formData.lastName || '',
@@ -32,7 +32,13 @@ const Step3PersonalInfo = () => {
       return;
     }
     updateData({ ...localData, address });
-    alert("Prochaine étape à implémenter !");
+    
+    if (formConfig.formDetails.is_credit_bureau_enabled) {
+      navigate('../step-4');
+    } else {
+      // TODO: Navigate to review step when it exists
+      alert("Prochaine étape à implémenter !");
+    }
   };
 
   return (

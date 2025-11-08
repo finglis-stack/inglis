@@ -26,10 +26,27 @@
     "previous_button": "Précédent",
     "next_button": "Suivant"
   },
+  "credit_check": {
+    "title": "Vérification d'Identité",
+    "subtitle": "Pour votre sécurité, nous devons vérifier votre identité à l'aide de votre dossier de crédit.",
+    "sin_label": "Numéro d'Assurance Sociale (NAS)",
+    "sin_desc": "Votre NAS est utilisé uniquement pour cette vérification et n'est pas conservé.",
+    "previous_button": "Précédent",
+    "next_button": "Vérifier",
+    "questions_title": "Questions de Sécurité",
+    "questions_subtitle": "Veuillez répondre aux questions suivantes basées sur votre historique de crédit.",
+    "verify_button": "Vérifier mes réponses",
+    "no_report_title": "Vérification non requise",
+    "no_report_desc": "Nous n'avons pas trouvé de dossier de crédit correspondant ou les données sont insuffisantes. Vous pouvez continuer votre demande.",
+    "continue_button": "Continuer",
+    "failed_title": "Échec de la vérification",
+    "failed_desc": "Les réponses fournies ne correspondent pas à nos dossiers. Pour des raisons de sécurité, vous ne pouvez pas continuer cette demande en ligne."
+  },
   "steps": {
     "welcome": "Accueil",
     "card_selection": "Sélection",
     "personal_info": "Informations",
+    "credit_check": "Vérification",
     "review": "Vérification",
     "confirmation": "Confirmation"
   }

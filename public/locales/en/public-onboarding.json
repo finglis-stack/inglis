@@ -26,10 +26,27 @@
     "previous_button": "Previous",
     "next_button": "Next"
   },
+  "credit_check": {
+    "title": "Identity Verification",
+    "subtitle": "For your security, we need to verify your identity using your credit file.",
+    "sin_label": "Social Insurance Number (SIN)",
+    "sin_desc": "Your SIN is used only for this verification and is not stored.",
+    "previous_button": "Previous",
+    "next_button": "Verify",
+    "questions_title": "Security Questions",
+    "questions_subtitle": "Please answer the following questions based on your credit history.",
+    "verify_button": "Verify My Answers",
+    "no_report_title": "Verification Not Required",
+    "no_report_desc": "We could not find a matching credit file or the data was insufficient. You may continue your application.",
+    "continue_button": "Continue",
+    "failed_title": "Verification Failed",
+    "failed_desc": "The answers provided do not match our records. For security reasons, you cannot continue this application online."
+  },
   "steps": {
     "welcome": "Welcome",
     "card_selection": "Selection",
     "personal_info": "Information",
+    "credit_check": "Verification",
     "review": "Review",
     "confirmation": "Confirmation"
   }
