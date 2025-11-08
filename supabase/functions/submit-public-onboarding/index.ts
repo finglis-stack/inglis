@@ -50,7 +50,7 @@ serve(async (req) => {
       dob: profileData.dob,
       address: profileData.address,
       sin: profileData.sin || null,
-      status: 'pending',
+      status: 'active', // Correction: Utiliser 'active' au lieu de 'pending'
     };
     console.log("Préparation de l'insertion du profil:", profileToInsert);
 
