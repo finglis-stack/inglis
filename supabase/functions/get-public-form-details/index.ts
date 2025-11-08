@@ -62,6 +62,7 @@ serve(async (req) => {
     // 4. Construire la réponse
     const responseData = {
       formDetails: {
+        id: form.id,
         name: form.name,
         description: form.description,
         is_credit_bureau_enabled: form.is_credit_bureau_enabled,
