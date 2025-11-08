@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { showError, showSuccess } from '@/utils/toast';
 import { Loader2, Upload } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 const OnboardingFormEditor = () => {
   const navigate = useNavigate();
@@ -26,6 +27,8 @@ const OnboardingFormEditor = () => {
     credit_limit_type: 'dynamic',
     fixed_credit_limit: '',
     background_image_url: '',
+    auto_approve_enabled: false,
+    soft_credit_limit: '',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -53,6 +56,8 @@ const OnboardingFormEditor = () => {
             credit_limit_type: data.credit_limit_type || 'dynamic',
             fixed_credit_limit: data.fixed_credit_limit || '',
             background_image_url: data.background_image_url || '',
+            auto_approve_enabled: data.auto_approve_enabled || false,
+            soft_credit_limit: data.soft_credit_limit || '',
           });
           setImagePreview(data.background_image_url);
         }
@@ -97,6 +102,8 @@ const OnboardingFormEditor = () => {
         credit_limit_type: formData.credit_limit_type,
         fixed_credit_limit: formData.credit_limit_type === 'fixed' ? parseFloat(formData.fixed_credit_limit) : null,
         background_image_url: imageUrl,
+        auto_approve_enabled: formData.auto_approve_enabled,
+        soft_credit_limit: formData.soft_credit_limit ? parseFloat(formData.soft_credit_limit) : null,
       };
 
       if (formId) {
@@ -116,7 +123,6 @@ const OnboardingFormEditor = () => {
     }
   };
 
-  // ... (autres handlers inchangés)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
   const handleSwitchChange = (id: string, checked: boolean) => setFormData(prev => ({ ...prev, [id]: checked }));
   const handleRadioChange = (value: string) => setFormData(prev => ({ ...prev, credit_limit_type: value }));
@@ -153,6 +159,18 @@ const OnboardingFormEditor = () => {
               </div>
             </div>
           </div>
+          <Separator />
+          <div className="space-y-4">
+            <h3 className="font-semibold">Automatisation</h3>
+            <div className="flex items-center justify-between p-4 border rounded-md">
+              <div>
+                <Label htmlFor="auto_approve_enabled">Approbation Automatique</Label>
+                <p className="text-sm text-muted-foreground">Tenter d'approuver et d'émettre la carte automatiquement après soumission.</p>
+              </div>
+              <Switch id="auto_approve_enabled" checked={formData.auto_approve_enabled} onCheckedChange={(checked) => handleSwitchChange('auto_approve_enabled', checked)} />
+            </div>
+          </div>
+          <Separator />
           <div className="space-y-4">
             <h3 className="font-semibold">Modules</h3>
             <div className="flex items-center justify-between p-4 border rounded-md">
@@ -163,6 +181,7 @@ const OnboardingFormEditor = () => {
               <Switch id="is_credit_bureau_enabled" checked={formData.is_credit_bureau_enabled} onCheckedChange={(checked) => handleSwitchChange('is_credit_bureau_enabled', checked)} />
             </div>
           </div>
+          <Separator />
           <div className="space-y-4">
             <h3 className="font-semibold">Programmes de Cartes</h3>
             <p className="text-sm text-muted-foreground">Sélectionnez les programmes de cartes qui seront proposés dans ce formulaire.</p>
@@ -177,6 +196,7 @@ const OnboardingFormEditor = () => {
               </div>
             </ScrollArea>
           </div>
+          <Separator />
           <div className="space-y-4">
             <h3 className="font-semibold">Limite de Crédit</h3>
             <RadioGroup value={formData.credit_limit_type} onValueChange={handleRadioChange}>
@@ -187,6 +207,13 @@ const OnboardingFormEditor = () => {
               <div className="grid gap-2 pl-6 pt-2">
                 <Label htmlFor="fixed_credit_limit">Montant de la limite de crédit fixe</Label>
                 <Input id="fixed_credit_limit" type="number" value={formData.fixed_credit_limit} onChange={handleChange} placeholder="5000.00" />
+              </div>
+            )}
+             {formData.auto_approve_enabled && (
+              <div className="grid gap-2 pt-4">
+                <Label htmlFor="soft_credit_limit">Plafond de la limite de crédit (Soft Limit)</Label>
+                <Input id="soft_credit_limit" type="number" value={formData.soft_credit_limit} onChange={handleChange} placeholder="10000.00" />
+                <p className="text-xs text-muted-foreground">La limite de crédit approuvée automatiquement ne dépassera jamais ce montant.</p>
               </div>
             )}
           </div>
