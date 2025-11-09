@@ -1,11 +1,13 @@
-import { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense } from 'react';
 import { BrandingProvider } from '@/context/BrandingContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Loader2 } from 'lucide-react';
 
 // --- App Chooser & Routers ---
 import LocalhostChooser from '@/pages/LocalhostChooser';
@@ -172,6 +174,33 @@ const Q12xAppRoutes = () => (
   </Routes>
 );
 
+const DomainRouter = ({ children }) => {
+  const navigate = useNavigate();
+  const [isCheckingDomain, setIsCheckingDomain] = useState(true);
+
+  useEffect(() => {
+    const checkDomain = async () => {
+      const hostname = window.location.hostname;
+      const mainDomains = ['localhost', 'inglisdominion.ca', 'www.inglisdominion.ca', 'q12x.inglisdominion.ca', 'apply.inglisdominion.ca'];
+      
+      if (!mainDomains.includes(hostname)) {
+        const { data: formId, error } = await supabase.rpc('get_form_id_for_domain', { p_domain_name: hostname });
+        if (formId && !error) {
+          navigate(`/apply/${formId}`, { replace: true });
+        }
+      }
+      setIsCheckingDomain(false);
+    };
+    checkDomain();
+  }, [navigate]);
+
+  if (isCheckingDomain) {
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+  }
+
+  return children;
+};
+
 const AppContent = () => {
   const [localhostApp, setLocalhostApp] = useState(() => localStorage.getItem('dyad-app-choice'));
 
@@ -194,7 +223,12 @@ const AppContent = () => {
 
   if (isQ12x) return <Q12xAppRoutes />;
   if (isApply) return <ApplyRoutes />;
-  return <MainAppRoutes />;
+  
+  return (
+    <DomainRouter>
+      <MainAppRoutes />
+    </DomainRouter>
+  );
 };
 
 const App = () => {
