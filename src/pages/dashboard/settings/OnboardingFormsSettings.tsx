@@ -37,7 +37,10 @@ const OnboardingFormsSettings = () => {
   }, []);
 
   const copyUrl = (formId: string) => {
-    const url = `${window.location.origin.replace('www.', 'apply.')}/apply/${formId}`;
+    const isLocal = window.location.hostname === 'localhost';
+    const url = isLocal 
+      ? `${window.location.origin}/apply/${formId}`
+      : `https://appy.inglisdominion.ca/${formId}`;
     navigator.clipboard.writeText(url);
     setCopiedId(formId);
     setTimeout(() => setCopiedId(null), 2000);

@@ -66,20 +66,19 @@ const translations = {
   }
 };
 
+const baseUrl = 'https://bsmclnbeywqosuhijhae.supabase.co/functions/v1/twilio-ivr';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const url = new URL(req.url);
-    const host = req.headers.get('host');
-    const baseUrl = `https://${host}${url.pathname}`;
-
     const bodyText = await req.text();
     const params = new URLSearchParams(bodyText);
     const digits = params.get('Digits');
 
+    const url = new URL(req.url);
     const step = url.searchParams.get('step') || 'welcome';
     const lang = url.searchParams.get('lang');
     const cardNumber = url.searchParams.get('cardNumber');
@@ -153,7 +152,7 @@ serve(async (req) => {
         twiml.say({ voice: t_menu.voice, language: t_menu.language }, t_menu.goodbye);
         twiml.hangup();
         break;
-
+      
       case 'handle_menu':
         const t_action = translations[lang];
         if (digits === '1') {
