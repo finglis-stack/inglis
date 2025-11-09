@@ -40,7 +40,7 @@ const OnboardingFormsSettings = () => {
     const isLocal = window.location.hostname === 'localhost';
     const url = isLocal 
       ? `${window.location.origin}/apply/${formId}`
-      : `https://appy.inglisdominion.ca/${formId}`;
+      : `https://apply.inglisdominion.ca/${formId}`;
     navigator.clipboard.writeText(url);
     setCopiedId(formId);
     setTimeout(() => setCopiedId(null), 2000);
