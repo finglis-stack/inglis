@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { CreditCard, KeyRound, FileText, Paintbrush } from 'lucide-react';
+import { CreditCard, KeyRound, FileText, Paintbrush, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const Settings = () => {
@@ -52,6 +52,17 @@ const Settings = () => {
                 <CardDescription>Gérez le logo et l'apparence de votre marque.</CardDescription>
               </div>
               <Paintbrush className="h-8 w-8 text-muted-foreground" />
+            </CardHeader>
+          </Card>
+        </Link>
+        <Link to="/dashboard/settings/domains">
+          <Card className="hover:bg-gray-50 transition-colors h-full">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div className="space-y-1">
+                <CardTitle>Domaines</CardTitle>
+                <CardDescription>Gérez les domaines personnalisés pour vos formulaires.</CardDescription>
+              </div>
+              <Globe className="h-8 w-8 text-muted-foreground" />
             </CardHeader>
           </Card>
         </Link>
