@@ -12,6 +12,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
+const renderVerificationData = (data: any) => {
+  if (!data) return <p className="text-sm text-muted-foreground">Aucun enregistrement de vérification trouvé. Le domaine est peut-être déjà vérifié.</p>;
+  
+  const records = Array.isArray(data) ? data : [data];
+
+  if (records.length === 0) {
+    return <p className="text-sm text-muted-foreground">Aucun enregistrement de vérification trouvé. Le domaine est peut-être déjà vérifié.</p>;
+  }
+
+  return (
+    <div className="space-y-3 font-mono text-xs">
+      {records.map((rec, i) => (
+        <div key={i} className="p-3 bg-muted rounded-md border">
+          <p><strong>Type:</strong> {rec.type}</p>
+          <p><strong>Nom/Hôte:</strong> {rec.domain || '@'}</p>
+          <p className="break-all"><strong>Valeur/Cible:</strong> {rec.value}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const Domains = () => {
   const [domains, setDomains] = useState<any[]>([]);
   const [forms, setForms] = useState<any[]>([]);
@@ -200,15 +222,7 @@ const Domains = () => {
                               <p>
                                 Pour que votre domaine personnalisé fonctionne, vous devez ajouter les enregistrements DNS suivants chez votre registraire de domaine (là où vous avez acheté le domaine, comme GoDaddy, Namecheap, etc.).
                               </p>
-                              <div className="space-y-3 font-mono text-xs">
-                                {Array.isArray(domain.verification_data) && domain.verification_data.map((rec, i) => (
-                                  <div key={i} className="p-3 bg-muted rounded-md border">
-                                    <p><strong>Type:</strong> {rec.type}</p>
-                                    <p><strong>Nom/Hôte:</strong> {rec.domain || '@'}</p>
-                                    <p className="break-all"><strong>Valeur/Cible:</strong> {rec.value}</p>
-                                  </div>
-                                ))}
-                              </div>
+                              {renderVerificationData(domain.verification_data)}
                               <p className="text-xs text-muted-foreground">
                                 La propagation des DNS peut prendre de quelques minutes à plusieurs heures. Une fois les enregistrements ajoutés, revenez ici et cliquez sur "Vérifier".
                               </p>
@@ -261,15 +275,7 @@ const Domains = () => {
               <Info className="h-4 w-4" />
               <AlertTitle>Instructions</AlertTitle>
               <AlertDescription className="text-sm space-y-4">
-                <div className="space-y-3 font-mono text-xs">
-                  {Array.isArray(verificationInfo?.verification) && verificationInfo.verification.map((rec, i) => (
-                    <div key={i} className="p-3 bg-muted rounded-md border">
-                      <p><strong>Type:</strong> {rec.type}</p>
-                      <p><strong>Nom/Hôte:</strong> {rec.domain}</p>
-                      <p className="break-all"><strong>Valeur/Cible:</strong> {rec.value}</p>
-                    </div>
-                  ))}
-                </div>
+                {renderVerificationData(verificationInfo?.verification)}
                 <p className="text-xs text-muted-foreground font-sans">
                   La propagation des DNS peut prendre du temps. Vous pourrez vérifier le statut dans la liste des domaines.
                 </p>
