@@ -68,16 +68,19 @@ const Domains = () => {
       const { data, error } = await supabase.functions.invoke('verify-custom-domain', {
         body: { domain: domainName },
       });
+
       if (error) {
         const functionError = await error.context.json();
-        throw new Error(functionError.error || "Erreur de vérification.");
+        throw new Error(functionError.error || "Une erreur inattendue est survenue lors de la vérification.");
       }
+
       if (data.verified) {
         showSuccess("Domaine vérifié avec succès !");
+        fetchDomainsAndForms();
       } else {
-        showError("La vérification a échoué. Assurez-vous que vos DNS sont corrects et attendez quelques minutes.");
+        const reason = data.error?.message || "Assurez-vous que vos enregistrements DNS sont corrects et attendez la propagation (cela peut prendre du temps).";
+        showError(`La vérification a échoué. ${reason}`);
       }
-      fetchDomainsAndForms();
     } catch (err) {
       showError(err.message);
     } finally {
@@ -193,7 +196,9 @@ const Domains = () => {
                             <Info className="h-4 w-4" />
                             <AlertTitle>Action requise : Configurez vos DNS</AlertTitle>
                             <AlertDescription className="text-sm space-y-4">
-                              <p>Pour que votre domaine personnalisé fonctionne, vous devez ajouter les enregistrements DNS suivants chez votre registraire de domaine.</p>
+                              <p>
+                                Pour que votre domaine personnalisé fonctionne, vous devez ajouter les enregistrements DNS suivants dans le panneau de configuration de votre registraire de domaine (là où vous avez acheté le domaine, comme GoDaddy, Namecheap, etc.).
+                              </p>
                               <div className="space-y-3 font-mono text-xs">
                                 {domain.verification_data.map((rec, i) => (
                                   <div key={i} className="p-3 bg-muted rounded-md border">
@@ -203,7 +208,9 @@ const Domains = () => {
                                   </div>
                                 ))}
                               </div>
-                              <p className="text-xs text-muted-foreground">La propagation des DNS peut prendre de quelques minutes à plusieurs heures. Une fois les enregistrements ajoutés, revenez ici et cliquez sur "Vérifier".</p>
+                              <p className="text-xs text-muted-foreground">
+                                La propagation des DNS peut prendre de quelques minutes à plusieurs heures. Une fois les enregistrements ajoutés, revenez ici et cliquez sur "Vérifier".
+                              </p>
                             </AlertDescription>
                           </Alert>
                         </TableCell>
