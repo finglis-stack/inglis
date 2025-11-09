@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Info, Loader2, CheckCircle, Clock, Edit, Trash2 } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const Domains = () => {
@@ -21,6 +21,7 @@ const Domains = () => {
   const [adding, setAdding] = useState(false);
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [editingDomain, setEditingDomain] = useState<any | null>(null);
+  const [verificationInfo, setVerificationInfo] = useState<any | null>(null);
 
   const fetchDomainsAndForms = async () => {
     setLoading(true);
@@ -44,14 +45,14 @@ const Domains = () => {
     if (!newDomain.trim()) return;
     setAdding(true);
     try {
-      const { error } = await supabase.functions.invoke('add-custom-domain', {
+      const { data, error } = await supabase.functions.invoke('add-custom-domain', {
         body: { domain: newDomain, formId: selectedFormId },
       });
       if (error) {
         const functionError = await error.context.json();
         throw new Error(functionError.error || "Une erreur est survenue.");
       }
-      showSuccess("Domaine ajouté. Veuillez configurer vos DNS.");
+      setVerificationInfo(data);
       setNewDomain('');
       setSelectedFormId(null);
       fetchDomainsAndForms();
@@ -78,8 +79,8 @@ const Domains = () => {
         showSuccess("Domaine vérifié avec succès !");
         fetchDomainsAndForms();
       } else {
-        const reason = data.error?.message || "Assurez-vous que vos enregistrements DNS sont corrects et attendez la propagation (cela peut prendre du temps).";
-        showError(`La vérification a échoué. ${reason}`);
+        setVerificationInfo(data);
+        showError(`La vérification a échoué. Veuillez vérifier vos enregistrements DNS.`);
       }
     } catch (err) {
       showError(err.message);
@@ -161,62 +162,33 @@ const Domains = () => {
                 <TableRow><TableCell colSpan={4} className="text-center">Chargement...</TableCell></TableRow>
               ) : domains.length > 0 ? (
                 domains.map(domain => (
-                  <>
-                    <TableRow key={domain.id}>
-                      <TableCell className="font-medium">{domain.domain_name}</TableCell>
-                      <TableCell>{domain.onboarding_forms?.name || <span className="text-muted-foreground">Aucun</span>}</TableCell>
-                      <TableCell>
-                        {domain.status === 'verified' ? (
-                          <Badge className="bg-green-600 hover:bg-green-700"><CheckCircle className="h-3 w-3 mr-1" />Vérifié</Badge>
-                        ) : (
-                          <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />En attente</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {domain.status === 'pending' && (
-                          <Button variant="outline" size="sm" onClick={() => handleVerifyDomain(domain.domain_name)} disabled={verifyingId === domain.domain_name}>
-                            {verifyingId === domain.domain_name && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Vérifier
-                          </Button>
-                        )}
-                        <Button variant="ghost" size="icon" onClick={() => setEditingDomain(domain)}><Edit className="h-4 w-4" /></Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>Supprimer ce domaine ?</AlertDialogTitle><AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>Annuler</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteDomain(domain.domain_name)}>Supprimer</AlertDialogAction></AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </TableCell>
-                    </TableRow>
-                    {domain.status === 'pending' && domain.verification_data && (
-                      <TableRow>
-                        <TableCell colSpan={4}>
-                          <Alert>
-                            <Info className="h-4 w-4" />
-                            <AlertTitle>Action requise : Configurez vos DNS</AlertTitle>
-                            <AlertDescription className="text-sm space-y-4">
-                              <p>
-                                Pour que votre domaine personnalisé fonctionne, vous devez ajouter les enregistrements DNS suivants dans le panneau de configuration de votre registraire de domaine (là où vous avez acheté le domaine, comme GoDaddy, Namecheap, etc.).
-                              </p>
-                              <div className="space-y-3 font-mono text-xs">
-                                {domain.verification_data.map((rec, i) => (
-                                  <div key={i} className="p-3 bg-muted rounded-md border">
-                                    <p><strong>Type:</strong> {rec.type}</p>
-                                    <p><strong>Nom/Hôte:</strong> {rec.name || '@'}</p>
-                                    <p className="break-all"><strong>Valeur/Cible:</strong> {rec.value}</p>
-                                  </div>
-                                ))}
-                              </div>
-                              <p className="text-xs text-muted-foreground">
-                                La propagation des DNS peut prendre de quelques minutes à plusieurs heures. Une fois les enregistrements ajoutés, revenez ici et cliquez sur "Vérifier".
-                              </p>
-                            </AlertDescription>
-                          </Alert>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </>
+                  <TableRow key={domain.id}>
+                    <TableCell className="font-medium">{domain.domain_name}</TableCell>
+                    <TableCell>{domain.onboarding_forms?.name || <span className="text-muted-foreground">Aucun</span>}</TableCell>
+                    <TableCell>
+                      {domain.status === 'verified' ? (
+                        <Badge className="bg-green-600 hover:bg-green-700"><CheckCircle className="h-3 w-3 mr-1" />Vérifié</Badge>
+                      ) : (
+                        <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />En attente</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {domain.status === 'pending' && (
+                        <Button variant="outline" size="sm" onClick={() => handleVerifyDomain(domain.domain_name)} disabled={verifyingId === domain.domain_name}>
+                          {verifyingId === domain.domain_name && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Vérifier
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" onClick={() => setEditingDomain(domain)}><Edit className="h-4 w-4" /></Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader><AlertDialogTitle>Supprimer ce domaine ?</AlertDialogTitle><AlertDialogDescription>Cette action est irréversible.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogFooter><AlertDialogCancel>Annuler</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteDomain(domain.domain_name)}>Supprimer</AlertDialogAction></AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
                 <TableRow><TableCell colSpan={4} className="text-center h-24">Aucun domaine configuré.</TableCell></TableRow>
@@ -243,6 +215,40 @@ const Domains = () => {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEditingDomain(null)}>Annuler</Button>
             <Button onClick={handleUpdateDomain}>Sauvegarder</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!verificationInfo} onOpenChange={() => setVerificationInfo(null)}>
+        <DialogContent className="sm:max-w-[625px]">
+          <DialogHeader>
+            <DialogTitle>Action requise : Configurez vos DNS</DialogTitle>
+            <DialogDescription>
+              Pour que votre domaine {verificationInfo?.name} fonctionne, ajoutez les enregistrements DNS suivants chez votre registraire de domaine.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>Instructions</AlertTitle>
+              <AlertDescription className="text-sm space-y-4">
+                <div className="space-y-3 font-mono text-xs">
+                  {verificationInfo?.verification?.map((rec, i) => (
+                    <div key={i} className="p-3 bg-muted rounded-md border">
+                      <p><strong>Type:</strong> {rec.type}</p>
+                      <p><strong>Nom/Hôte:</strong> {rec.domain}</p>
+                      <p className="break-all"><strong>Valeur/Cible:</strong> {rec.value}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground font-sans">
+                  La propagation des DNS peut prendre du temps. Vous pourrez vérifier le statut dans la liste des domaines.
+                </p>
+              </AlertDescription>
+            </Alert>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setVerificationInfo(null)}>Fermer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
