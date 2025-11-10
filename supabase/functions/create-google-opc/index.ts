@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
-import * as openpgp from 'https://esm.sh/openpgp@5.11.1';
+import * as openpgp from 'https://esm.sh/openpgp@5.11.1?target=deno';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
