@@ -90,4 +90,4 @@ serve(async (req) => {
       status: 400,
     });
   }
-});
+})
