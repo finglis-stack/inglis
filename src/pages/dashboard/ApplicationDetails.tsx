@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { showError, showSuccess } from '@/utils/toast';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ProcessingLogConsole } from '@/components/dashboard/applications/ProcessingLogConsole';
+import { getFunctionError } from '@/lib/utils';
 
 const ApplicationDetails = () => {
   const { id } = useParams();
@@ -81,10 +82,14 @@ const ApplicationDetails = () => {
       const { error } = await supabase.functions.invoke('process-onboarding-application', {
         body: { applicationId: id },
       });
-      if (error) throw error;
+      if (error) throw new Error(getFunctionError(error));
       showSuccess("Le traitement automatique a été relancé.");
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setRelaunching(false);
     }

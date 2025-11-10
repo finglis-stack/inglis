@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
 import Lottie from "lottie-react";
+import { getFunctionError } from '@/lib/utils';
 
 const Step6Review = () => {
   const navigate = useNavigate();
@@ -38,8 +39,7 @@ const Step6Review = () => {
         body: { formId: formConfig.formDetails.id, profileData: formData },
       });
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || "Une erreur est survenue lors de la soumission.");
+        throw new Error(getFunctionError(error, "Une erreur est survenue lors de la soumission."));
       }
 
       if (formConfig.formDetails.auto_approve_enabled) {
@@ -75,7 +75,11 @@ const Step6Review = () => {
         navigate('../step-7');
       }
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
       setProcessingState('error');
     }
   };

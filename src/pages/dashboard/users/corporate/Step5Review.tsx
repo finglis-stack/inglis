@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { showSuccess, showError } from '@/utils/toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
+import { getFunctionError } from '@/lib/utils';
 
 const Step5Review = () => {
   const navigate = useNavigate();
@@ -23,8 +24,7 @@ const Step5Review = () => {
       });
 
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || error.message);
+        throw new Error(getFunctionError(error, error.message));
       }
 
       showSuccess('Nouvel utilisateur corporatif créé avec succès !');

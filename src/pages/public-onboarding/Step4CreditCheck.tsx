@@ -10,6 +10,7 @@ import { Loader2, ShieldCheck, ShieldX } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
+import { getFunctionError } from '@/lib/utils';
 
 const Step4CreditCheck = () => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const Step4CreditCheck = () => {
       const { data, error } = await supabase.functions.invoke('generate-credit-questions', {
         body: { sin, formId: formId }, // Utiliser l'ID de l'URL
       });
-      if (error) throw error;
+      if (error) throw new Error(getFunctionError(error));
 
       if (data.status === 'no_report' || data.status === 'insufficient_data') {
         updateData({ creditBureauVerification: data.status });
@@ -41,7 +42,11 @@ const Step4CreditCheck = () => {
         setStep('answer_questions');
       }
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setLoading(false);
     }
@@ -54,7 +59,7 @@ const Step4CreditCheck = () => {
       const { data, error } = await supabase.functions.invoke('verify-credit-answers', {
         body: { verificationId, answers: orderedAnswers },
       });
-      if (error) throw error;
+      if (error) throw new Error(getFunctionError(error));
 
       if (data.success) {
         updateData({ creditBureauVerification: 'passed', sin });
@@ -64,7 +69,11 @@ const Step4CreditCheck = () => {
         setStep('failed');
       }
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setLoading(false);
     }

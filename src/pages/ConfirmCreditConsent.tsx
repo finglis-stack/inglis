@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { getFunctionError } from '@/lib/utils';
 
 const ConfirmCreditConsent = () => {
   const { token } = useParams();
@@ -24,15 +25,18 @@ const ConfirmCreditConsent = () => {
       });
 
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || "Une erreur est survenue.");
+        throw new Error(getFunctionError(error, "Une erreur est survenue."));
       }
       
       setStatus('success');
       setMessage(`Merci ! Votre consentement a été enregistré et vos informations ont été partagées avec ${data.institutionName}.`);
     } catch (err) {
       setStatus('error');
-      setMessage(err.message);
+      if (err instanceof Error) {
+        setMessage(err.message);
+      } else {
+        setMessage("Une erreur inconnue est survenue.");
+      }
     } finally {
       setLoading(false);
     }

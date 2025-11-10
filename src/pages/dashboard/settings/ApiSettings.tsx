@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PlusCircle, Copy, Check, Trash2, Loader2, FlaskConical, UserPlus } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { useTranslation } from 'react-i18next';
+import { getFunctionError } from '@/lib/utils';
 
 const ApiSettings = () => {
   const { t } = useTranslation('dashboard');
@@ -57,8 +58,7 @@ const ApiSettings = () => {
     try {
       const { data, error } = await supabase.functions.invoke('generate-api-key');
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || error.message);
+        throw new Error(getFunctionError(error, error.message));
       }
       setNewKey(data.apiKey);
       fetchKeys(); // Refresh the list
@@ -80,8 +80,7 @@ const ApiSettings = () => {
         body: { key_id: keyId },
       });
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || error.message);
+        throw new Error(getFunctionError(error, error.message));
       }
       showSuccess("Clé API supprimée avec succès.");
       setKeys(keys.filter(k => k.id !== keyId));
@@ -108,8 +107,7 @@ const ApiSettings = () => {
         }
       });
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || "La transaction de test a échoué.");
+        throw new Error(getFunctionError(error, "La transaction de test a échoué."));
       }
       showSuccess(`Transaction de test réussie ! ID: ${data.transaction_id}`);
       setTestToken('');

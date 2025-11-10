@@ -11,6 +11,7 @@ import { showError, showSuccess } from '@/utils/toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { getFunctionError } from '@/lib/utils';
 
 const renderVerificationData = (data: any) => {
   if (!data) return <p className="text-sm text-muted-foreground">Aucun enregistrement de vérification trouvé. Le domaine est peut-être déjà vérifié.</p>;
@@ -71,15 +72,18 @@ const Domains = () => {
         body: { domain: newDomain, formId: selectedFormId },
       });
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || "Une erreur est survenue.");
+        throw new Error(getFunctionError(error, "Une erreur est survenue."));
       }
       setVerificationInfo(data);
       setNewDomain('');
       setSelectedFormId(null);
       fetchDomainsAndForms();
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setAdding(false);
     }
@@ -93,8 +97,7 @@ const Domains = () => {
       });
 
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || "Une erreur inattendue est survenue lors de la vérification.");
+        throw new Error(getFunctionError(error, "Une erreur inattendue est survenue lors de la vérification."));
       }
 
       if (data.verified) {
@@ -105,7 +108,11 @@ const Domains = () => {
         showError(`La vérification a échoué. Veuillez vérifier vos enregistrements DNS.`);
       }
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setVerifyingId(null);
     }
@@ -116,11 +123,15 @@ const Domains = () => {
       const { error } = await supabase.functions.invoke('delete-custom-domain', {
         body: { domainName },
       });
-      if (error) throw error;
+      if (error) throw new Error(getFunctionError(error));
       showSuccess("Domaine supprimé avec succès.");
       fetchDomainsAndForms();
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     }
   };
 
@@ -130,12 +141,16 @@ const Domains = () => {
       const { error } = await supabase.functions.invoke('update-custom-domain', {
         body: { domainId: editingDomain.id, formId: editingDomain.onboarding_form_id },
       });
-      if (error) throw error;
+      if (error) throw new Error(getFunctionError(error));
       showSuccess("Lien du formulaire mis à jour.");
       setEditingDomain(null);
       fetchDomainsAndForms();
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     }
   };
 

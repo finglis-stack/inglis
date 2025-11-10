@@ -63,3 +63,16 @@ export function validateLuhnAlphanumeric(pan: string): boolean {
 
   return calculatedCheckDigit === checkDigit;
 }
+
+export function getFunctionError(error: any, fallbackMessage: string = 'An unknown error occurred.'): string {
+  if (error?.context?.error) {
+    // This handles errors from my edge functions that return { error: '...' }
+    return error.context.error;
+  }
+  if (error instanceof Error) {
+    // This handles generic JS errors and Supabase client errors
+    return error.message;
+  }
+  // Fallback for other cases
+  return fallbackMessage;
+}

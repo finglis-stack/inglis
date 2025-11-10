@@ -13,6 +13,7 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import { CardAgreementPDF } from '@/components/dashboard/cards/CardAgreementPDF';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Label } from '@/components/ui/label';
+import { getFunctionError } from '@/lib/utils';
 
 const CreateCardStep4 = () => {
   const { t } = useTranslation('dashboard');
@@ -83,8 +84,7 @@ const CreateCardStep4 = () => {
       });
 
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || error.message);
+        throw new Error(getFunctionError(error, error.message));
       }
 
       showSuccess(t('newCard.successMessage'));

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { showError } from '@/utils/toast';
+import { getFunctionError } from '@/lib/utils';
 
 interface AddToGoogleWalletButtonProps {
   cardId: string;
@@ -19,8 +20,7 @@ export const AddToGoogleWalletButton = ({ cardId }: AddToGoogleWalletButtonProps
       });
 
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || "Une erreur est survenue lors de la création de l'OPC.");
+        throw new Error(getFunctionError(error, "Une erreur est survenue lors de la création de l'OPC."));
       }
 
       console.log("--- Opaque Payment Card (OPC) pour Google Wallet ---");
@@ -36,7 +36,11 @@ export const AddToGoogleWalletButton = ({ cardId }: AddToGoogleWalletButtonProps
       alert("L'OPC a été généré avec succès ! Vérifiez la console du navigateur (F12) pour voir l'objet à envoyer à Google Wallet.");
 
     } catch (err) {
-      showError(err.message);
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError("Une erreur inconnue est survenue.");
+      }
     } finally {
       setLoading(false);
     }

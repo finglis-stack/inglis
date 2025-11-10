@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Badge } from '@/components/ui/badge';
+import { getFunctionError } from '@/lib/utils';
 
 const CardPrograms = () => {
   const { t } = useTranslation('dashboard');
@@ -56,8 +57,7 @@ const CardPrograms = () => {
       });
 
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || error.message);
+        throw new Error(getFunctionError(error, error.message));
       }
 
       setPrograms(programs.filter((p) => p.id !== programId));

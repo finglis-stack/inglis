@@ -11,6 +11,7 @@ import { useTranslation, Trans } from 'react-i18next';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { getDeviceFingerprint } from '@/utils/deviceFingerprint';
 import { behavioralAnalyzer } from '@/utils/behavioralAnalysis';
+import { getFunctionError } from '@/lib/utils';
 
 const PublicCheckoutPage = () => {
   const { checkoutId } = useParams();
@@ -51,21 +52,6 @@ const PublicCheckoutPage = () => {
     getDeviceFingerprint().catch(console.error);
   }, [checkoutId]);
 
-  const getFunctionError = async (error: any, fallbackMessage: string): Promise<string> => {
-    if (error.context && typeof error.context.json === 'function') {
-      try {
-        const functionError = await error.context.json();
-        return functionError.error || fallbackMessage;
-      } catch (e) {
-        console.error("Could not parse Edge Function error response:", e);
-      }
-    }
-    if (error instanceof Error) {
-      return error.message;
-    }
-    return fallbackMessage;
-  };
-
   const handlePaymentSubmit = async (cardDetails: any, behavioralSignals: any) => {
     setProcessing(true);
     setPaymentError(null);
@@ -83,7 +69,7 @@ const PublicCheckoutPage = () => {
       });
 
       if (tokenError) {
-        const message = await getFunctionError(tokenError, t('publicCheckout.form.paymentRefused'));
+        const message = getFunctionError(tokenError, t('publicCheckout.form.paymentRefused'));
         throw new Error(message);
       }
 
@@ -104,7 +90,7 @@ const PublicCheckoutPage = () => {
       });
 
       if (paymentError) {
-        const message = await getFunctionError(paymentError, t('publicCheckout.form.paymentRefused'));
+        const message = getFunctionError(paymentError, t('publicCheckout.form.paymentRefused'));
         throw new Error(message);
       }
 

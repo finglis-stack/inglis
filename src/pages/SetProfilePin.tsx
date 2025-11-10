@@ -6,6 +6,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { showError } from '@/utils/toast';
 import { Loader2, CheckCircle } from 'lucide-react';
+import { getFunctionError } from '@/lib/utils';
 
 const SetProfilePin = () => {
   const { token } = useParams();
@@ -33,8 +34,7 @@ const SetProfilePin = () => {
       });
 
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || "Le lien est invalide ou a expiré.");
+        throw new Error(getFunctionError(error, "Le lien est invalide ou a expiré."));
       }
 
       setIsSuccess(true);

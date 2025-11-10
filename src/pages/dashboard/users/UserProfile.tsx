@@ -17,6 +17,7 @@ import { UploadCloud, DownloadCloud, Loader2, Info, AlertTriangle } from 'lucide
 import CreditReportDisplay from '@/components/dashboard/users/CreditReportDisplay';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import RiskAnalysis from '@/components/dashboard/users/RiskAnalysis';
+import { getFunctionError } from '@/lib/utils';
 
 const UserProfile = () => {
   const { id } = useParams();
@@ -65,8 +66,7 @@ const UserProfile = () => {
         body: { profile_id: profile.id },
       });
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || "Une erreur est survenue.");
+        throw new Error(getFunctionError(error, "Une erreur est survenue."));
       }
       showSuccess("L'e-mail de demande de consentement a été envoyé à l'utilisateur.");
     } catch (err) {
@@ -87,8 +87,7 @@ const UserProfile = () => {
         body: { profile_id: profile.id },
       });
       if (error) {
-        const functionError = await error.context.json();
-        throw new Error(functionError.error || "Une erreur est survenue.");
+        throw new Error(getFunctionError(error, "Une erreur est survenue."));
       }
       showSuccess("L'e-mail de demande de consultation a été envoyé à l'utilisateur.");
     } catch (err) {
@@ -155,8 +154,7 @@ const UserProfile = () => {
       });
 
       if (error) {
-          const functionError = await error.context.json();
-          showError(`Erreur de vérification: ${functionError.error || error.message}`);
+          showError(getFunctionError(error, `Erreur de vérification: ${error.message}`));
           return false;
       }
 
@@ -193,8 +191,7 @@ const UserProfile = () => {
             body: { profile_id: profile.id },
           });
           if (sinError) {
-            const functionError = await sinError.context.json();
-            throw new Error(functionError.error || sinError.message);
+            throw new Error(getFunctionError(sinError, sinError.message));
           }
           setDecryptedSin(sinData.sin);
         }
@@ -203,8 +200,7 @@ const UserProfile = () => {
             body: { profile_id: profile.id },
           });
           if (addressError) {
-            const functionError = await addressError.context.json();
-            throw new Error(functionError.error || addressError.message);
+            throw new Error(getFunctionError(addressError, addressError.message));
           }
           setDecryptedAddress(addressData.address);
         }
