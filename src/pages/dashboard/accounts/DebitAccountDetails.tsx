@@ -13,6 +13,7 @@ import { useDebitAccountBalance } from '@/hooks/useDebitAccountBalance';
 import { useTranslation } from 'react-i18next';
 import AddFundsDialog from '@/components/dashboard/accounts/AddFundsDialog';
 import { Separator } from '@/components/ui/separator';
+import { AddToGoogleWalletButton } from '@/components/dashboard/accounts/AddToGoogleWalletButton';
 
 const DebitAccountDetails = () => {
   const { t } = useTranslation('dashboard');
@@ -215,6 +216,7 @@ const DebitAccountDetails = () => {
                 )}
               </Link>
             </Button>
+            <AddToGoogleWalletButton cardId={account.card_id} />
             <Button variant="destructive">{t('accounts.blockAccount')}</Button>
           </CardContent>
         </Card>

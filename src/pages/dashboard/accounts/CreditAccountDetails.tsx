@@ -15,6 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { useCreditAccountBalance } from '@/hooks/useCreditAccountBalance';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
+import { AddToGoogleWalletButton } from '@/components/dashboard/accounts/AddToGoogleWalletButton';
 
 const CreditAccountDetails = () => {
   const { t } = useTranslation(['dashboard', 'common']);
@@ -223,6 +224,7 @@ const CreditAccountDetails = () => {
                 <Button asChild><Link to={`/dashboard/accounts/credit/${accountId}/new-transaction`}><PlusCircle className="mr-2 h-4 w-4" />{t('accounts.addDebit')}</Link></Button>
                 <Button asChild variant="outline"><Link to={`/dashboard/accounts/credit/${accountId}/pending-authorizations`}><Clock className="mr-2 h-4 w-4" />{t('accounts.pendingAuthorizations')}{pendingAuthCount > 0 && <Badge variant="secondary" className="ml-2">{pendingAuthCount}</Badge>}</Link></Button>
                 <Button variant="secondary" onClick={handleGenerateStatement} disabled={isGeneratingStatement}>{isGeneratingStatement ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}{t('accounts.generateStatement')}</Button>
+                <AddToGoogleWalletButton cardId={account.card_id} />
                 <Button variant="destructive">{t('accounts.blockAccount')}</Button>
               </div>
             </div>
