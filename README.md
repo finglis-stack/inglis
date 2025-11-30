@@ -1,1 +1,142 @@
-# Welcome to your Dyad app
+# Inglis Dominion & Q12x - L'Infrastructure de Paiement du Futur
+
+> **Créé par :** Félix Inglis-Chevarie (Sec 4)
+> **Statut :** Remplacement complet de Visa/Mastercard codé entre deux cours de math. 🚀
+
+---
+
+## 🌟 Introduction
+
+Bienvenue dans la documentation officielle d'**Inglis Dominion**. Ce n'est pas juste une application, c'est un écosystème financier complet. 
+
+Le but ? Remplacer les réseaux de paiement traditionnels (comme Visa ou Mastercard) par une architecture moderne, ouverte et sans frais d'interchange abusifs. Ce projet gère tout le cycle de vie de la monnaie numérique : de l'émission de la carte bancaire jusqu'au paiement chez le marchand, en passant par la détection de fraude par intelligence artificielle.
+
+Ce monorepo contient **trois applications distinctes** qui communiquent ensemble via une base de données PostgreSQL unifiée.
+
+---
+
+## 🏗️ Architecture du Système
+
+Le projet est divisé en trois piliers majeurs :
+
+1.  **Inglis Dominion (Côté Émetteur)** : Le tableau de bord pour les banques et les Fintechs pour émettre des cartes.
+2.  **Q12x (Côté Acquéreur/Marchand)** : Le processeur de paiement (style Stripe) pour les commerçants.
+3.  **Le Moteur d'Onboarding (Côté Client)** : Le système public pour que les gens demandent des cartes.
+
+---
+
+## 1. Inglis Dominion : La Plateforme d'Émission (Issuer)
+
+C'est le "QG" des institutions financières. C'est ici que la banque gère ses programmes de cartes et ses clients.
+
+### 💳 Gestion des Programmes de Cartes
+L'institution peut créer des produits financiers sur mesure :
+*   **Types de cartes :** Crédit, Débit, ou Hybride.
+*   **Configuration financière :** Définition des taux d'intérêt, délais de grâce, limites de crédit, et frais (annuels ou par transaction).
+*   **Design :** Personnalisation visuelle des cartes (Or Rose, Noir Métal, etc.).
+*   **BIN (Bank Identification Number) :** Gestion des BINs partagés ou dédiés pour le routage des transactions.
+
+### 👥 Gestion des Utilisateurs (KYC)
+*   **Profils :** Supporte les particuliers (Personal) et les entreprises (Corporate).
+*   **Sécurité des données :** Les informations sensibles (NAS, Adresses) sont chiffrées dans la base de données. Seuls les employés autorisés avec les bonnes permissions RLS (Row Level Security) peuvent les déchiffrer.
+*   **Gestion du NIP :** Système sécurisé pour permettre aux utilisateurs de définir leur NIP de carte via un lien unique envoyé par courriel (utilisant l'API Resend).
+
+### 🏦 Bureau de Crédit (Simulation)
+J'ai codé un mini-bureau de crédit interne :
+*   **Pulling :** L'institution peut "tirer" le dossier de crédit d'un client (avec son consentement tracé par token) pour voir son score, son historique et ses dettes.
+*   **Reporting :** Le système rapporte automatiquement les balances et l'historique de paiement des comptes de crédit Inglis Dominion au bureau de crédit simulé.
+
+### 💰 Gestion des Comptes
+*   **Ledger (Grand Livre) :** Suivi en temps réel des soldes (Solde comptable vs Solde disponible).
+*   **Transactions :** Historique complet avec calcul automatique des intérêts.
+*   **Relevés (Statements) :** Génération automatique des relevés mensuels le jour du cycle de facturation via une Edge Function planifiée.
+
+---
+
+## 2. Le Moteur d'Onboarding Public
+
+Comment un client obtient-il une carte ? Via les formulaires publics intelligents.
+
+### 📝 Formulaires Dynamiques
+*   L'institution crée un formulaire dans son dashboard (ex: "Carte Étudiant").
+*   Le système génère une URL publique unique (ou la lie à un domaine personnalisé, voir plus bas).
+*   Le formulaire est une "Single Page Application" (SPA) fluide qui guide l'utilisateur.
+
+### 🤖 Décision Automatisée
+C'est là que la magie opère. Quand une demande est soumise :
+1.  Une **Edge Function** (`process-onboarding-application`) se déclenche.
+2.  Elle analyse le revenu déclaré vs les critères du programme.
+3.  Elle vérifie le score de crédit (si activé).
+4.  **Résultat :** Elle approuve ou rejette la demande instantanément.
+5.  Si approuvé, elle crée le compte, génère le numéro de carte (avec l'algorithme de Luhn), et envoie les accès au client.
+
+### 🌐 Gestion des Domaines Personnalisés
+Grâce à l'API de Vercel intégrée dans le backend Supabase, une institution peut connecter son propre domaine (ex: `apply.mabanque.com`) directement à son formulaire d'onboarding Inglis Dominion. Le système gère la vérification DNS et le certificat SSL automatiquement.
+
+---
+
+## 3. Q12x : Le Processeur de Paiement (Acquirer)
+
+C'est la partie qui remplace Stripe. C'est ce que les magasins utilisent pour se faire payer.
+
+### 🛍️ Checkouts & Liens de Paiement
+Les marchands peuvent créer des liens de paiement configurables (Montant fixe ou variable, devise, description) et les envoyer à leurs clients.
+
+### 🔒 La Page de Paiement Hébergée
+*   Conçue pour être ultra-sécurisée.
+*   **Tokenisation :** Les numéros de carte ne touchent jamais le serveur du marchand. Ils sont envoyés directement à l'API Inglis Dominion qui renvoie un jeton (`tok_...`) temporaire.
+*   **Honeypot :** Des champs cachés piègent les bots stupides qui essaient de remplir le formulaire.
+
+---
+
+## 4. Le Système de Sécurité Anti-Fraude 🛡️
+
+C'est probablement la partie la plus complexe du code. Chaque transaction passe par un pipeline d'analyse en temps réel avant d'être approuvée.
+
+### 🕵️‍♂️ Device Fingerprinting
+On utilise une librairie pour générer une empreinte unique de l'appareil (basée sur le navigateur, l'écran, les polices, etc.).
+*   Si une carte est utilisée sur un nouvel appareil inconnu -> **Risque augmente.**
+*   Si l'appareil est marqué comme "Bloqué" dans le dashboard -> **Transaction rejetée.**
+
+### 🖱️ Biométrie Comportementale
+Le système enregistre comment l'utilisateur bouge sa souris et tape au clavier.
+*   Mouvements de souris parfaits et linéaires ? -> **C'est un bot.**
+*   Vitesse de frappe inhumaine ? -> **C'est un script.**
+*   Copier-coller du numéro de carte ? -> **Suspect (souvent des cartes volées).**
+
+### 🌍 Vélocité & Géolocalisation
+*   **Vitesse :** Si 5 achats sont faits en 1 minute -> **Blocage.**
+*   **Voyage Impossible :** Si une carte est utilisée à Montréal, et 10 minutes plus tard à Paris, le système calcule la distance et la vitesse nécessaire. Si c'est impossible physiquement -> **Blocage.**
+*   **Analyse IP :** Détection des VPN, Proxy, et Tor via une Edge Function proxy pour éviter les bloqueurs de publicité.
+
+### 🕸️ Réseau de Fraude (Graph)
+Le système construit un graphe de connexions. Si une carte frauduleuse a touché l'IP `1.2.3.4`, toutes les autres cartes ayant touché cette IP deviennent suspectes. On peut visualiser ce réseau en 3D dans le dashboard.
+
+---
+
+## 5. Fonctionnalités Techniques Avancées
+
+### 📞 SVI (Système Vocal Interactif) avec Twilio
+J'ai codé un système téléphonique. Un utilisateur peut appeler un numéro, entrer son numéro de carte et son NIP, et le système lui lit son solde et ses dernières transactions via *Text-to-Speech*. Le code est hébergé dans une Edge Function (`twilio-ivr`) qui répond aux webhooks de Twilio avec du XML (TwiML).
+
+### 📲 Google Wallet (Push Provisioning)
+Le système peut générer des **OPC (Opaque Payment Cards)**. C'est un payload cryptographique complexe signé avec des clés PGP qui permet d'ajouter la carte Inglis Dominion directement dans le Google Wallet d'un téléphone Android.
+
+### ⚡ Edge Functions & Webhooks
+Toute la logique lourde (création de carte, analyse de fraude, envoi d'emails) tourne sur des fonctions Serverless (Deno) chez Supabase pour une vitesse maximale et une sécurité accrue (les clés privées ne sont jamais exposées au client).
+
+---
+
+## 💻 Stack Technologique
+
+*   **Frontend :** React, TypeScript, Vite.
+*   **UI/UX :** Tailwind CSS, Shadcn/ui, Framer Motion (pour les anims), Recharts (pour les graphiques).
+*   **Backend / Base de données :** Supabase (PostgreSQL).
+*   **Sécurité :** RLS (Row Level Security) sur toutes les tables. Personne ne voit les données qu'il ne doit pas voir.
+*   **Infrastructure :** Vercel (Hébergement), Cloudflare (DNS).
+*   **APIs Externes :** Twilio (Téléphonie), Resend (Emails), IPGeolocation (Fraude), Google Maps (Visuel).
+
+---
+
+> **Note du développeur :**
+> Ce projet a été réalisé entièrement par moi, Félix, étudiant de secondaire 4. Il prouve qu'on n'a pas besoin d'être une multinationale pour construire des systèmes financiers complexes. Il suffit de curiosité, de temps, et d'une bonne connexion internet. 😉
