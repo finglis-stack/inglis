@@ -46,6 +46,9 @@ serve(async (req) => {
 
     // Envoyer le courriel
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+    // Récupérer l'email validé depuis les variables d'environnement
+    const fromEmail = Deno.env.get('RESEND_FROM_EMAIL') || "Inglis Dominion Security <onboarding@resend.dev>";
+
     // Fallback pour éviter de planter si la clé manque (pour le dev)
     if (!RESEND_API_KEY) {
       console.log(`[DEV MODE] OTP Code for ${user.email}: ${code}`);
@@ -62,8 +65,8 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`
       },
       body: JSON.stringify({
-        from: "Inglis Dominion Security <security@resend.dev>", // Utilisez votre domaine vérifié en prod
-        to: [user.email], // En mode test Resend, cela ne marche que vers votre propre email
+        from: fromEmail,
+        to: [user.email],
         subject: "Code de vérification - Accès carte",
         html: `
           <div style="font-family: sans-serif; padding: 20px; max-width: 500px; margin: 0 auto;">
@@ -73,6 +76,8 @@ serve(async (req) => {
               <span style="letter-spacing: 8px; font-size: 32px; font-weight: bold; color: #000;">${code}</span>
             </div>
             <p style="color: #666; font-size: 14px;">Ce code expirera dans 15 minutes.</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+            <p style="color: #999; font-size: 12px; text-align: center;">Envoyé par Inglis Dominion</p>
           </div>
         `
       })
@@ -81,7 +86,8 @@ serve(async (req) => {
     if (!res.ok) {
       const errorData = await res.text();
       console.error("Resend API Error:", errorData);
-      throw new Error("Erreur lors de l'envoi du courriel (Vérifiez votre quota ou configuration Resend).");
+      // On renvoie l'erreur brute pour le débogage si nécessaire, ou un message générique
+      throw new Error(`Erreur Resend: ${errorData}`);
     }
 
     return new Response(JSON.stringify({ message: "Code envoyé" }), {
