@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
-import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,14 +30,14 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
-  const { checkoutId, card_token, amount, fraud_signals } = await req.json();
-  const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? null;
-  
-  const startTime = Date.now();
-  const analysisLog = [];
-  let riskScore = 100; // Score de confiance, commence à 100
-
   try {
+    const { checkoutId, card_token, amount, fraud_signals } = await req.json();
+    const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? null;
+    
+    const startTime = Date.now();
+    const analysisLog = [];
+    let riskScore = 100; // Score de confiance, commence à 100
+
     // --- VALIDATION & DATA FETCHING ---
     analysisLog.push({ step: "Début de la validation", result: "Initialisation", impact: "+0", timestamp: Date.now() - startTime });
 
@@ -232,13 +231,10 @@ serve(async (req) => {
 
     // 4. IP ADDRESS ANALYSIS & STORAGE
     if (ipAddress) {
-      // Utiliser l'edge function get-ip-geolocation au lieu de ip-api.com
       let ipGeoData = null;
       let isVpn = false;
       
       try {
-        console.log('Calling get-ip-geolocation edge function for IP:', ipAddress);
-        
         const { data: geoResponse, error: geoError } = await supabaseAdmin.functions.invoke('get-ip-geolocation', {
           body: { ipAddress }
         });
@@ -271,10 +267,6 @@ serve(async (req) => {
             geoResponse.org.toLowerCase().includes('proxy') || 
             geoResponse.org.toLowerCase().includes('hosting')
           ));
-          
-          console.log('Geolocation successful:', ipGeoData);
-        } else {
-          console.error('Geolocation failed:', geoResponse?.message || 'Unknown error');
         }
       } catch (e) {
         console.error('IP geolocation failed:', e);
@@ -390,7 +382,7 @@ serve(async (req) => {
       analysisLog.push({ step: "Analyse du montant", result: "Pas d'historique pour l'analyse du montant", impact: "+0", timestamp: Date.now() - startTime });
     }
 
-    // 6. MULTI-DIMENSIONAL VELOCITY CHECKS
+    // 6. VELOCITY CHECKS
     const debitAccountIds = profile.debit_accounts.map(a => a.id);
     const creditAccountIds = profile.credit_accounts.map(a => a.id);
 
@@ -398,7 +390,6 @@ serve(async (req) => {
     if (debitAccountIds.length > 0) orConditions.push(`debit_account_id.in.(${debitAccountIds.join(',')})`);
     if (creditAccountIds.length > 0) orConditions.push(`credit_account_id.in.(${creditAccountIds.join(',')})`);
 
-    // Velocity by card (last 10 minutes)
     if (orConditions.length > 0) {
       const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
       const { data: recentTransactions, error: velocityError } = await supabaseAdmin
@@ -421,7 +412,6 @@ serve(async (req) => {
           analysisLog.push({ step: "Vélocité par carte", result: `${transactionCount} transaction(s) en 10 minutes - normal`, impact: "+0", timestamp: Date.now() - startTime });
         }
 
-        // Geographic velocity check with last transaction
         const lastTransaction = recentTransactions[0];
         
         if (lastTransaction && ipAddress) {
@@ -440,9 +430,6 @@ serve(async (req) => {
 
             if (lastTransaction.ip_address && (lastTransaction.ip_address !== ipAddress || timeDiffMinutes > 5)) {
               try {
-                console.log(`Fetching geolocation for current IP: ${ipAddress} and last IP: ${lastTransaction.ip_address}`);
-                
-                // Utiliser l'edge function pour les deux IPs
                 const [currentGeoResult, lastGeoResult] = await Promise.all([
                   supabaseAdmin.functions.invoke('get-ip-geolocation', { body: { ipAddress } }),
                   supabaseAdmin.functions.invoke('get-ip-geolocation', { body: { ipAddress: lastTransaction.ip_address } })
@@ -450,9 +437,6 @@ serve(async (req) => {
                 
                 const currentGeo = currentGeoResult.data;
                 const lastGeo = lastGeoResult.data;
-                
-                console.log('Current geo data:', JSON.stringify(currentGeo));
-                console.log('Last geo data:', JSON.stringify(lastGeo));
                 
                 if (currentGeo?.status !== 'success' || lastGeo?.status !== 'success') {
                   analysisLog.push({ 
@@ -476,7 +460,7 @@ serve(async (req) => {
                       riskScore -= 50;
                       analysisLog.push({ 
                         step: "Vélocité géographique", 
-                        result: `Déplacement impossible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km en ${Math.round(timeDiffMinutes)} min) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
+                        result: `Déplacement impossible (${Math.round(speedKmh)} km/h)`, 
                         impact: "-50", 
                         timestamp: Date.now() - startTime 
                       });
@@ -484,98 +468,20 @@ serve(async (req) => {
                       riskScore -= 25;
                       analysisLog.push({ 
                         step: "Vélocité géographique", 
-                        result: `Déplacement très rapide (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
+                        result: `Déplacement très rapide (${Math.round(speedKmh)} km/h)`, 
                         impact: "-25", 
                         timestamp: Date.now() - startTime 
                       });
-                    } else if (speedKmh > 200) {
-                      riskScore -= 10;
-                      analysisLog.push({ 
-                        step: "Vélocité géographique", 
-                        result: `Déplacement rapide (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
-                        impact: "-10", 
-                        timestamp: Date.now() - startTime 
-                      });
-                    } else {
-                      analysisLog.push({ 
-                        step: "Vélocité géographique", 
-                        result: `Déplacement plausible (${Math.round(speedKmh)} km/h sur ${Math.round(distanceKm)} km) - ${lastGeo.city || 'Unknown'} → ${currentGeo.city || 'Unknown'}`, 
-                        impact: "+0", 
-                        timestamp: Date.now() - startTime 
-                      });
                     }
-                  } else if (distanceKm <= 1) {
-                    analysisLog.push({ 
-                      step: "Vélocité géographique", 
-                      result: `Même localisation (${Math.round(distanceKm * 1000)} mètres) - ${currentGeo.city || 'Unknown'}`, 
-                      impact: "+0", 
-                      timestamp: Date.now() - startTime 
-                    });
                   }
-                } else {
-                  analysisLog.push({ 
-                    step: "Vélocité géographique", 
-                    result: `Données de géolocalisation incomplètes (current: ${currentGeo?.lat ? 'OK' : 'MISSING'}, last: ${lastGeo?.lat ? 'OK' : 'MISSING'})`, 
-                    impact: "+0", 
-                    timestamp: Date.now() - startTime 
-                  });
                 }
               } catch (geoError) {
                 console.error("Geolocation error:", geoError);
-                analysisLog.push({ 
-                  step: "Vélocité géographique", 
-                  result: `Erreur lors de la récupération des données de géolocalisation: ${geoError.message}`, 
-                  impact: "+0", 
-                  timestamp: Date.now() - startTime 
-                });
               }
-            } else if (lastTransaction.ip_address === ipAddress && timeDiffMinutes <= 5) {
-              analysisLog.push({ 
-                step: "Vélocité", 
-                result: "Même IP, intervalle court - pas de vérification géographique", 
-                impact: "+0", 
-                timestamp: Date.now() - startTime 
-              });
             }
           } catch (e) { 
             console.error("Velocity check failed:", e.message);
-            analysisLog.push({ 
-              step: "Vélocité", 
-              result: `Erreur: ${e.message}`, 
-              impact: "+0", 
-              timestamp: Date.now() - startTime 
-            });
           }
-        }
-      } else {
-        analysisLog.push({ step: "Vélocité par carte", result: "Première transaction récente", impact: "+0", timestamp: Date.now() - startTime });
-      }
-    }
-
-    // 7. VELOCITY BY IP (check if this IP has been used by multiple cards)
-    if (ipAddress) {
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-      const { data: ipTransactions } = await supabaseAdmin
-        .from('transactions')
-        .select('debit_account_id, credit_account_id')
-        .eq('ip_address', ipAddress)
-        .gte('created_at', oneHourAgo);
-
-      if (ipTransactions && ipTransactions.length > 0) {
-        const uniqueAccounts = new Set();
-        ipTransactions.forEach(t => {
-          if (t.debit_account_id) uniqueAccounts.add(t.debit_account_id);
-          if (t.credit_account_id) uniqueAccounts.add(t.credit_account_id);
-        });
-
-        if (uniqueAccounts.size >= 5) {
-          riskScore -= 50;
-          analysisLog.push({ step: "Vélocité par IP", result: `${uniqueAccounts.size} cartes différentes depuis cette IP en 1h`, impact: "-50", timestamp: Date.now() - startTime });
-        } else if (uniqueAccounts.size >= 3) {
-          riskScore -= 25;
-          analysisLog.push({ step: "Vélocité par IP", result: `${uniqueAccounts.size} cartes différentes depuis cette IP en 1h`, impact: "-25", timestamp: Date.now() - startTime });
-        } else {
-          analysisLog.push({ step: "Vélocité par IP", result: `${uniqueAccounts.size} carte(s) depuis cette IP - normal`, impact: "+0", timestamp: Date.now() - startTime });
         }
       }
     }
@@ -628,7 +534,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Q12x Checkout Error:", error.message);
-    return new Response(JSON.stringify({ error: "Le paiement a été refusé par l'institution émettrice de la carte." }), {
+    // Return the actual error message in the JSON body
+    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400,
     });
   }
