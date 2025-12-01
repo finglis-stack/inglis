@@ -8,6 +8,7 @@ interface CardPreviewProps {
   userName?: string;
   showCardNumber?: boolean;
   cardNumber?: string;
+  expiryDate?: string;
 }
 
 const getInitials = (name?: string): string => {
@@ -22,7 +23,7 @@ const getInitials = (name?: string): string => {
   return 'XX';
 };
 
-export const CardPreview = ({ programName, cardType, cardColor, userName, showCardNumber = true, cardNumber }: CardPreviewProps) => {
+export const CardPreview = ({ programName, cardType, cardColor, userName, showCardNumber = true, cardNumber, expiryDate }: CardPreviewProps) => {
   const { t } = useTranslation('dashboard');
   const isLight = cardColor.includes('fde0cf'); // Simple check for rose gold
 
@@ -31,6 +32,7 @@ export const CardPreview = ({ programName, cardType, cardColor, userName, showCa
   
   // Utilise le numéro fourni, sinon le placeholder par défaut
   const displayCardNumber = cardNumber || `${initials} 000000 QZ 0000000 7`;
+  const displayExpiry = expiryDate || "06/28";
 
   return (
     <div 
@@ -57,7 +59,7 @@ export const CardPreview = ({ programName, cardType, cardColor, userName, showCa
         )}
         <div className={cn("flex justify-between text-sm", showCardNumber && "mt-2")}>
           <span>{displayName}</span>
-          <span>06/28</span>
+          <span>{displayExpiry}</span>
         </div>
       </div>
     </div>

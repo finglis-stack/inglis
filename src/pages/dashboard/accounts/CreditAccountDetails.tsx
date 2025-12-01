@@ -232,6 +232,16 @@ const CreditAccountDetails = () => {
   const creditLimit = account.credit_limit || 1;
   const utilization = Math.min(100, Math.max(0, (currentBalance / creditLimit) * 100));
 
+  // Formatage de la date d'expiration
+  const formatExpiry = (dateStr: string) => {
+    if (!dateStr) return "MM/YY";
+    // On suppose le format YYYY-MM-DD de la base de données
+    const [year, month] = dateStr.split('-');
+    return `${month}/${year.slice(-2)}`;
+  };
+
+  const cardExpiry = formatExpiry(account.cards.expires_at);
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -277,6 +287,7 @@ const CreditAccountDetails = () => {
                 userName={profileName}
                 showCardNumber={true}
                 cardNumber={isCardNumberVisible ? fullCardNumber : maskedCardNumber}
+                expiryDate={cardExpiry}
               />
             </div>
             
@@ -474,6 +485,10 @@ const CreditAccountDetails = () => {
                       <div>
                         <p className="text-sm text-muted-foreground">Statut</p>
                         <Badge variant={account.cards.status === 'active' ? 'default' : 'destructive'}>{account.cards.status}</Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Expiration</p>
+                        <p className="font-medium">{cardExpiry}</p>
                       </div>
                    </div>
                  </CardContent>

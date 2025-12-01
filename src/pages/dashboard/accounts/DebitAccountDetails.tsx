@@ -14,6 +14,8 @@ import { useTranslation } from 'react-i18next';
 import AddFundsDialog from '@/components/dashboard/accounts/AddFundsDialog';
 import { Separator } from '@/components/ui/separator';
 import { AddToGoogleWalletButton } from '@/components/dashboard/accounts/AddToGoogleWalletButton';
+import { CardPreview } from '@/components/dashboard/CardPreview';
+import { cn } from '@/lib/utils';
 
 const DebitAccountDetails = () => {
   const { t } = useTranslation('dashboard');
@@ -43,7 +45,7 @@ const DebitAccountDetails = () => {
         .from('debit_accounts')
         .select(`
           *,
-          cards(*, card_programs(program_name)),
+          cards(*, card_programs(program_name, card_type, card_color)),
           profiles(full_name, legal_name, type)
         `)
         .eq('id', accountId)
@@ -133,6 +135,15 @@ const DebitAccountDetails = () => {
 
   const currentBalance = balanceData?.current_balance;
   const availableBalance = balanceData?.available_balance;
+
+  // Formatage de la date d'expiration
+  const formatExpiry = (dateStr: string) => {
+    if (!dateStr) return "MM/YY";
+    const [year, month] = dateStr.split('-');
+    return `${month}/${year.slice(-2)}`;
+  };
+
+  const cardExpiry = formatExpiry(account.cards.expires_at);
 
   return (
     <div className="space-y-6">
@@ -275,10 +286,31 @@ const DebitAccountDetails = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" /> {t('accounts.associatedCard')}</CardTitle></CardHeader>
-          <CardContent className="space-y-2">
-            <p className="font-mono">{cardNumber}</p>
-            <p className="text-sm text-muted-foreground">{t('userProfile.program')}: {account.cards.card_programs.program_name}</p>
-            <p className="text-sm text-muted-foreground">{t('accounts.cardStatus')}: <Badge variant={account.cards.status === 'active' ? 'default' : 'destructive'}>{account.cards.status}</Badge></p>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Numéro de carte</p>
+              <div className={cn("transition-all duration-300")}>
+                <CardPreview
+                  programName={account.cards.card_programs.program_name}
+                  cardType={account.cards.card_programs.card_type}
+                  cardColor={account.cards.card_programs.card_color}
+                  userName={profileName}
+                  showCardNumber={true}
+                  cardNumber={cardNumber}
+                  expiryDate={cardExpiry}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Programme</p>
+                <p className="font-medium">{account.cards.card_programs.program_name}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Statut</p>
+                <Badge variant={account.cards.status === 'active' ? 'default' : 'destructive'}>{account.cards.status}</Badge>
+              </div>
+            </div>
           </CardContent>
         </Card>
         <Card>
