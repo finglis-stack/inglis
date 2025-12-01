@@ -2,10 +2,42 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// Helper: AES-256-GCM Encryption
+async function encryptAddress(addressObj, keyHex) {
+  if (!addressObj || !keyHex) return null;
+  
+  try {
+    const enc = new TextEncoder();
+    // Convert hex key to Uint8Array
+    const keyData = new Uint8Array(keyHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+    const iv = crypto.getRandomValues(new Uint8Array(12)); // 12 bytes IV for GCM
+    
+    const key = await crypto.subtle.importKey(
+      "raw", keyData, { name: "AES-GCM" }, false, ["encrypt"]
+    );
+    
+    const encryptedBuffer = await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: iv },
+      key,
+      enc.encode(JSON.stringify(addressObj))
+    );
+    
+    return {
+      encrypted: base64Encode(new Uint8Array(encryptedBuffer)),
+      iv: base64Encode(iv),
+      version: "aes-256-gcm"
+    };
+  } catch (e) {
+    console.error("Encryption error:", e);
+    throw new Error("Erreur lors du chiffrement de l'adresse.");
+  }
 }
 
 serve(async (req) => {
@@ -39,10 +71,16 @@ serve(async (req) => {
       .single();
     if (institutionError) throw institutionError;
 
-    // HACHAGE HARDCORE COST 12
+    // Hachage des identifiants
     const saltRounds = 12;
     const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, saltRounds) : null;
     const hashedSin = profileData.sin ? bcrypt.hashSync(profileData.sin, saltRounds) : null;
+
+    // Chiffrement de l'adresse
+    const encryptionKey = Deno.env.get('ADDRESS_ENCRYPTION_KEY');
+    if (!encryptionKey) throw new Error("Clé de chiffrement non configurée (ADDRESS_ENCRYPTION_KEY).");
+    
+    const encryptedAddress = await encryptAddress(profileData.address, encryptionKey);
 
     const recordToInsert = {
       institution_id: institution.id,
@@ -51,38 +89,32 @@ serve(async (req) => {
       phone: profileData.phone,
       email: profileData.email,
       dob: profileData.dob,
-      address: profileData.address,
+      address: encryptedAddress, // Stockage chiffré
       pin: hashedPin,
-      sin: hashedSin, // On stocke le HASH, jamais le clair
+      sin: hashedSin,
     };
 
     const { error: insertError } = await supabaseAdmin.from('profiles').insert(recordToInsert);
     if (insertError) throw insertError;
 
-    // Pour le rapport de crédit, on utilise le NAS en clair TEMPORAIREMENT pour la recherche, 
-    // mais on ne le stocke pas dans la table profiles.
+    // Simulation Bureau de Crédit (Si nécessaire, on garde l'adresse en clair ici car c'est un système "externe" simulé)
+    // Dans un cas réel, on enverrait l'adresse déchiffrée à l'API du bureau de crédit
     if (profileData.consent && profileData.sin) {
       const { data: existingReport, error: reportError } = await supabaseAdmin
         .from('credit_reports')
         .select('id')
-        .eq('ssn', profileData.sin) // Recherche exacte sur le bureau de crédit (simulé)
-        .single();
+        .eq('ssn', profileData.sin)
+        .maybeSingle();
 
-      if (reportError && reportError.code === 'PGRST116') {
-        // Création d'un nouveau rapport si inexistant (Simulateur)
-        // Note: Dans un vrai bureau de crédit, on ne créerait pas de dossier, on interrogerait seulement.
-        // Ici pour la démo, on stocke le NAS en clair UNIQUEMENT dans la table credit_reports qui est isolée
-        const { error: createReportError } = await supabaseAdmin.from('credit_reports').insert({
+      if (!existingReport) {
+        await supabaseAdmin.from('credit_reports').insert({
           full_name: profileData.fullName,
           ssn: profileData.sin,
-          address: profileData.address,
+          address: profileData.address, // Simulation : on stocke en clair dans la table "externe"
           phone_number: profileData.phone,
           email: profileData.email,
           credit_history: [],
         });
-        if (createReportError) {
-          console.error("Failed to create credit report:", createReportError.message);
-        }
       }
     }
 

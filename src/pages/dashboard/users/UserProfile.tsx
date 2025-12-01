@@ -46,16 +46,10 @@ const UserProfile = () => {
         p_profile_id: id,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       setAccessLogs(data || []);
     } catch (e) {
-      if (e instanceof Error) {
-        showError(`Erreur lors de la récupération de l'historique d'accès: ${e.message}`);
-      } else {
-        showError("Erreur inconnue lors de la récupération de l'historique d'accès.");
-      }
+      console.error("Log fetch error:", e);
     }
   }, [id]);
 
@@ -65,16 +59,10 @@ const UserProfile = () => {
       const { error } = await supabase.functions.invoke('request-credit-bureau-consent', {
         body: { profile_id: profile.id },
       });
-      if (error) {
-        throw new Error(getFunctionError(error, "Une erreur est survenue."));
-      }
-      showSuccess("L'e-mail de demande de consentement a été envoyé à l'utilisateur.");
+      if (error) throw new Error(getFunctionError(error, "Erreur inconnue."));
+      showSuccess("Demande de consentement envoyée.");
     } catch (err) {
-      if (err instanceof Error) {
-        showError(err.message);
-      } else {
-        showError("Une erreur inconnue est survenue.");
-      }
+      showError(err.message);
     } finally {
       setIsPushing(false);
     }
@@ -86,16 +74,10 @@ const UserProfile = () => {
       const { error } = await supabase.functions.invoke('request-credit-report-pull', {
         body: { profile_id: profile.id },
       });
-      if (error) {
-        throw new Error(getFunctionError(error, "Une erreur est survenue."));
-      }
-      showSuccess("L'e-mail de demande de consultation a été envoyé à l'utilisateur.");
+      if (error) throw new Error(getFunctionError(error, "Erreur inconnue."));
+      showSuccess("Demande de consultation envoyée.");
     } catch (err) {
-      if (err instanceof Error) {
-        showError(err.message);
-      } else {
-        showError("Une erreur inconnue est survenue.");
-      }
+      showError(err.message);
     } finally {
       setIsRequesting(false);
     }
@@ -113,11 +95,9 @@ const UserProfile = () => {
         return;
       }
       setProfile(profileData);
-      if (!profileData.pin) {
-        setIsUnlocked(true);
-      }
+      if (!profileData.pin) setIsUnlocked(true);
 
-      const { data: reportData, error: reportError } = await supabase
+      const { data: reportData } = await supabase
         .from('pulled_credit_reports')
         .select('report_data, created_at, expires_at')
         .eq('profile_id', id)
@@ -128,9 +108,7 @@ const UserProfile = () => {
       if (reportData) {
         const isExpired = new Date(reportData.expires_at) < new Date();
         setIsReportExpired(isExpired);
-        if (!isExpired) {
-          setPulledReport(reportData);
-        }
+        if (!isExpired) setPulledReport(reportData);
       }
 
       setLoading(false);
@@ -139,97 +117,69 @@ const UserProfile = () => {
   }, [id, t]);
 
   useEffect(() => {
-    if (isUnlocked) {
-      fetchLogs();
-    }
+    if (isUnlocked) fetchLogs();
   }, [isUnlocked, fetchLogs]);
 
   const handleUnlock = async (pin) => {
     try {
       const { data, error } = await supabase.functions.invoke('verify-pin', {
-          body: {
-              profile_id: profile.id,
-              pin_to_verify: pin,
-          },
+          body: { profile_id: profile.id, pin_to_verify: pin },
       });
 
-      if (error) {
-          showError(getFunctionError(error, `Erreur de vérification: ${error.message}`));
-          return false;
-      }
-
-      if (!data.isValid) {
+      if (error || !data.isValid) {
+          showError("NIP incorrect.");
           return false;
       }
 
       setIsUnlocked(true);
 
-      const { data: cardsData, error: cardsError } = await supabase
-        .from('cards')
-        .select('*, card_programs(program_name, card_type)')
-        .eq('profile_id', profile.id);
-      if (cardsError) throw cardsError;
-      setCards(cardsData || []);
+      // Charger les données associées
+      const [cardsRes, creditRes, debitRes, riskRes] = await Promise.all([
+        supabase.from('cards').select('*, card_programs(program_name, card_type)').eq('profile_id', profile.id),
+        supabase.from('credit_accounts').select('*').eq('profile_id', profile.id),
+        supabase.from('debit_accounts').select('*').eq('profile_id', profile.id),
+        supabase.from('transaction_risk_assessments').select('*').eq('profile_id', profile.id).order('created_at', { ascending: false }).limit(5)
+      ]);
 
-      const { data: creditAccountsData, error: creditAccountsError } = await supabase
-        .from('credit_accounts')
-        .select('*')
-        .eq('profile_id', profile.id);
-      if (creditAccountsError) throw creditAccountsError;
-      setCreditAccounts(creditAccountsData || []);
+      setCards(cardsRes.data || []);
+      setCreditAccounts(creditRes.data || []);
+      setDebitAccounts(debitRes.data || []);
+      setRiskAssessments(riskRes.data || []);
 
-      const { data: debitAccountsData, error: debitAccountsError } = await supabase
-        .from('debit_accounts')
-        .select('*')
-        .eq('profile_id', profile.id);
-      if (debitAccountsError) throw debitAccountsError;
-      setDebitAccounts(debitAccountsData || []);
-
-      if (profile.type === 'personal') {
-        if (profile.sin) {
+      // DÉCHIFFREMENT DES DONNÉES SENSIBLES
+      try {
+        if (profile.type === 'personal' && profile.sin) {
           const { data: sinData, error: sinError } = await supabase.functions.invoke('get-decrypted-sin', {
             body: { profile_id: profile.id },
           });
-          if (sinError) {
-            throw new Error(getFunctionError(sinError, sinError.message));
-          }
-          setDecryptedSin(sinData.sin);
+          if (!sinError) setDecryptedSin(sinData.sin);
         }
-        if (profile.address) {
-          const { data: addressData, error: addressError } = await supabase.functions.invoke('get-decrypted-address', {
-            body: { profile_id: profile.id },
-          });
-          if (addressError) {
-            throw new Error(getFunctionError(addressError, addressError.message));
-          }
+
+        // Déchiffrement de l'adresse (Personnel OU Corporatif)
+        // Le serveur gère automatiquement le déchiffrement si l'adresse est encryptée
+        const { data: addressData, error: addressError } = await supabase.functions.invoke('get-decrypted-address', {
+          body: { profile_id: profile.id },
+        });
+        
+        if (addressError) {
+          console.error("Erreur déchiffrement adresse:", addressError);
+        } else if (addressData && addressData.address) {
           setDecryptedAddress(addressData.address);
         }
+
+      } catch (cryptError) {
+         console.error("Crypto fetch error:", cryptError);
       }
       
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase
-          .from('profile_access_logs')
-          .insert({ profile_id: profile.id, visitor_user_id: user.id });
-        fetchLogs(); // Refresh logs after inserting
+        await supabase.from('profile_access_logs').insert({ profile_id: profile.id, visitor_user_id: user.id });
+        fetchLogs();
       }
-
-      const { data: assessmentsData, error: assessmentsError } = await supabase
-        .from('transaction_risk_assessments')
-        .select('*')
-        .eq('profile_id', profile.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-      if (assessmentsError) throw assessmentsError;
-      setRiskAssessments(assessmentsData || []);
       
       return true;
     } catch (e) {
-      if (e instanceof Error) {
-        showError(`Une erreur est survenue: ${e.message}`);
-      } else {
-        showError(`Une erreur inconnue est survenue.`);
-      }
+      showError("Erreur lors du déverrouillage.");
       return false;
     }
   };
@@ -238,18 +188,19 @@ const UserProfile = () => {
     setProfile({ ...profile, pin: newPin });
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-4 p-4">
-        <Skeleton className="h-8 w-1/2" />
-        <Skeleton className="h-64 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </div>
-    );
-  }
+  if (loading) return <Skeleton className="h-screen w-full" />;
+  if (error || !profile) return <div className="text-center p-4">{t('userProfile.notFound')}</div>;
 
-  if (error) return <div className="text-center text-red-500 p-4">{error}</div>;
-  if (!profile) return <div className="text-center p-4">{t('userProfile.notFound')}</div>;
+  // On prépare un objet profil avec l'adresse en clair pour l'affichage
+  // Si decryptedAddress existe, on l'utilise. Sinon, on utilise l'adresse brute (pour compatibilité avec vieux profils non-chiffrés)
+  // Si l'adresse brute est un objet chiffré (contient "encrypted") et qu'on n'a pas decryptedAddress, on n'affiche rien.
+  const addressToShow = decryptedAddress || (profile.address && !profile.address.encrypted ? profile.address : null) || (profile.business_address && !profile.business_address.encrypted ? profile.business_address : null);
+  
+  const profileForDisplay = {
+    ...profile,
+    address: profile.type === 'personal' ? addressToShow : null,
+    business_address: profile.type === 'corporate' ? addressToShow : null
+  };
 
   return (
     <TooltipProvider>
@@ -269,8 +220,28 @@ const UserProfile = () => {
               </Button>
             </div>
           )}
-          {profile.type === 'personal' && <PersonalProfile profile={profile} decryptedSin={decryptedSin} decryptedAddress={decryptedAddress} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} profileId={profile.id} />}
-          {profile.type === 'corporate' && <CorporateProfile profile={profile} cards={cards} creditAccounts={creditAccounts} debitAccounts={debitAccounts} profileId={profile.id} />}
+          
+          {profile.type === 'personal' && (
+              <PersonalProfile 
+                profile={profileForDisplay} 
+                decryptedSin={decryptedSin} 
+                decryptedAddress={profileForDisplay.address} 
+                cards={cards} 
+                creditAccounts={creditAccounts} 
+                debitAccounts={debitAccounts} 
+                profileId={profile.id} 
+              />
+          )}
+          
+          {profile.type === 'corporate' && (
+              <CorporateProfile 
+                profile={profileForDisplay} 
+                cards={cards} 
+                creditAccounts={creditAccounts} 
+                debitAccounts={debitAccounts} 
+                profileId={profile.id} 
+              />
+          )}
         </div>
 
         {isUnlocked && (

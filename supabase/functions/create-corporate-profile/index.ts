@@ -2,10 +2,26 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+async function encryptAddress(addressObj, keyHex) {
+  if (!addressObj || !keyHex) return null;
+  try {
+    const enc = new TextEncoder();
+    const keyData = new Uint8Array(keyHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await crypto.subtle.importKey("raw", keyData, { name: "AES-GCM" }, false, ["encrypt"]);
+    const encryptedBuffer = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, enc.encode(JSON.stringify(addressObj)));
+    return { encrypted: base64Encode(new Uint8Array(encryptedBuffer)), iv: base64Encode(iv), version: "aes-256-gcm" };
+  } catch (e) {
+    console.error("Encryption error:", e);
+    throw new Error("Erreur de chiffrement.");
+  }
 }
 
 serve(async (req) => {
@@ -41,6 +57,11 @@ serve(async (req) => {
 
     const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, 10) : null;
 
+    const encryptionKey = Deno.env.get('ADDRESS_ENCRYPTION_KEY');
+    if (!encryptionKey) throw new Error("Clé de chiffrement non configurée.");
+    
+    const encryptedAddress = await encryptAddress(profileData.businessAddress, encryptionKey);
+
     const recordToInsert = {
       institution_id: institution.id,
       type: 'corporate',
@@ -48,7 +69,7 @@ serve(async (req) => {
       operating_name: profileData.operatingName,
       business_number: profileData.businessNumber,
       jurisdiction: profileData.jurisdiction,
-      business_address: profileData.businessAddress, // Already a JSON object
+      business_address: encryptedAddress, // Stocké chiffré
       pin: hashedPin,
     };
 

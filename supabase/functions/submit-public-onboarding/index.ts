@@ -2,10 +2,26 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+async function encryptAddress(addressObj, keyHex) {
+  if (!addressObj || !keyHex) return null;
+  try {
+    const enc = new TextEncoder();
+    const keyData = new Uint8Array(keyHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await crypto.subtle.importKey("raw", keyData, { name: "AES-GCM" }, false, ["encrypt"]);
+    const encryptedBuffer = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, enc.encode(JSON.stringify(addressObj)));
+    return { encrypted: base64Encode(new Uint8Array(encryptedBuffer)), iv: base64Encode(iv), version: "aes-256-gcm" };
+  } catch (e) {
+    console.error("Encryption error:", e);
+    throw new Error("Erreur de chiffrement.");
+  }
 }
 
 serve(async (req) => {
@@ -15,56 +31,44 @@ serve(async (req) => {
 
   try {
     const { formId, profileData } = await req.json();
-    if (!formId || !profileData) {
-      throw new Error("ID de formulaire et données de profil requis.");
-    }
+    if (!formId || !profileData) throw new Error("Données requises manquantes.");
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // 1. Vérification du formulaire
     const { data: form, error: formError } = await supabaseAdmin
       .from('onboarding_forms')
-      .select('institution_id, is_active, auto_approve_enabled')
+      .select('institution_id, is_active, auto_approve_enabled, is_credit_bureau_enabled')
       .eq('id', formId)
       .single();
 
-    if (formError) throw formError;
-    if (!form) throw new Error("Ce formulaire n'est pas valide.");
-    if (!form.is_active) throw new Error("Ce formulaire n'est plus actif.");
+    if (formError || !form) throw new Error("Formulaire invalide.");
+    if (!form.is_active) throw new Error("Formulaire inactif.");
 
-    // 2. VÉRIFICATION HARDCORE DU CRÉDIT
-    // Avant de hacher quoi que ce soit, on vérifie si le NAS existe vraiment dans les dossiers de crédit
+    // Vérification crédit (logique de simulation)
     if (profileData.sin) {
-      // On formate le NAS pour correspondre au format standard (XXX-XXX-XXX ou XXXXXXXXX)
       const cleanSin = profileData.sin.replace(/[^0-9]/g, '');
-      const formattedSin = `${cleanSin.slice(0, 3)}-${cleanSin.slice(3, 6)}-${cleanSin.slice(6, 9)}`;
-      
-      const { data: creditReport, error: creditError } = await supabaseAdmin
+      const { data: creditReport } = await supabaseAdmin
         .from('credit_reports')
         .select('id')
-        .or(`ssn.eq.${cleanSin},ssn.eq.${formattedSin}`)
+        .eq('ssn', cleanSin)
         .maybeSingle();
 
-      if (creditError) {
-        console.error("Erreur vérification crédit:", creditError);
-      }
-      
-      // Si le module de bureau de crédit est activé et qu'on ne trouve pas de dossier
       if (!creditReport && form.is_credit_bureau_enabled) {
-         // Note: En prod, on pourrait rejeter ici, mais pour l'UX on continue souvent en marquant pour revue manuelle
-         console.warn("Avertissement: Aucun dossier de crédit trouvé pour ce NAS avant hachage.");
+         console.warn("Avertissement: Pas de dossier crédit pour ce NAS.");
       }
     }
 
-    // 3. HACHAGE SÉCURISÉ (BCRYPT COST 12)
-    // Le NAS est haché immédiatement. La valeur brute n'est JAMAIS stockée dans la table profiles.
-    const saltRounds = 12; // Facteur de travail élevé pour ralentir les attaques par force brute
-    
+    const saltRounds = 12;
     const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, saltRounds) : null;
     const hashedSin = profileData.sin ? bcrypt.hashSync(profileData.sin, saltRounds) : null;
+
+    // Chiffrement adresse
+    const encryptionKey = Deno.env.get('ADDRESS_ENCRYPTION_KEY');
+    if (!encryptionKey) throw new Error("Configuration serveur incomplète.");
+    const encryptedAddress = await encryptAddress(profileData.address, encryptionKey);
 
     const profileToInsert = {
       institution_id: form.institution_id,
@@ -73,8 +77,8 @@ serve(async (req) => {
       email: profileData.email,
       phone: profileData.phone,
       dob: profileData.dob,
-      address: profileData.address,
-      sin: hashedSin, // STOCKAGE DU HASH UNIQUEMENT
+      address: encryptedAddress, // Stocké chiffré
+      sin: hashedSin,
       pin: hashedPin,
       status: 'inactive',
     };
@@ -85,13 +89,7 @@ serve(async (req) => {
       .select('id')
       .single();
 
-    if (insertProfileError) {
-      if (insertProfileError.code === '23505') throw new Error("Un profil avec cet e-mail existe déjà.");
-      throw insertProfileError;
-    }
-
-    const annualIncomeValue = profileData.annualIncome && !isNaN(parseFloat(profileData.annualIncome)) ? parseFloat(profileData.annualIncome) : null;
-    const t4IncomeValue = profileData.hasT4 && profileData.t4Income && !isNaN(parseFloat(profileData.t4Income)) ? parseFloat(profileData.t4Income) : null;
+    if (insertProfileError) throw insertProfileError;
 
     const applicationToInsert = {
       form_id: formId,
@@ -99,8 +97,8 @@ serve(async (req) => {
       selected_card_program_id: profileData.selectedProgramId,
       employment_status: profileData.employmentStatus,
       employer: profileData.employer,
-      annual_income: annualIncomeValue,
-      t4_income: t4IncomeValue,
+      annual_income: profileData.annualIncome ? parseFloat(profileData.annualIncome) : null,
+      t4_income: profileData.t4Income ? parseFloat(profileData.t4Income) : null,
       credit_bureau_verification_status: profileData.creditBureauVerification,
       status: 'pending',
     };
@@ -120,14 +118,13 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ 
-      message: "Candidature soumise avec succès. Données sensibles sécurisées.",
+      message: "Candidature soumise et sécurisée.",
       applicationId: newApplication.id
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error) {
-    console.error("--- ERREUR CRITIQUE ---", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
