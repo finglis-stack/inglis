@@ -197,20 +197,42 @@ serve(async (req) => {
       await logProgress(applicationId, "Règle échouée: Revenu insuffisant.", "warning");
     }
 
-    if (isApproved && program.min_credit_score_requirement && profile.sin) {
-      await logProgress(applicationId, "Vérification du score de crédit...", "info");
-      const { data: report, error: reportError } = await supabaseAdmin.from('credit_reports').select('credit_score').eq('ssn', profile.sin).maybeSingle();
-      if (reportError) {
-        await logProgress(applicationId, `Avertissement: Impossible de récupérer le dossier de crédit: ${reportError.message}`, "warning");
-      } else if (report && report.credit_score < program.min_credit_score_requirement) {
-        isApproved = false;
-        reasons.push(`Score de crédit (${report.credit_score}) inférieur au minimum requis (${program.min_credit_score_requirement}).`);
-        await logProgress(applicationId, "Règle échouée: Score de crédit trop bas.", "warning");
-      } else if (!report) {
-        await logProgress(applicationId, "Aucun dossier de crédit trouvé, la vérification du score est ignorée.", "info");
-      } else {
-        await logProgress(applicationId, "Vérification du score de crédit réussie.", "success");
-      }
+    if (isApproved && program.min_credit_score_requirement) {
+       if (!profile.sin) {
+          await logProgress(applicationId, "Aucun NAS fourni. La vérification du crédit est ignorée.", "info");
+       } else {
+          await logProgress(applicationId, "Vérification du score de crédit en cours...", "info");
+          
+          // Détection de format Legacy (Bcrypt) vs Nouveau (SHA-256)
+          if (profile.sin.startsWith('$2')) {
+             await logProgress(applicationId, "ATTENTION: Format de NAS obsolète (Bcrypt) détecté. Impossible de faire la correspondance avec le bureau de crédit.", "error");
+             // On ne rejette pas automatiquement pour ne pas bloquer, mais on log l'erreur
+          } else {
+             // Recherche par Blind Index (SHA-256)
+             const { data: report, error: reportError } = await supabaseAdmin
+                .from('credit_reports')
+                .select('credit_score')
+                .eq('ssn', profile.sin)
+                .maybeSingle();
+
+             if (reportError) {
+                await logProgress(applicationId, `Erreur technique lors de la récupération du dossier: ${reportError.message}`, "warning");
+             } else if (!report) {
+                await logProgress(applicationId, "Aucun dossier de crédit trouvé pour ce NAS.", "warning");
+                // Optionnel: Rejeter si le dossier est introuvable ? Pour l'instant on laisse passer.
+             } else {
+                await logProgress(applicationId, `Score de crédit trouvé: ${report.credit_score}`, "success");
+                
+                if (report.credit_score < program.min_credit_score_requirement) {
+                   isApproved = false;
+                   reasons.push(`Score de crédit (${report.credit_score}) inférieur au minimum requis (${program.min_credit_score_requirement}).`);
+                   await logProgress(applicationId, "Règle échouée: Score de crédit trop bas.", "warning");
+                } else {
+                   await logProgress(applicationId, "Règle réussie: Score de crédit suffisant.", "success");
+                }
+             }
+          }
+       }
     }
 
     await logProgress(applicationId, `Décision: ${isApproved ? 'Approuvée' : 'Rejetée'}`, "info");
