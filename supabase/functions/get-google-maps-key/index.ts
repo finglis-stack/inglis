@@ -7,26 +7,46 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
+    // 1. Essai direct standard
+    let apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
 
-    console.log(`Request received. API Key present: ${!!apiKey}`);
+    // 2. Si non trouvé, on scanne toutes les variables d'environnement
+    // Cela contourne le bug où le nom de la variable contient des espaces ou \r\n
+    if (!apiKey) {
+      const allEnv = Deno.env.toObject();
+      for (const [key, value] of Object.entries(allEnv)) {
+        if (key.trim() === 'GOOGLE_MAPS_API_KEY') {
+          apiKey = value;
+          break;
+        }
+        // Cas extrême : la clé est mal nommée mais contient la valeur (commence par AIza)
+        if (value.startsWith('AIzaSy')) {
+            console.log(`Key found in variable: ${key}`);
+            apiKey = value;
+            break;
+        }
+      }
+    }
+
+    console.log(`Request received. API Key found: ${!!apiKey}`);
 
     if (!apiKey) {
-      // Return 200 with explicit error payload to aid debugging on client
       return new Response(
-        JSON.stringify({ apiKey: null, error: 'Server configuration error: GOOGLE_MAPS_API_KEY secret is missing or empty.' }),
+        JSON.stringify({ apiKey: null, error: 'Server configuration error: GOOGLE_MAPS_API_KEY secret is missing.' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    // Nettoyage de la valeur (au cas où la valeur elle-même aurait des retours à la ligne)
+    const cleanKey = apiKey.trim();
+
     return new Response(
-      JSON.stringify({ apiKey: apiKey.trim() }),
+      JSON.stringify({ apiKey: cleanKey }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
