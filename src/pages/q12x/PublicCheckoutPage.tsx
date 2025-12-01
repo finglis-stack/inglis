@@ -32,12 +32,11 @@ const PublicCheckoutPage = () => {
     const fetchCheckout = async () => {
       if (!checkoutId) return;
       setLoading(true);
-      const { data, error } = await supabase
-        .from('checkouts')
-        .select('*, merchant_accounts(name)')
-        .eq('id', checkoutId)
-        .eq('status', 'active')
-        .single();
+      
+      // Utilisation de la RPC sécurisée au lieu du select direct sur la table
+      const { data, error } = await supabase.rpc('get_public_checkout_details', {
+        p_checkout_id: checkoutId
+      });
 
       if (error || !data) {
         setCheckout(null);
