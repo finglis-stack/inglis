@@ -24,6 +24,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // 1. Vérification du formulaire
     const { data: form, error: formError } = await supabaseAdmin
       .from('onboarding_forms')
       .select('institution_id, is_active, auto_approve_enabled')
@@ -34,7 +35,36 @@ serve(async (req) => {
     if (!form) throw new Error("Ce formulaire n'est pas valide.");
     if (!form.is_active) throw new Error("Ce formulaire n'est plus actif.");
 
-    const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, 10) : null;
+    // 2. VÉRIFICATION HARDCORE DU CRÉDIT
+    // Avant de hacher quoi que ce soit, on vérifie si le NAS existe vraiment dans les dossiers de crédit
+    if (profileData.sin) {
+      // On formate le NAS pour correspondre au format standard (XXX-XXX-XXX ou XXXXXXXXX)
+      const cleanSin = profileData.sin.replace(/[^0-9]/g, '');
+      const formattedSin = `${cleanSin.slice(0, 3)}-${cleanSin.slice(3, 6)}-${cleanSin.slice(6, 9)}`;
+      
+      const { data: creditReport, error: creditError } = await supabaseAdmin
+        .from('credit_reports')
+        .select('id')
+        .or(`ssn.eq.${cleanSin},ssn.eq.${formattedSin}`)
+        .maybeSingle();
+
+      if (creditError) {
+        console.error("Erreur vérification crédit:", creditError);
+      }
+      
+      // Si le module de bureau de crédit est activé et qu'on ne trouve pas de dossier
+      if (!creditReport && form.is_credit_bureau_enabled) {
+         // Note: En prod, on pourrait rejeter ici, mais pour l'UX on continue souvent en marquant pour revue manuelle
+         console.warn("Avertissement: Aucun dossier de crédit trouvé pour ce NAS avant hachage.");
+      }
+    }
+
+    // 3. HACHAGE SÉCURISÉ (BCRYPT COST 12)
+    // Le NAS est haché immédiatement. La valeur brute n'est JAMAIS stockée dans la table profiles.
+    const saltRounds = 12; // Facteur de travail élevé pour ralentir les attaques par force brute
+    
+    const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, saltRounds) : null;
+    const hashedSin = profileData.sin ? bcrypt.hashSync(profileData.sin, saltRounds) : null;
 
     const profileToInsert = {
       institution_id: form.institution_id,
@@ -44,9 +74,9 @@ serve(async (req) => {
       phone: profileData.phone,
       dob: profileData.dob,
       address: profileData.address,
-      sin: profileData.sin || null,
+      sin: hashedSin, // STOCKAGE DU HASH UNIQUEMENT
       pin: hashedPin,
-      status: 'inactive', // Le statut sera 'active' après approbation
+      status: 'inactive',
     };
 
     const { data: newProfile, error: insertProfileError } = await supabaseAdmin
@@ -84,21 +114,20 @@ serve(async (req) => {
     if (insertApplicationError) throw insertApplicationError;
 
     if (form.auto_approve_enabled) {
-      // Ne pas attendre la fin, laisser tourner en arrière-plan
       supabaseAdmin.functions.invoke('process-onboarding-application', {
         body: { applicationId: newApplication.id },
       });
     }
 
     return new Response(JSON.stringify({ 
-      message: "Candidature soumise avec succès.",
+      message: "Candidature soumise avec succès. Données sensibles sécurisées.",
       applicationId: newApplication.id
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error) {
-    console.error("--- ERREUR DANS LA FONCTION ---", error.message);
+    console.error("--- ERREUR CRITIQUE ---", error.message);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,

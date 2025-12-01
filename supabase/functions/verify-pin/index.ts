@@ -14,7 +14,6 @@ serve(async (req) => {
   }
 
   try {
-    // Authentifier l'utilisateur qui fait l'appel
     const authHeader = req.headers.get('Authorization')!
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -26,29 +25,28 @@ serve(async (req) => {
 
     const { profile_id, pin_to_verify } = await req.json()
     if (!profile_id || !pin_to_verify) {
-      throw new Error("L'ID du profil et le NIP sont requis.");
+      throw new Error("Paramètres manquants.");
     }
 
-    // Utiliser le client admin pour les opérations privilégiées
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Vérification de sécurité : L'utilisateur a-t-il le droit d'accéder à ce profil ?
     const { data: institution } = await supabaseAdmin.from('institutions').select('id').eq('user_id', user.id).single()
-    if (!institution) throw new Error("L'utilisateur n'est associé à aucune institution.");
+    if (!institution) throw new Error("Institution non trouvée.");
 
     const { data: profile, error: profileError } = await supabaseAdmin.from('profiles').select('id, pin').eq('id', profile_id).eq('institution_id', institution.id).single()
-    if (profileError || !profile) throw new Error('Permission refusée ou profil non trouvé.');
+    if (profileError || !profile) throw new Error('Accès refusé.');
 
     if (!profile.pin) {
-      return new Response(JSON.stringify({ isValid: false, error: "Aucun NIP n'est défini pour ce profil." }), {
+      return new Response(JSON.stringify({ isValid: false, error: "Aucun NIP défini." }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       })
     }
 
+    // Comparaison du NIP avec le hash stocké (fonctionne quelque soit le cost factor utilisé lors de la création)
     const isValid = bcrypt.compareSync(pin_to_verify, profile.pin);
 
     return new Response(JSON.stringify({ isValid }), {

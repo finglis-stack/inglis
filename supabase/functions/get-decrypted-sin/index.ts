@@ -25,22 +25,25 @@ serve(async (req) => {
 
     const { profile_id } = await req.json()
 
-    // Utiliser le client admin
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Vérification de sécurité : l'utilisateur a-t-il le droit de voir ce profil ?
     const { data: institution } = await supabaseAdmin.from('institutions').select('id').eq('user_id', user.id).single()
     const { data: profile, error: profileError } = await supabaseAdmin.from('profiles').select('id').eq('id', profile_id).eq('institution_id', institution.id).single()
-    if (profileError || !profile) throw new Error('Permission denied to access this profile');
+    if (profileError || !profile) throw new Error('Permission denied');
 
-    // Sélectionner le NAS.
+    // Récupération du HASH
     const { data: sinData, error: selectError } = await supabaseAdmin.from('profiles').select('sin').eq('id', profile_id).single()
     if (selectError) throw selectError
 
-    return new Response(JSON.stringify({ sin: sinData.sin }), {
+    // Pour des raisons de sécurité et de conformité, nous ne retournons plus jamais le NAS en clair.
+    // Nous retournons une version masquée indiquant qu'il est sécurisé.
+    const isHashed = sinData.sin && sinData.sin.startsWith('$2'); // Détection basique bcrypt
+    const displayValue = isHashed ? "🔒 HASHÉ ET SÉCURISÉ" : (sinData.sin || "Non fourni");
+
+    return new Response(JSON.stringify({ sin: displayValue }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })

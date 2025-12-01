@@ -39,7 +39,10 @@ serve(async (req) => {
       .single();
     if (institutionError) throw institutionError;
 
-    const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, 10) : null;
+    // HACHAGE HARDCORE COST 12
+    const saltRounds = 12;
+    const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, saltRounds) : null;
+    const hashedSin = profileData.sin ? bcrypt.hashSync(profileData.sin, saltRounds) : null;
 
     const recordToInsert = {
       institution_id: institution.id,
@@ -50,22 +53,25 @@ serve(async (req) => {
       dob: profileData.dob,
       address: profileData.address,
       pin: hashedPin,
-      sin: profileData.sin,
+      sin: hashedSin, // On stocke le HASH, jamais le clair
     };
 
     const { error: insertError } = await supabaseAdmin.from('profiles').insert(recordToInsert);
     if (insertError) throw insertError;
 
-    // Handle credit report creation if consent is given
+    // Pour le rapport de crédit, on utilise le NAS en clair TEMPORAIREMENT pour la recherche, 
+    // mais on ne le stocke pas dans la table profiles.
     if (profileData.consent && profileData.sin) {
       const { data: existingReport, error: reportError } = await supabaseAdmin
         .from('credit_reports')
         .select('id')
-        .eq('ssn', profileData.sin)
+        .eq('ssn', profileData.sin) // Recherche exacte sur le bureau de crédit (simulé)
         .single();
 
-      // If no report exists (error code for "No rows found"), create one.
       if (reportError && reportError.code === 'PGRST116') {
+        // Création d'un nouveau rapport si inexistant (Simulateur)
+        // Note: Dans un vrai bureau de crédit, on ne créerait pas de dossier, on interrogerait seulement.
+        // Ici pour la démo, on stocke le NAS en clair UNIQUEMENT dans la table credit_reports qui est isolée
         const { error: createReportError } = await supabaseAdmin.from('credit_reports').insert({
           full_name: profileData.fullName,
           ssn: profileData.sin,
@@ -75,13 +81,12 @@ serve(async (req) => {
           credit_history: [],
         });
         if (createReportError) {
-          // Log this error but don't fail the whole request, as profile creation was successful
           console.error("Failed to create credit report:", createReportError.message);
         }
       }
     }
 
-    return new Response(JSON.stringify({ message: "Profil créé avec succès" }), {
+    return new Response(JSON.stringify({ message: "Profil sécurisé créé avec succès" }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
