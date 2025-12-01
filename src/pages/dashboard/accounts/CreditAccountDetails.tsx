@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, DollarSign, CreditCard, User, Clock, PlusCircle, RefreshCw, FileText, Loader2 } from 'lucide-react';
+import { ArrowLeft, DollarSign, CreditCard, User, Clock, PlusCircle, RefreshCw, FileText, Loader2, MoreHorizontal, Ban } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError, showSuccess } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -15,7 +15,14 @@ import { Separator } from '@/components/ui/separator';
 import { useCreditAccountBalance } from '@/hooks/useCreditAccountBalance';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { AddToGoogleWalletButton } from '@/components/dashboard/accounts/AddToGoogleWalletButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const CreditAccountDetails = () => {
   const { t } = useTranslation(['dashboard', 'common']);
@@ -124,14 +131,12 @@ const CreditAccountDetails = () => {
 
     let totalPaymentsMade = statement.total_payments;
 
-    // Si ce n'est pas le relevé le plus récent, il faut aussi regarder les paiements du relevé suivant
     if (statement.id !== account.current_statement_id) {
       const nextStatement = statements.find(s => s.id === statement.carried_over_to_statement_id);
       if (nextStatement) {
         totalPaymentsMade += nextStatement.total_payments;
       }
     } else {
-      // Si c'est le relevé actuel, on ajoute les paiements non encore facturés
       totalPaymentsMade += unbilledPayments;
     }
 
@@ -219,13 +224,42 @@ const CreditAccountDetails = () => {
             </div>
             <Separator />
             <div>
-              <h4 className="font-semibold">{t('accounts.otherActions')}</h4>
-              <div className="flex flex-wrap gap-4 mt-2">
-                <Button asChild><Link to={`/dashboard/accounts/credit/${accountId}/new-transaction`}><PlusCircle className="mr-2 h-4 w-4" />{t('accounts.addDebit')}</Link></Button>
-                <Button asChild variant="outline"><Link to={`/dashboard/accounts/credit/${accountId}/pending-authorizations`}><Clock className="mr-2 h-4 w-4" />{t('accounts.pendingAuthorizations')}{pendingAuthCount > 0 && <Badge variant="secondary" className="ml-2">{pendingAuthCount}</Badge>}</Link></Button>
-                <Button variant="secondary" onClick={handleGenerateStatement} disabled={isGeneratingStatement}>{isGeneratingStatement ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}{t('accounts.generateStatement')}</Button>
-                <AddToGoogleWalletButton cardId={account.card_id} />
-                <Button variant="destructive">{t('accounts.blockAccount')}</Button>
+              <h4 className="font-semibold mb-3">{t('accounts.otherActions')}</h4>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button asChild>
+                  <Link to={`/dashboard/accounts/credit/${accountId}/new-transaction`}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    {t('accounts.addDebit')}
+                  </Link>
+                </Button>
+                
+                <Button asChild variant="outline">
+                  <Link to={`/dashboard/accounts/credit/${accountId}/pending-authorizations`}>
+                    <Clock className="mr-2 h-4 w-4" />
+                    {t('accounts.pendingAuthorizations')}
+                    {pendingAuthCount > 0 && <Badge variant="secondary" className="ml-2">{pendingAuthCount}</Badge>}
+                  </Link>
+                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions administratives</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={handleGenerateStatement} disabled={isGeneratingStatement}>
+                       {isGeneratingStatement ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                       <span>{t('accounts.generateStatement')}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => {}}>
+                       <Ban className="mr-2 h-4 w-4" />
+                       <span className="font-medium">{t('accounts.blockAccount')}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </CardContent>
