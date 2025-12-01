@@ -107,5 +107,8 @@
     "financial_info": "Finances",
     "review": "Vérification",
     "confirmation": "Confirmation"
+  },
+  "layout": {
+    "application_form": "Formulaire de demande"
   }
 }

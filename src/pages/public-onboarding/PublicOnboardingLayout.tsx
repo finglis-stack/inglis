@@ -1,38 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useParams, Outlet, useLocation } from 'react-router-dom';
+import { useParams, Outlet } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { PublicOnboardingProvider } from '@/context/PublicOnboardingContext';
-import { OnboardingStepIndicator } from '@/components/OnboardingStepIndicator';
 import { useTranslation } from 'react-i18next';
 
 const PublicOnboardingLayout = () => {
   const { formId } = useParams();
-  const location = useLocation();
   const { t } = useTranslation('public-onboarding');
   const [formConfig, setFormConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const steps = [
-    t('steps.welcome'),
-    t('steps.card_selection'),
-    t('steps.personal_info'),
-    t('steps.credit_check'),
-    t('steps.financial_info'),
-    t('steps.review'),
-    t('steps.confirmation'),
-  ];
-
-  let currentStep = 1;
-  if (location.pathname.includes('step-2')) currentStep = 2;
-  else if (location.pathname.includes('step-3')) currentStep = 3;
-  else if (location.pathname.includes('step-4')) currentStep = 4;
-  else if (location.pathname.includes('step-5')) currentStep = 5;
-  else if (location.pathname.includes('step-6')) currentStep = 6;
-  else if (location.pathname.includes('step-7')) currentStep = 7;
 
   useEffect(() => {
     const fetchFormDetails = async () => {
@@ -99,7 +79,13 @@ const PublicOnboardingLayout = () => {
         </div>
         <div className="hidden lg:block lg:w-1/2 bg-cover bg-center relative" style={{ backgroundImage: `url(${backgroundImage})` }}>
           <div className="absolute inset-0 bg-black/30" />
-          <OnboardingStepIndicator steps={steps} currentStep={currentStep} />
+          <div className="absolute bottom-12 right-12 max-w-md text-right">
+             <div className="inline-block bg-black/40 backdrop-blur-md border border-white/10 p-6 rounded-xl shadow-2xl">
+                <p className="text-white font-thin text-3xl tracking-wide uppercase">
+                  {t('layout.application_form')}
+                </p>
+             </div>
+          </div>
         </div>
       </div>
     </PublicOnboardingProvider>
