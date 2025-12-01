@@ -2,10 +2,20 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
+import { crypto } from "https://deno.land/std@0.177.0/crypto/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// Helper to hash data (SHA-256) for blind index matching
+async function hashData(text) {
+  if (!text) return null;
+  const msgUint8 = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 // Helper to shuffle an array
@@ -124,20 +134,26 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
 
+    // Hacher le NAS reçu pour le comparer avec la base de données
+    const sinHash = await hashData(sin);
+
     const { data: reportData, error: reportError } = await supabaseAdmin
       .from('credit_reports')
       .select('credit_history')
-      .eq('ssn', sin)
+      .eq('ssn', sinHash)
       .single();
 
     let creditHistory = reportData?.credit_history;
 
+    // Tentative avec le format XXX-XXX-XXX si le format brut échoue
     if (reportError || !creditHistory || creditHistory.length === 0) {
       const formattedSin = `${sin.slice(0, 3)}-${sin.slice(3, 6)}-${sin.slice(6, 9)}`;
+      const formattedSinHash = await hashData(formattedSin);
+      
       const { data: reportDataRetry, error: reportErrorRetry } = await supabaseAdmin
         .from('credit_reports')
         .select('credit_history')
-        .eq('ssn', formattedSin)
+        .eq('ssn', formattedSinHash)
         .single();
       
       const creditHistoryRetry = reportDataRetry?.credit_history;
