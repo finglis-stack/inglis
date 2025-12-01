@@ -7,6 +7,7 @@ interface CardPreviewProps {
   cardColor: string;
   userName?: string;
   showCardNumber?: boolean;
+  cardNumber?: string;
 }
 
 const getInitials = (name?: string): string => {
@@ -21,12 +22,15 @@ const getInitials = (name?: string): string => {
   return 'XX';
 };
 
-export const CardPreview = ({ programName, cardType, cardColor, userName, showCardNumber = true }: CardPreviewProps) => {
+export const CardPreview = ({ programName, cardType, cardColor, userName, showCardNumber = true, cardNumber }: CardPreviewProps) => {
   const { t } = useTranslation('dashboard');
   const isLight = cardColor.includes('fde0cf'); // Simple check for rose gold
 
   const displayName = (userName || 'LÉA TREMBLAY').toUpperCase();
   const initials = getInitials(userName || 'LÉA TREMBLAY');
+  
+  // Utilise le numéro fourni, sinon le placeholder par défaut
+  const displayCardNumber = cardNumber || `${initials} 000000 QZ 0000000 7`;
 
   return (
     <div 
@@ -48,7 +52,7 @@ export const CardPreview = ({ programName, cardType, cardColor, userName, showCa
         {showCardNumber && (
           <>
             <div className="w-12 h-8 bg-yellow-400 rounded-md mb-2 border border-yellow-500" />
-            <p className="text-2xl tracking-widest">{initials} 000000 QZ 0000000 7</p>
+            <p className="text-2xl tracking-widest">{displayCardNumber}</p>
           </>
         )}
         <div className={cn("flex justify-between text-sm", showCardNumber && "mt-2")}>

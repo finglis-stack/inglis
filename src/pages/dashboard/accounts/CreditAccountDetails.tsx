@@ -275,7 +275,8 @@ const CreditAccountDetails = () => {
                 cardType={account.cards.card_programs.card_type}
                 cardColor={account.cards.card_programs.card_color}
                 userName={profileName}
-                showCardNumber={true} // Toujours true, mais le contenu change ou est flouté
+                showCardNumber={true}
+                cardNumber={isCardNumberVisible ? fullCardNumber : maskedCardNumber}
               />
             </div>
             
