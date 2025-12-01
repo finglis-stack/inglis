@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,33 +7,33 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Gestion des requêtes OPTIONS (CORS preflight)
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Récupération de la clé depuis les variables d'environnement
     const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
 
+    console.log(`Request received. API Key present: ${!!apiKey}`);
+
     if (!apiKey) {
-      console.error('ERREUR: La variable GOOGLE_MAPS_API_KEY est introuvable.');
+      // Return 200 with explicit error payload to aid debugging on client
       return new Response(
-        JSON.stringify({ error: 'Configuration serveur incomplète (Clé API manquante)' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ apiKey: null, error: 'Server configuration error: GOOGLE_MAPS_API_KEY secret is missing or empty.' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // On retourne la clé nettoyée de tout espace blanc
     return new Response(
       JSON.stringify({ apiKey: apiKey.trim() }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Exception dans get-google-maps-key:', error);
+    console.error("Internal Server Error:", error.message);
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: `Internal Error: ${error.message}` }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })

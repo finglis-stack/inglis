@@ -10,19 +10,26 @@ import { useTranslation } from 'react-i18next';
 
 const fetchMapsApiKey = async (): Promise<string> => {
   console.log('[AddressAutocomplete] Fetching Google Maps API Key...');
-  // On utilise POST pour éviter certains problèmes de cache avec les Edge Functions
+  
   const { data, error } = await supabase.functions.invoke('get-google-maps-key', {
     method: 'POST', 
   });
   
+  // Erreur réseau ou système (ex: fonction introuvable, erreur 500 qui a échappé au try/catch)
   if (error) {
-    console.error('[AddressAutocomplete] Edge Function Error:', error);
+    console.error('[AddressAutocomplete] System Error:', error);
     throw new Error(error.message || 'Erreur de communication avec le serveur.');
   }
   
+  // Erreur logique renvoyée par notre fonction (ex: clé manquante)
+  if (data && data.error) {
+    console.error('[AddressAutocomplete] Config Error:', data.error);
+    throw new Error(data.error);
+  }
+  
   if (!data || !data.apiKey) {
-    console.error('[AddressAutocomplete] No API key in response:', data);
-    throw new Error('La clé API Google Maps n\'est pas configurée.');
+    console.error('[AddressAutocomplete] Empty response:', data);
+    throw new Error('La clé API reçue est vide.');
   }
   
   return data.apiKey;
@@ -33,14 +40,12 @@ interface AddressAutocompleteProps {
   initialAddress: any | null;
 }
 
-// IMPORTANT: Définir les bibliothèques à l'extérieur du composant ou via useMemo
-// pour éviter de recharger le script à chaque rendu.
+// IMPORTANT: Définir les bibliothèques à l'extérieur pour éviter le rechargement
 const LIBRARIES: "places"[] = ["places"];
 
 const MapAutocomplete = ({ apiKey, onAddressSelect, initialAddress }: { apiKey: string, onAddressSelect: (addr: any) => void, initialAddress: any }) => {
   const { t } = useTranslation('public-onboarding');
   
-  // Utilisation de useJsApiLoader avec un ID unique pour éviter les conflits
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-places-script',
     googleMapsApiKey: apiKey,
@@ -56,7 +61,6 @@ const MapAutocomplete = ({ apiKey, onAddressSelect, initialAddress }: { apiKey: 
       const place = autocomplete.getPlace();
       
       if (!place.geometry) {
-        // L'utilisateur a tapé quelque chose mais n'a pas sélectionné de suggestion
         return;
       }
 
@@ -76,19 +80,15 @@ const MapAutocomplete = ({ apiKey, onAddressSelect, initialAddress }: { apiKey: 
           country: getComponent('country'),
           countryCode: getShortComponent('country'),
           formatted_address: place.formatted_address,
-          // On garde les données brutes cryptées pour le backend si besoin
           location: {
             lat: place.geometry.location?.lat(),
             lng: place.geometry.location?.lng()
           }
         };
         
-        console.log('[AddressAutocomplete] Address selected:', structuredAddress);
         setSelectedAddress(structuredAddress);
         onAddressSelect(structuredAddress);
       }
-    } else {
-      console.error('Autocomplete is not loaded yet!');
     }
   }, [autocomplete, onAddressSelect]);
 
@@ -100,7 +100,7 @@ const MapAutocomplete = ({ apiKey, onAddressSelect, initialAddress }: { apiKey: 
   if (loadError) {
     return (
       <div className="text-sm text-destructive border border-destructive/30 bg-destructive/10 p-3 rounded-md">
-        <p className="font-semibold">Erreur Google Maps</p>
+        <p className="font-semibold">Erreur Google Maps SDK</p>
         <p>{loadError.message}</p>
       </div>
     );
@@ -168,7 +168,10 @@ export const AddressAutocomplete = ({ onAddressSelect, initialAddress }: Address
       <div className="flex flex-col gap-2">
         <div className="text-sm text-destructive flex items-center gap-2 p-2 border border-destructive/20 rounded bg-destructive/5">
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          <span>Erreur clé API: {error instanceof Error ? error.message : String(error)}</span>
+          <div className="flex-1">
+            <p className="font-semibold">Erreur de configuration</p>
+            <p className="text-xs">{error instanceof Error ? error.message : String(error)}</p>
+          </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => refetch()} className="w-fit">
           <RefreshCw className="h-3 w-3 mr-2" /> Réessayer
