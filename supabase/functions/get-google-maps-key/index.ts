@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,29 +7,33 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Gestion des requêtes OPTIONS (CORS preflight)
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Pas besoin d'authentification pour obtenir la clé API Google Maps
-    // Cette clé est publique et sera utilisée côté client de toute façon
+    // Récupération de la clé depuis les variables d'environnement
     const apiKey = Deno.env.get('GOOGLE_MAPS_API_KEY');
-    
+
     if (!apiKey) {
-      console.error('GOOGLE_MAPS_API_KEY is not set in environment variables');
-      throw new Error('La clé API Google Maps n\'est pas configurée dans les secrets Supabase.');
+      console.error('ERREUR: La variable GOOGLE_MAPS_API_KEY est introuvable.');
+      return new Response(
+        JSON.stringify({ error: 'Configuration serveur incomplète (Clé API manquante)' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    return new Response(JSON.stringify({ apiKey }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    })
+    // On retourne la clé nettoyée de tout espace blanc
+    return new Response(
+      JSON.stringify({ apiKey: apiKey.trim() }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   } catch (error) {
-    console.error('Error in get-google-maps-key function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    })
+    console.error('Exception dans get-google-maps-key:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
 })

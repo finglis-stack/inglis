@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, AlertTriangle, Printer } from 'lucide-react';
+import { Shield, AlertTriangle, Printer, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 type CreditReport = {
@@ -36,20 +36,33 @@ const CreditReportAccess = () => {
     setError(null);
     setReport(null);
 
-    const { data, error: dbError } = await supabase
-      .from('credit_reports')
-      .select('*')
-      .eq('ssn', ssn)
-      .single();
+    try {
+      // Appel à l'Edge Function sécurisée qui gère le hashage et le déchiffrement
+      const { data, error: fnError } = await supabase.functions.invoke('get-secure-credit-report', {
+        body: { ssn: ssn }
+      });
 
-    if (dbError || !data) {
-      setError(`DOSSIER NON TROUVÉ POUR LE NAS : ${ssn}`);
-      setReport(null);
-    } else {
+      if (fnError) {
+        // On parse l'erreur si elle vient de la fonction (souvent un JSON stringifié dans le message)
+        let errorMessage = fnError.message;
+        try {
+           const body = await fnError.context.json();
+           if (body.error) errorMessage = body.error;
+        } catch {}
+        throw new Error(errorMessage);
+      }
+
+      if (!data) {
+        throw new Error("Aucune donnée retournée.");
+      }
+
       setReport(data as CreditReport);
+    } catch (err: any) {
+      setError(`DOSSIER NON TROUVÉ OU ERREUR : ${err.message}`);
+      setReport(null);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleReset = () => {
@@ -199,7 +212,7 @@ const CreditReportAccess = () => {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="win95-window w-full max-w-3xl">
           <div className="win95-title-bar print-hidden">
-            <span>BUREAU DE CRÉDIT</span>
+            <span>BUREAU DE CRÉDIT - ACCÈS SÉCURISÉ (AES-256)</span>
             <div className="flex gap-1">
               <span className="w-4 h-4 bg-gray-300 border border-black flex items-center justify-center text-xs font-mono">_</span>
               <span className="w-4 h-4 bg-gray-300 border border-black flex items-center justify-center text-xs font-mono">[]</span>
@@ -234,7 +247,7 @@ const CreditReportAccess = () => {
                   </div>
                   <div className="text-right">
                     <button type="submit" className="win95-button" disabled={loading}>
-                      {loading ? 'RECHERCHE...' : 'SOUMETTRE'}
+                      {loading ? 'DÉCHIFFREMENT...' : 'SOUMETTRE'}
                     </button>
                   </div>
                 </form>
@@ -252,7 +265,7 @@ const CreditReportAccess = () => {
                 <div className="flex justify-between items-start flex-wrap gap-4">
                   <div>
                     <h2 className="text-2xl font-bold print-text-black">{report.full_name}</h2>
-                    <p className="print-text-black">NAS: ***-***-{report.ssn.slice(6)}</p>
+                    <p className="print-text-black">NAS: ***-***-{report.ssn ? report.ssn.slice(-3) : '***'}</p>
                   </div>
                   <div className="text-center p-2 border-2 border-t-gray-500 border-l-gray-500 border-b-white border-r-white print-border">
                     <p className="font-bold print-text-black">SCORE DE CRÉDIT</p>
@@ -264,7 +277,7 @@ const CreditReportAccess = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
-                    <h3 className="font-bold print-text-black">Informations Personnelles</h3>
+                    <h3 className="font-bold print-text-black">Informations Personnelles (Déchiffrées)</h3>
                     <div className="p-2 bg-white border-2 border-t-gray-500 border-l-gray-500 border-b-white border-r-white mt-1 print-border">
                       <p className="print-text-black">{report.address?.street}</p>
                       <p className="print-text-black">{report.address?.city}, {report.address?.province} {report.address?.postalCode}</p>
@@ -320,7 +333,7 @@ const CreditReportAccess = () => {
             )}
 
             <div className="win95-status-bar print-hidden">
-              <p className="text-xs">PRÊT</p>
+              <p className="text-xs">{loading ? 'CONNEXION SÉCURISÉE...' : 'PRÊT'}</p>
             </div>
           </div>
         </div>

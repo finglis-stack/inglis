@@ -3,32 +3,30 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import { crypto } from "https://deno.land/std@0.177.0/crypto/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Helper: AES-256-GCM Encryption
-async function encryptAddress(addressObj, keyHex) {
-  if (!addressObj || !keyHex) return null;
-  
+// Chiffrement AES-256-GCM
+async function encryptData(dataObj, keyHex) {
+  if (!dataObj || !keyHex) return null;
   try {
     const enc = new TextEncoder();
-    // Convert hex key to Uint8Array
     const keyData = new Uint8Array(keyHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-    const iv = crypto.getRandomValues(new Uint8Array(12)); // 12 bytes IV for GCM
+    const iv = crypto.getRandomValues(new Uint8Array(12)); 
+    const key = await crypto.subtle.importKey("raw", keyData, { name: "AES-GCM" }, false, ["encrypt"]);
     
-    const key = await crypto.subtle.importKey(
-      "raw", keyData, { name: "AES-GCM" }, false, ["encrypt"]
-    );
+    // On gère aussi bien les chaînes que les objets
+    const dataString = typeof dataObj === 'string' ? dataObj : JSON.stringify(dataObj);
     
     const encryptedBuffer = await crypto.subtle.encrypt(
       { name: "AES-GCM", iv: iv },
       key,
-      enc.encode(JSON.stringify(addressObj))
+      enc.encode(dataString)
     );
-    
     return {
       encrypted: base64Encode(new Uint8Array(encryptedBuffer)),
       iv: base64Encode(iv),
@@ -36,18 +34,26 @@ async function encryptAddress(addressObj, keyHex) {
     };
   } catch (e) {
     console.error("Encryption error:", e);
-    throw new Error("Erreur lors du chiffrement de l'adresse.");
+    throw new Error("Erreur de chiffrement des données sensibles.");
   }
 }
 
+// Hachage SHA-256 pour l'indexation aveugle (Blind Indexing)
+async function hashData(text) {
+  if (!text) return null;
+  const msgUint8 = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
-  }
+  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
     const profileData = await req.json();
-    if (!profileData) throw new Error("Données de profil manquantes.");
+    if (!profileData) throw new Error("Données manquantes.");
 
     const authHeader = req.headers.get('Authorization')!;
     const supabaseClient = createClient(
@@ -64,61 +70,60 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data: institution, error: institutionError } = await supabaseAdmin
-      .from('institutions')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-    if (institutionError) throw institutionError;
+    const { data: institution } = await supabaseAdmin.from('institutions').select('id').eq('user_id', user.id).single();
+    if (!institution) throw new Error("Institution introuvable.");
 
-    // Hachage des identifiants
-    const saltRounds = 12;
-    const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, saltRounds) : null;
-    const hashedSin = profileData.sin ? bcrypt.hashSync(profileData.sin, saltRounds) : null;
-
-    // Chiffrement de l'adresse
     const encryptionKey = Deno.env.get('ADDRESS_ENCRYPTION_KEY');
-    if (!encryptionKey) throw new Error("Clé de chiffrement non configurée (ADDRESS_ENCRYPTION_KEY).");
-    
-    const encryptedAddress = await encryptAddress(profileData.address, encryptionKey);
+    if (!encryptionKey) throw new Error("Clé de chiffrement serveur manquante.");
 
-    const recordToInsert = {
+    // 1. Préparation Profil (Interne)
+    const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, 10) : null;
+    const hashedSin = profileData.sin ? bcrypt.hashSync(profileData.sin, 10) : null;
+    const encryptedAddress = await encryptData(profileData.address, encryptionKey);
+
+    const { error: insertError } = await supabaseAdmin.from('profiles').insert({
       institution_id: institution.id,
       type: 'personal',
       full_name: profileData.fullName,
       phone: profileData.phone,
       email: profileData.email,
       dob: profileData.dob,
-      address: encryptedAddress, // Stockage chiffré
+      address: encryptedAddress, // Chiffré
       pin: hashedPin,
       sin: hashedSin,
-    };
-
-    const { error: insertError } = await supabaseAdmin.from('profiles').insert(recordToInsert);
+    });
     if (insertError) throw insertError;
 
-    // Simulation Bureau de Crédit (Si nécessaire, on garde l'adresse en clair ici car c'est un système "externe" simulé)
-    // Dans un cas réel, on enverrait l'adresse déchiffrée à l'API du bureau de crédit
-    if (profileData.consent && profileData.sin) {
-      const { data: existingReport, error: reportError } = await supabaseAdmin
+    // 2. Simulation Bureau de Crédit (Externe)
+    // Si un NAS est fourni, on crée/met à jour l'entrée au bureau de crédit
+    // ATTENTION: Ici aussi tout doit être chiffré
+    if (profileData.sin) {
+      // On utilise un hash SHA-256 comme clé de recherche (Blind Index) pour ne pas stocker le NAS en clair
+      const sinIndex = await hashData(profileData.sin);
+      
+      // L'adresse est stockée chiffrée dans le bureau de crédit aussi
+      const creditBureauAddress = await encryptData(profileData.address, encryptionKey);
+
+      const { data: existingReport } = await supabaseAdmin
         .from('credit_reports')
         .select('id')
-        .eq('ssn', profileData.sin)
+        .eq('ssn', sinIndex) // Recherche par HASH
         .maybeSingle();
 
       if (!existingReport) {
         await supabaseAdmin.from('credit_reports').insert({
           full_name: profileData.fullName,
-          ssn: profileData.sin,
-          address: profileData.address, // Simulation : on stocke en clair dans la table "externe"
+          ssn: sinIndex, // Stockage du HASH seulement
+          address: creditBureauAddress, // Stockage chiffré
           phone_number: profileData.phone,
           email: profileData.email,
           credit_history: [],
+          credit_score: Math.floor(Math.random() * (850 - 650 + 1)) + 650 // Score simulé
         });
       }
     }
 
-    return new Response(JSON.stringify({ message: "Profil sécurisé créé avec succès" }), {
+    return new Response(JSON.stringify({ message: "Profil créé et sécurisé (AES-256)." }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
