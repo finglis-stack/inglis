@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, PlusCircle, RefreshCw, FileText, Loader2, MoreHorizontal, Ban, History, Shield, User, CreditCard, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, PlusCircle, RefreshCw, FileText, Loader2, MoreHorizontal, Ban, Shield, User, CreditCard, Calendar, Clock, Lock, Eye } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError, showSuccess } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useCreditAccountBalance } from '@/hooks/useCreditAccountBalance';
 import { useTranslation } from 'react-i18next';
-import { cn } from '@/lib/utils';
+import { cn, getFunctionError } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +26,15 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CardPreview } from '@/components/dashboard/CardPreview';
 import { Progress } from "@/components/ui/progress";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const CreditAccountDetails = () => {
   const { t } = useTranslation(['dashboard', 'common']);
@@ -39,6 +48,13 @@ const CreditAccountDetails = () => {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [pendingAuthCount, setPendingAuthCount] = useState(0);
   const [isGeneratingStatement, setIsGeneratingStatement] = useState(false);
+  
+  // États pour la sécurité du numéro de carte
+  const [isCardNumberVisible, setIsCardNumberVisible] = useState(false);
+  const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
 
   const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance, secondsUntilRefresh } = useCreditAccountBalance(accountId!);
 
@@ -69,6 +85,11 @@ const CreditAccountDetails = () => {
       return;
     }
     setAccount(accountData);
+
+    // Check session storage for previous verification
+    if (sessionStorage.getItem(`card_reveal_${accountData.card_id}`)) {
+      setIsCardNumberVisible(true);
+    }
 
     const { data: transactionsData, error: transactionsError } = await supabase
       .from('transactions')
@@ -131,6 +152,45 @@ const CreditAccountDetails = () => {
     }
   };
 
+  const handleRevealCard = async () => {
+    if (isCardNumberVisible) return;
+    
+    setIsSendingOtp(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-admin-otp');
+      if (error) throw new Error(getFunctionError(error));
+      
+      setIsOtpDialogOpen(true);
+      showSuccess("Un code de vérification a été envoyé à votre adresse courriel.");
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Erreur lors de l'envoi du code.");
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    setIsVerifyingOtp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-admin-otp', {
+        body: { code: otp }
+      });
+
+      if (error) throw new Error(getFunctionError(error));
+
+      if (data.success) {
+        setIsCardNumberVisible(true);
+        sessionStorage.setItem(`card_reveal_${account.card_id}`, 'true');
+        setIsOtpDialogOpen(false);
+        showSuccess("Numéro de carte déverrouillé pour cette session.");
+      }
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Code invalide.");
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
   const getStatementStatus = (statement: any) => {
     const unbilledPayments = transactions
       .filter(tx => tx.type === 'payment')
@@ -159,23 +219,21 @@ const CreditAccountDetails = () => {
     return { text: t('accounts.statementUnpaid'), variant: 'secondary' as 'secondary', className: '' };
   };
 
-  if (loading) {
-    return <Skeleton className="h-screen w-full" />;
-  }
-
+  if (loading) return <Skeleton className="h-screen w-full" />;
   if (!account) return <div>{t('accounts.accountNotFound')}</div>;
 
   const profileName = account.profiles.type === 'personal' ? account.profiles.full_name : account.profiles.legal_name;
-  const currentStatement = statements.find(s => s.id === account.current_statement_id);
   
-  // Calcul du pourcentage d'utilisation du crédit
+  // Construction du numéro de carte
+  const fullCardNumber = `${account.cards.user_initials} ${account.cards.issuer_id} ${account.cards.random_letters} ${account.cards.unique_identifier} ${account.cards.check_digit}`;
+  const maskedCardNumber = `${account.cards.user_initials} ${account.cards.issuer_id} ${account.cards.random_letters} ****${account.cards.unique_identifier.slice(-3)} ${account.cards.check_digit}`;
+  
   const currentBalance = balanceData?.current_balance || 0;
   const creditLimit = account.credit_limit || 1;
   const utilization = Math.min(100, Math.max(0, (currentBalance / creditLimit) * 100));
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Top Section: Breadcrumb and Actions */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <Link to="/dashboard/cards" className="flex items-center text-sm text-muted-foreground hover:text-primary transition-colors">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -208,23 +266,39 @@ const CreditAccountDetails = () => {
         </div>
       </div>
 
-      {/* Header Card: Visual & Key Metrics */}
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Left: Card Visual */}
         <div className="w-full lg:w-96 flex-shrink-0">
-          <CardPreview
-             programName={account.cards.card_programs.program_name}
-             cardType={account.cards.card_programs.card_type}
-             cardColor={account.cards.card_programs.card_color}
-             userName={profileName}
-          />
+          <div className="relative group">
+            <div className={cn("transition-all duration-300", !isCardNumberVisible && "blur-sm select-none")}>
+              <CardPreview
+                programName={account.cards.card_programs.program_name}
+                cardType={account.cards.card_programs.card_type}
+                cardColor={account.cards.card_programs.card_color}
+                userName={profileName}
+                showCardNumber={true} // Toujours true, mais le contenu change ou est flouté
+              />
+            </div>
+            
+            {!isCardNumberVisible && (
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <Button 
+                  onClick={handleRevealCard} 
+                  className="bg-black/50 hover:bg-black/70 text-white backdrop-blur-md border border-white/20"
+                  disabled={isSendingOtp}
+                >
+                  {isSendingOtp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
+                  Voir le numéro
+                </Button>
+              </div>
+            )}
+          </div>
+
           <div className="mt-4 flex justify-center gap-2">
              <Badge variant="outline" className="text-xs">{account.currency}</Badge>
              <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
           </div>
         </div>
 
-        {/* Right: Balance & Quick Actions */}
         <div className="flex-1 space-y-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{t('accounts.accountOf', { name: profileName })}</h1>
@@ -256,18 +330,6 @@ const CreditAccountDetails = () => {
                <p className="text-4xl font-bold text-green-600">
                   {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: account.currency }).format(balanceData?.available_credit ?? 0)}
                </p>
-               {currentStatement && (
-                 <div className="mt-4 p-3 bg-muted/50 rounded-md text-sm">
-                    <div className="flex justify-between mb-1">
-                      <span>{t('accounts.minimumPayment')}:</span>
-                      <span className="font-semibold">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: account.currency }).format(currentStatement.minimum_payment)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{t('accounts.dueDate')}:</span>
-                      <span className="font-semibold">{new Date(currentStatement.payment_due_date).toLocaleDateString('fr-CA')}</span>
-                    </div>
-                 </div>
-               )}
             </div>
           </div>
 
@@ -294,38 +356,24 @@ const CreditAccountDetails = () => {
         </div>
       </div>
 
-      {/* Main Content Tabs */}
       <Tabs defaultValue="transactions" className="w-full mt-8">
         <TabsList className="w-full justify-start border-b bg-transparent p-0 h-auto rounded-none">
-          <TabsTrigger 
-            value="transactions" 
-            className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-          >
+          <TabsTrigger value="transactions" className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
             Transactions
             <Badge variant="secondary" className="ml-2 text-xs">{transactions.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger 
-            value="statements"
-            className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-          >
+          <TabsTrigger value="statements" className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
             Relevés
           </TabsTrigger>
-          <TabsTrigger 
-            value="details"
-            className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-          >
+          <TabsTrigger value="details" className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
             Détails & Titulaire
           </TabsTrigger>
-          <TabsTrigger 
-            value="security"
-            className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-          >
+          <TabsTrigger value="security" className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
             Sécurité & Accès
           </TabsTrigger>
         </TabsList>
 
         <div className="mt-6">
-          {/* Transactions Tab */}
           <TabsContent value="transactions" className="space-y-6">
             {pendingAuthCount > 0 && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-center justify-between">
@@ -378,7 +426,6 @@ const CreditAccountDetails = () => {
             </Card>
           </TabsContent>
 
-          {/* Statements Tab */}
           <TabsContent value="statements">
             <Card>
               <CardHeader>
@@ -407,7 +454,6 @@ const CreditAccountDetails = () => {
             </Card>
           </TabsContent>
 
-          {/* Details Tab */}
           <TabsContent value="details" className="space-y-6">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <Card>
@@ -415,7 +461,9 @@ const CreditAccountDetails = () => {
                  <CardContent className="space-y-4">
                    <div>
                      <p className="text-sm text-muted-foreground mb-1">Numéro de carte</p>
-                     <p className="font-mono text-lg bg-muted p-2 rounded text-center">{account.cards.user_initials} {account.cards.issuer_id} {account.cards.random_letters} **** {account.cards.unique_identifier.slice(-3)} {account.cards.check_digit}</p>
+                     <div className={cn("font-mono text-lg bg-muted p-2 rounded text-center transition-all", !isCardNumberVisible && "blur-sm")}>
+                        {isCardNumberVisible ? fullCardNumber : maskedCardNumber}
+                     </div>
                    </div>
                    <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -473,7 +521,6 @@ const CreditAccountDetails = () => {
              </div>
           </TabsContent>
 
-          {/* Security Tab */}
           <TabsContent value="security" className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
                <CreditAccountAccessLog logs={accessLogs} className="w-full" />
@@ -495,6 +542,39 @@ const CreditAccountDetails = () => {
           </TabsContent>
         </div>
       </Tabs>
+      
+      <Dialog open={isOtpDialogOpen} onOpenChange={setIsOtpDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Vérification d'identité</DialogTitle>
+            <DialogDescription>
+              Pour afficher le numéro de carte complet, veuillez entrer le code à 6 chiffres envoyé à votre adresse courriel.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+              </InputOTPGroup>
+              <div className="w-4" />
+              <InputOTPGroup>
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsOtpDialogOpen(false)}>Annuler</Button>
+            <Button onClick={handleVerifyOtp} disabled={otp.length !== 6 || isVerifyingOtp}>
+              {isVerifyingOtp && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Vérifier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
