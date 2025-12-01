@@ -38,7 +38,7 @@ async function encryptData(dataObj, keyHex) {
   }
 }
 
-// Hachage SHA-256 pour l'indexation aveugle (Blind Indexing)
+// Hachage SHA-256 pour l'indexation aveugle (Blind Index)
 async function hashData(text) {
   if (!text) return null;
   const msgUint8 = new TextEncoder().encode(text);
@@ -78,7 +78,11 @@ serve(async (req) => {
 
     // 1. Préparation Profil (Interne)
     const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, 10) : null;
-    const hashedSin = profileData.sin ? bcrypt.hashSync(profileData.sin, 10) : null;
+    
+    // IMPORTANT: On utilise hashData (SHA-256) au lieu de bcrypt pour le SIN
+    // Cela permet de faire correspondre ce champ avec la colonne 'ssn' de credit_reports
+    const hashedSin = await hashData(profileData.sin); 
+    
     const encryptedAddress = await encryptData(profileData.address, encryptionKey);
 
     const { error: insertError } = await supabaseAdmin.from('profiles').insert({
@@ -90,18 +94,15 @@ serve(async (req) => {
       dob: profileData.dob,
       address: encryptedAddress, // Chiffré
       pin: hashedPin,
-      sin: hashedSin,
+      sin: hashedSin, // Haché (SHA-256)
     });
     if (insertError) throw insertError;
 
     // 2. Simulation Bureau de Crédit (Externe)
-    // Si un NAS est fourni, on crée/met à jour l'entrée au bureau de crédit
-    // ATTENTION: Ici aussi tout doit être chiffré
     if (profileData.sin) {
-      // On utilise un hash SHA-256 comme clé de recherche (Blind Index) pour ne pas stocker le NAS en clair
-      const sinIndex = await hashData(profileData.sin);
+      // sinIndex est le même hash SHA-256
+      const sinIndex = hashedSin; 
       
-      // L'adresse est stockée chiffrée dans le bureau de crédit aussi
       const creditBureauAddress = await encryptData(profileData.address, encryptionKey);
 
       const { data: existingReport } = await supabaseAdmin
@@ -113,7 +114,7 @@ serve(async (req) => {
       if (!existingReport) {
         await supabaseAdmin.from('credit_reports').insert({
           full_name: profileData.fullName,
-          ssn: sinIndex, // Stockage du HASH seulement
+          ssn: sinIndex, // Stockage du HASH
           address: creditBureauAddress, // Stockage chiffré
           phone_number: profileData.phone,
           email: profileData.email,
@@ -123,7 +124,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ message: "Profil créé et sécurisé (AES-256)." }), {
+    return new Response(JSON.stringify({ message: "Profil créé et sécurisé (AES-256 + Blind Index)." }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

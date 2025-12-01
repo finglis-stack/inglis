@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 import bcrypt from 'https://esm.sh/bcryptjs@2.4.3'
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import { crypto } from "https://deno.land/std@0.177.0/crypto/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,6 +23,14 @@ async function encryptAddress(addressObj, keyHex) {
     console.error("Encryption error:", e);
     throw new Error("Erreur de chiffrement.");
   }
+}
+
+async function hashData(text) {
+  if (!text) return null;
+  const msgUint8 = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 serve(async (req) => {
@@ -47,23 +56,12 @@ serve(async (req) => {
     if (formError || !form) throw new Error("Formulaire invalide.");
     if (!form.is_active) throw new Error("Formulaire inactif.");
 
-    // Vérification crédit (logique de simulation)
-    if (profileData.sin) {
-      const cleanSin = profileData.sin.replace(/[^0-9]/g, '');
-      const { data: creditReport } = await supabaseAdmin
-        .from('credit_reports')
-        .select('id')
-        .eq('ssn', cleanSin)
-        .maybeSingle();
-
-      if (!creditReport && form.is_credit_bureau_enabled) {
-         console.warn("Avertissement: Pas de dossier crédit pour ce NAS.");
-      }
-    }
-
+    // Hachage
     const saltRounds = 12;
     const hashedPin = profileData.pin ? bcrypt.hashSync(profileData.pin, saltRounds) : null;
-    const hashedSin = profileData.sin ? bcrypt.hashSync(profileData.sin, saltRounds) : null;
+    
+    // IMPORTANT: Utilisation de SHA-256 pour le NAS (au lieu de bcrypt) pour le Blind Indexing
+    const hashedSin = await hashData(profileData.sin);
 
     // Chiffrement adresse
     const encryptionKey = Deno.env.get('ADDRESS_ENCRYPTION_KEY');
@@ -78,7 +76,7 @@ serve(async (req) => {
       phone: profileData.phone,
       dob: profileData.dob,
       address: encryptedAddress, // Stocké chiffré
-      sin: hashedSin,
+      sin: hashedSin, // Stocké haché (SHA-256)
       pin: hashedPin,
       status: 'inactive',
     };
