@@ -1,12 +1,12 @@
 /**
  * Utilitaire pour communiquer avec un lecteur de carte à puce via WebUSB.
- * Implémente le protocole CCID pour les cartes SLE4442.
+ * Tente de contourner les restrictions de classe 0x0B en scannant toutes les configurations.
  */
 
 const APDU = {
   READ_BINARY: [0xFF, 0xB0, 0x00],
   UPDATE_BINARY: [0xFF, 0xD0, 0x00],
-  VERIFY_PSC: [0xFF, 0x20, 0x00, 0x00, 0x03, 0xFF, 0xFF, 0xFF], // Code FF FF FF
+  VERIFY_PSC: [0xFF, 0x20, 0x00, 0x00, 0x03, 0xFF, 0xFF, 0xFF],
 };
 
 export class SmartCardManager {
@@ -17,53 +17,68 @@ export class SmartCardManager {
   private seq: number = 0;
 
   /**
-   * Tente de se connecter au lecteur
+   * Tente une connexion aggressive sur toutes les configurations disponibles
    */
   async connect(): Promise<boolean> {
     try {
       this.device = await navigator.usb.requestDevice({ filters: [] });
       await this.device.open();
       
-      // Sélection de la configuration
-      if (this.device.configuration === null) {
-        await this.device.selectConfiguration(1);
-      }
+      console.log(`Périphérique ouvert: ${this.device.productName} (VID:${this.device.vendorId})`);
 
-      // On parcourt les interfaces pour trouver celle qui est libre
-      // Chrome bloque souvent la classe 0x0B (SmartCard), c'est une limitation connue.
-      const interfaces = this.device.configuration?.interfaces || [];
-      let claimed = false;
-
-      for (const iface of interfaces) {
+      // Stratégie de recherche exhaustive
+      // On parcourt TOUTES les configurations, pas seulement la par défaut
+      const configurations = this.device.configurations;
+      
+      for (const config of configurations) {
+        console.log(`Tentative Configuration #${config.configurationValue}...`);
+        
         try {
-          await this.device.claimInterface(iface.interfaceNumber);
-          this.interfaceNumber = iface.interfaceNumber;
-          
-          // Recherche des endpoints
-          const endpoints = iface.alternates[0].endpoints;
-          this.endpointIn = endpoints.find(e => e.direction === 'in')?.endpointNumber || 0;
-          this.endpointOut = endpoints.find(e => e.direction === 'out')?.endpointNumber || 0;
+          await this.device.selectConfiguration(config.configurationValue);
+        } catch (err) {
+          console.warn(`Impossible de sélectionner config ${config.configurationValue}`, err);
+          continue;
+        }
 
-          if (this.endpointIn && this.endpointOut) {
-            claimed = true;
-            console.log(`Interface #${this.interfaceNumber} réclamée.`);
-            break; 
-          } else {
-             await this.device.releaseInterface(this.interfaceNumber);
+        // Parcours des interfaces de cette configuration
+        for (const iface of config.interfaces) {
+          // On vérifie chaque 'alternate' pour trouver des endpoints valides
+          for (const alternate of iface.alternates) {
+            const ifaceClass = alternate.interfaceClass;
+            console.log(`  > Interface #${iface.interfaceNumber} (Classe 0x${ifaceClass.toString(16)})`);
+
+            // Chrome bloque la classe 0x0B (SmartCard) par défaut.
+            // Mais on tente quand même, au cas où le driver WinUSB masquerait la classe à l'OS.
+            try {
+              await this.device.claimInterface(iface.interfaceNumber);
+              
+              // Recherche des endpoints IN et OUT
+              const epIn = alternate.endpoints.find(e => e.direction === 'in');
+              const epOut = alternate.endpoints.find(e => e.direction === 'out');
+
+              if (epIn && epOut) {
+                this.interfaceNumber = iface.interfaceNumber;
+                this.endpointIn = epIn.endpointNumber;
+                this.endpointOut = epOut.endpointNumber;
+                
+                console.log(`  >>> SUCCÈS ! Connecté sur Interface #${this.interfaceNumber}, EP In:${this.endpointIn}, EP Out:${this.endpointOut}`);
+                return true;
+              } else {
+                console.log("  > Pas d'endpoints valides, libération...");
+                await this.device.releaseInterface(iface.interfaceNumber);
+              }
+            } catch (e) {
+              console.warn(`  > Echec claimInterface: ${e.message}`);
+              // C'est ici que l'erreur SecurityError arrive. On l'ignore et on continue la boucle.
+            }
           }
-        } catch (e) {
-          console.warn(`Interface #${iface.interfaceNumber} inaccessible:`, e);
         }
       }
 
-      if (!claimed) {
-        throw new Error("Accès refusé par le navigateur (SecurityError). Chrome bloque souvent les lecteurs CCID natifs.");
-      }
+      throw new Error("Aucune interface accessible trouvée. Chrome bloque ce lecteur (Classe 0x0B).");
 
-      return true;
     } catch (error) {
-      console.error("Erreur connexion USB:", error);
-      // On propage l'erreur pour que l'UI puisse afficher le mode simulation
+      console.error("Erreur fatale USB:", error);
       throw error;
     }
   }
@@ -82,15 +97,22 @@ export class SmartCardManager {
   }
 
   async transmit(apdu: number[] | Uint8Array): Promise<Uint8Array> {
-    if (!this.device) throw new Error("Non connecté");
-    
+    if (!this.device || !this.endpointOut) throw new Error("Non connecté");
+
+    // Envoi
     await this.device.transferOut(this.endpointOut, this.buildCcidFrame(new Uint8Array(apdu)));
+
+    // Réception (taille max 64 pour standard, ajustable)
     const result = await this.device.transferIn(this.endpointIn, 64);
     
     if (!result.data) throw new Error("Pas de réponse");
     
-    // Skip CCID header (10 bytes)
-    return new Uint8Array(result.data.buffer, 10);
+    // Le lecteur renvoie un header CCID (10 bytes) + les données
+    // On extrait juste les données
+    if (result.data.byteLength > 10) {
+        return new Uint8Array(result.data.buffer, 10);
+    }
+    return new Uint8Array(0);
   }
 
   async verifyPsc(): Promise<boolean> {
@@ -99,9 +121,8 @@ export class SmartCardManager {
   }
 
   async writeData(address: number, data: Uint8Array): Promise<boolean> {
-    if (address < 32) throw new Error("Zone protégée (0-31). Écriture annulée.");
+    if (address < 32) throw new Error("Zone protégée.");
     
-    // Commande UPDATE BINARY
     const cmd = new Uint8Array(5 + data.length);
     cmd.set(APDU.UPDATE_BINARY.slice(0, 3), 0);
     cmd[3] = address;
@@ -114,7 +135,7 @@ export class SmartCardManager {
 
   private checkSuccess(sw: Uint8Array): boolean {
     if (sw.length < 2) return false;
-    // 0x90 0x00 = Succès
+    // SW1 SW2 = 90 00
     return sw[sw.length - 2] === 0x90 && sw[sw.length - 1] === 0x00;
   }
 
@@ -126,33 +147,21 @@ export class SmartCardManager {
   }
 }
 
-/**
- * Prépare les données dans un format binaire compact (compatible SLE4442)
- * Structure : [MAGIC 1B] [NUMERO 18B] [EXP 4B] [NOM VARIABLE]
- */
 export const prepareCardData = (cardNumber: string, name: string, expiry: string): Uint8Array => {
   const enc = new TextEncoder();
+  const cleanNum = cardNumber.replace(/[^A-Z0-9]/g, '').substring(0, 18);
+  const cleanExp = expiry.replace('/', '').substring(0, 4);
+  const cleanName = name.substring(0, 30);
   
-  // Nettoyage
-  const cleanNum = cardNumber.replace(/[^A-Z0-9]/g, '').padEnd(18, ' ').substring(0, 18); // 18 chars fixes
-  const cleanExp = expiry.replace('/', '').substring(0, 4); // 4 chars (MMYY)
-  const cleanName = name.substring(0, 30); // Max 30 chars
+  // Format binaire simple: [MAGIC 0x1D] [NUM] [EXP] [NOM]
+  const magic = new Uint8Array([0x1D]);
+  const buffer = new Uint8Array(1 + cleanNum.length + cleanExp.length + cleanName.length);
   
-  // Construction du buffer
-  // Magic byte 0xID (Inglis Dominion) pour reconnaitre nos cartes
-  const magic = new Uint8Array([0x1D]); 
-  const numBytes = enc.encode(cleanNum);
-  const expBytes = enc.encode(cleanExp);
-  const nameBytes = enc.encode(cleanName);
+  let i = 0;
+  buffer.set(magic, i); i += 1;
+  buffer.set(enc.encode(cleanNum), i); i += cleanNum.length;
+  buffer.set(enc.encode(cleanExp), i); i += cleanExp.length;
+  buffer.set(enc.encode(cleanName), i);
 
-  const totalLength = magic.length + numBytes.length + expBytes.length + nameBytes.length;
-  const finalBuffer = new Uint8Array(totalLength);
-
-  let offset = 0;
-  finalBuffer.set(magic, offset); offset += magic.length;
-  finalBuffer.set(numBytes, offset); offset += numBytes.length;
-  finalBuffer.set(expBytes, offset); offset += expBytes.length;
-  finalBuffer.set(nameBytes, offset);
-
-  return finalBuffer;
+  return buffer;
 };
