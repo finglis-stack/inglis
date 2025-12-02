@@ -2,85 +2,77 @@ import sys
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from smartcard.System import readers
-from smartcard.util import toHexString, toBytes
+from smartcard.util import toHexString
+from smartcard.CardConnection import CardConnection
 
 app = Flask(__name__)
 CORS(app)
 
-# Commandes APDU pour SLE4442
-CMD_VERIFY_PSC = [0xFF, 0x20, 0x00, 0x00, 0x03, 0xFF, 0xFF, 0xFF]
-CMD_UPDATE_MAIN_MEM = [0xFF, 0xD0, 0x00]
-
-def encode_card_data(card_number, name, expiry):
-    clean_num = ''.join(filter(str.isalnum, card_number))[:18]
-    clean_exp = expiry.replace('/', '')[:4]
-    clean_name = name[:30]
-    data_bytes = []
-    data_bytes.append(0x1D)
-    data_bytes.extend(clean_num.encode('utf-8'))
-    data_bytes.extend(clean_exp.encode('utf-8'))
-    data_bytes.extend(clean_name.encode('utf-8'))
-    return data_bytes
+# Commandes
+CMD_GET_DATA = [0xFF, 0xCA, 0x00, 0x00, 0x00] # Tente de lire l'UID (générique)
 
 @app.route('/status', methods=['GET'])
 def status():
     try:
-        # Force un nouveau scan des lecteurs à chaque requête
         r = readers()
-        print(f"-> Scan demandé. Lecteurs trouvés : {r}")
-        
         reader_name = str(r[0]) if len(r) > 0 else None
         return jsonify({
             "status": "online", 
             "reader": reader_name,
-            "all_readers": [str(x) for x in r],
             "ready": len(r) > 0
         })
     except Exception as e:
-        print(f"-> ERREUR SCAN: {e}")
         return jsonify({"status": "error", "message": str(e)})
 
 @app.route('/write', methods=['POST'])
 def write_card():
     connection = None
     try:
-        data = request.json
-        print(f"-> Demande d'écriture pour : {data.get('holderName')}")
+        print("-" * 30)
+        print("-> TENTATIVE DE CONNEXION...")
         
         r = readers()
         if len(r) == 0:
-            raise Exception("Lecteur perdu ou déconnecté au moment de l'écriture.")
+            raise Exception("Aucun lecteur trouvé.")
             
         reader = r[0]
-        print(f"-> Connexion au lecteur : {reader}")
+        print(f"-> Lecteur : {reader}")
+        
         connection = reader.createConnection()
         connection.connect()
         
-        data_psc, sw1, sw2 = connection.transmit(CMD_VERIFY_PSC)
-        print(f"-> Vérification PSC (Code sécurité) : {sw1:02X} {sw2:02X}")
+        # 1. LIRE L'ATR (La "carte d'identité" de la puce)
+        atr = toHexString(connection.getATR())
+        print(f"-> ATR DÉTECTÉ : {atr}")
         
-        if not (sw1 == 0x90 and sw2 == 0x00):
-            raise Exception(f"Carte verrouillée ou type incorrect. Code retour : {sw1:02X} {sw2:02X}")
+        # Analyse rapide de l'ATR pour SLE4442
+        # Un ATR de SLE4442 ressemble souvent à : A2 13 10 91
+        if atr.startswith("A2 13 10 91"):
+            print("-> TYPE CARTE : SLE4442 (Correct)")
+        else:
+            print(f"-> TYPE CARTE : INCONNU ou CPU (Peut-être incompatible avec l'écriture simple)")
 
-        payload = encode_card_data(
-            data.get('cardNumber', ''),
-            data.get('holderName', ''),
-            data.get('expiryDate', '')
-        )
+        # 2. TEST DOUX : On n'écrit pas tout de suite
+        # On essaie juste une commande inoffensive pour voir si le lecteur plante
+        print("-> Envoi commande test (Lecture UID)...")
+        try:
+            # Cette commande est moins agressive que l'écriture
+            data, sw1, sw2 = connection.transmit(CMD_GET_DATA)
+            print(f"-> Réponse Test : {sw1:02X} {sw2:02X}")
+        except Exception as e:
+            print(f"-> Le lecteur n'a pas aimé la commande test : {e}")
+            raise Exception("Lecteur incompatible avec les commandes PC/SC standards.")
 
-        # Commande d'écriture
-        apdu = CMD_UPDATE_MAIN_MEM + [0x20, len(payload)] + payload
-        response, sw1, sw2 = connection.transmit(apdu)
+        # Si on arrive ici sans crash, c'est bon signe, mais on arrête là pour le diagnostic
+        # car votre lecteur "Générique" ne supportera probablement pas l'écriture mémoire directe.
         
-        print(f"-> Résultat écriture : {sw1:02X} {sw2:02X}")
-        
-        if not (sw1 == 0x90 and sw2 == 0x00):
-             raise Exception(f"Erreur lors de l'écriture. Code : {sw1:02X} {sw2:02X}")
-
-        return jsonify({"success": True})
+        return jsonify({
+            "success": False, 
+            "error": "DIAGNOSTIC SEULEMENT. ATR: " + atr + ". Le lecteur semble incompatible pour l'écriture SLE4442."
+        })
 
     except Exception as e:
-        print(f"-> ERREUR CRITIQUE : {e}")
+        print(f"-> ERREUR : {e}")
         return jsonify({"success": False, "error": str(e)}), 500
     finally:
         if connection:
@@ -88,21 +80,5 @@ def write_card():
             except: pass
 
 if __name__ == '__main__':
-    print("=================================================")
-    print("   PONT INGLIS DOMINION (MODE DIAGNOSTIC)")
-    print("=================================================")
-    try:
-        r = readers()
-        print(f"ÉTAT ACTUEL : {len(r)} lecteur(s) détecté(s) par Windows/PC-SC")
-        if len(r) > 0:
-            for i, reader in enumerate(r):
-                print(f"  [{i}] {reader}")
-        else:
-            print("  [X] AUCUN LECTEUR DÉTECTÉ.")
-            print("      Veuillez vérifier le Gestionnaire de périphériques.")
-    except Exception as e:
-        print(f"ERREUR SYSTÈME : {e}")
-        print("Le service 'Smart Card' de Windows est-il démarré ?")
-    print("-------------------------------------------------")
-    print("Le service écoute sur http://localhost:5000 ...")
+    print("=== PONT DIAGNOSTIC ===")
     app.run(port=5000)
