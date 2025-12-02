@@ -4,9 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, DollarSign, CreditCard, User, Clock, PlusCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, DollarSign, CreditCard, User, Clock, PlusCircle, RefreshCw, Eye, Loader2, Usb } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { showError } from '@/utils/toast';
+import { showError, showSuccess } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import DebitAccountAccessLog from '@/components/dashboard/accounts/DebitAccountAccessLog';
 import { useDebitAccountBalance } from '@/hooks/useDebitAccountBalance';
@@ -15,7 +15,18 @@ import AddFundsDialog from '@/components/dashboard/accounts/AddFundsDialog';
 import { Separator } from '@/components/ui/separator';
 import { AddToGoogleWalletButton } from '@/components/dashboard/accounts/AddToGoogleWalletButton';
 import { CardPreview } from '@/components/dashboard/CardPreview';
-import { cn } from '@/lib/utils';
+import { cn, getFunctionError } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { PhysicalCardEncoder } from '@/components/dashboard/cards/PhysicalCardEncoder';
 
 const DebitAccountDetails = () => {
   const { t } = useTranslation('dashboard');
@@ -26,6 +37,17 @@ const DebitAccountDetails = () => {
   const [accessLogs, setAccessLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pendingAuthCount, setPendingAuthCount] = useState(0);
+  const [paymentAmount, setPaymentAmount] = useState('');
+
+  // États pour la sécurité du numéro de carte
+  const [isCardNumberVisible, setIsCardNumberVisible] = useState(false);
+  const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+
+  // État pour l'encodage physique
+  const [showPhysicalEncoder, setShowPhysicalEncoder] = useState(false);
 
   const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance, secondsUntilRefresh } = useDebitAccountBalance(accountId!);
 
@@ -57,6 +79,11 @@ const DebitAccountDetails = () => {
         return;
       }
       setAccount(accountData);
+      
+      // Check session storage for previous verification
+      if (sessionStorage.getItem(`card_reveal_${accountData.card_id}`)) {
+        setIsCardNumberVisible(true);
+      }
 
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
@@ -112,6 +139,62 @@ const DebitAccountDetails = () => {
     };
   }, [accountId, t, refetchBalance]);
 
+  const handlePayment = async () => {
+    const amount = parseFloat(paymentAmount);
+    if (isNaN(amount) || amount <= 0) {
+      showError(t('accounts.invalidPaymentAmount'));
+      return;
+    }
+    try {
+      const { error } = await supabase.rpc('process_transaction', { p_card_id: account.card_id, p_amount: amount, p_type: 'payment', p_description: t('accounts.paymentReceived') });
+      if (error) throw error;
+      showSuccess(t('accounts.paymentSuccess'));
+      setPaymentAmount('');
+      refetchBalance();
+    } catch (error) {
+      showError(`${t('accounts.paymentError')}: ${error.message}`);
+    }
+  };
+
+  const handleRevealCard = async () => {
+    if (isCardNumberVisible) return;
+    
+    setIsSendingOtp(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-admin-otp');
+      if (error) throw new Error(getFunctionError(error));
+      
+      setIsOtpDialogOpen(true);
+      showSuccess("Un code de vérification a été envoyé à votre adresse courriel.");
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Erreur lors de l'envoi du code.");
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    setIsVerifyingOtp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verify-admin-otp', {
+        body: { code: otp }
+      });
+
+      if (error) throw new Error(getFunctionError(error));
+
+      if (data.success) {
+        setIsCardNumberVisible(true);
+        sessionStorage.setItem(`card_reveal_${account.card_id}`, 'true');
+        setIsOtpDialogOpen(false);
+        showSuccess("Numéro de carte déverrouillé pour cette session.");
+      }
+    } catch (err) {
+      showError(err instanceof Error ? err.message : "Code invalide.");
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -131,7 +214,9 @@ const DebitAccountDetails = () => {
   }
 
   const profileName = account.profiles.type === 'personal' ? account.profiles.full_name : account.profiles.legal_name;
-  const cardNumber = `${account.cards.user_initials} ${account.cards.issuer_id} ${account.cards.random_letters} ****${account.cards.unique_identifier.slice(-3)} ${account.cards.check_digit}`;
+  
+  const fullCardNumber = `${account.cards.user_initials} ${account.cards.issuer_id} ${account.cards.random_letters} ${account.cards.unique_identifier} ${account.cards.check_digit}`;
+  const maskedCardNumber = `${account.cards.user_initials} ${account.cards.issuer_id} ${account.cards.random_letters} ****${account.cards.unique_identifier.slice(-3)} ${account.cards.check_digit}`;
 
   const currentBalance = balanceData?.current_balance;
   const availableBalance = balanceData?.available_balance;
@@ -296,11 +381,40 @@ const DebitAccountDetails = () => {
                   cardColor={account.cards.card_programs.card_color}
                   userName={profileName}
                   showCardNumber={true}
-                  cardNumber={cardNumber}
+                  cardNumber={isCardNumberVisible ? fullCardNumber : maskedCardNumber}
                   expiryDate={cardExpiry}
                 />
               </div>
+              
+              {!isCardNumberVisible && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                   {/* Overlay is handled inside the container div above in real render, here we use simplified structure */}
+                </div>
+              )}
+
+              <div className="mt-2 text-center">
+                  {!isCardNumberVisible && (
+                    <Button 
+                      onClick={handleRevealCard} 
+                      className="bg-black/50 hover:bg-black/70 text-white backdrop-blur-md border border-white/20"
+                      disabled={isSendingOtp}
+                    >
+                      {isSendingOtp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
+                      Voir le numéro
+                    </Button>
+                  )}
+              </div>
             </div>
+            
+            {isCardNumberVisible && (
+              <div className="mt-4 flex justify-center">
+                <Button variant="outline" className="w-full border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700" onClick={() => setShowPhysicalEncoder(true)}>
+                  <Usb className="mr-2 h-4 w-4" />
+                  Encoder carte physique
+                </Button>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-muted-foreground">Programme</p>
@@ -324,6 +438,60 @@ const DebitAccountDetails = () => {
         </Card>
         <DebitAccountAccessLog logs={accessLogs} className="md:col-span-2" />
       </div>
+
+      <Dialog open={isOtpDialogOpen} onOpenChange={setIsOtpDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Vérification d'identité</DialogTitle>
+            <DialogDescription>
+              Pour afficher le numéro de carte complet, veuillez entrer le code à 6 chiffres envoyé à votre adresse courriel.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+              </InputOTPGroup>
+              <div className="w-4" />
+              <InputOTPGroup>
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsOtpDialogOpen(false)}>Annuler</Button>
+            <Button onClick={handleVerifyOtp} disabled={otp.length !== 6 || isVerifyingOtp}>
+              {isVerifyingOtp && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Vérifier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPhysicalEncoder} onOpenChange={setShowPhysicalEncoder}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Encodage Carte Physique</DialogTitle>
+            <DialogDescription>
+              Cette action va écrire les informations de la carte sur la puce SLE4442 insérée dans le lecteur.
+            </DialogDescription>
+          </DialogHeader>
+          <PhysicalCardEncoder 
+            cardData={{
+              cardNumber: fullCardNumber,
+              holderName: profileName,
+              expiryDate: cardExpiry
+            }}
+            onSuccess={() => {
+              // Optionnel : Fermer le dialogue après succès
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, PlusCircle, RefreshCw, FileText, Loader2, MoreHorizontal, Ban, Shield, User, CreditCard, Calendar, Clock, Lock, Eye } from 'lucide-react';
+import { ArrowLeft, PlusCircle, RefreshCw, FileText, Loader2, MoreHorizontal, Ban, Shield, User, CreditCard, Calendar, Clock, Lock, Eye, Usb } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError, showSuccess } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -35,6 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { PhysicalCardEncoder } from '@/components/dashboard/cards/PhysicalCardEncoder';
 
 const CreditAccountDetails = () => {
   const { t } = useTranslation(['dashboard', 'common']);
@@ -55,6 +56,9 @@ const CreditAccountDetails = () => {
   const [otp, setOtp] = useState('');
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  
+  // État pour l'encodage physique
+  const [showPhysicalEncoder, setShowPhysicalEncoder] = useState(false);
 
   const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance, secondsUntilRefresh } = useCreditAccountBalance(accountId!);
 
@@ -309,6 +313,15 @@ const CreditAccountDetails = () => {
              <Badge variant="outline" className="text-xs">{account.currency}</Badge>
              <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
           </div>
+          
+          {isCardNumberVisible && (
+            <div className="mt-4 flex justify-center">
+              <Button variant="outline" className="w-full border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700" onClick={() => setShowPhysicalEncoder(true)}>
+                <Usb className="mr-2 h-4 w-4" />
+                Encoder carte physique
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="flex-1 space-y-6">
@@ -589,6 +602,27 @@ const CreditAccountDetails = () => {
               Vérifier
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPhysicalEncoder} onOpenChange={setShowPhysicalEncoder}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Encodage Carte Physique</DialogTitle>
+            <DialogDescription>
+              Cette action va écrire les informations de la carte sur la puce SLE4442 insérée dans le lecteur.
+            </DialogDescription>
+          </DialogHeader>
+          <PhysicalCardEncoder 
+            cardData={{
+              cardNumber: fullCardNumber,
+              holderName: profileName,
+              expiryDate: cardExpiry
+            }}
+            onSuccess={() => {
+              // Optionnel : Fermer le dialogue après succès ou laisser l'utilisateur le faire
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>
