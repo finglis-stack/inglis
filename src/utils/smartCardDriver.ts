@@ -1,21 +1,13 @@
 /**
- * Utilitaire minimaliste pour communiquer avec un lecteur de carte à puce via WebUSB.
- * Implémente une version simplifiée du protocole CCID (Chip Card Interface Device).
+ * Utilitaire pour communiquer avec un lecteur de carte à puce via WebUSB.
+ * Implémente le protocole CCID pour les cartes SLE4442.
  */
 
-// Commandes APDU standard pour les cartes mémoires type SLE4442 via un lecteur PC/SC générique
 const APDU = {
   READ_BINARY: [0xFF, 0xB0, 0x00],
   UPDATE_BINARY: [0xFF, 0xD0, 0x00],
-  VERIFY_PSC: [0xFF, 0x20, 0x00, 0x00, 0x03, 0xFF, 0xFF, 0xFF], // Code par défaut FF FF FF
+  VERIFY_PSC: [0xFF, 0x20, 0x00, 0x00, 0x03, 0xFF, 0xFF, 0xFF], // Code FF FF FF
 };
-
-export interface SmartCardDevice {
-  device: USBDevice;
-  interfaceNumber: number;
-  endpointIn: number;
-  endpointOut: number;
-}
 
 export class SmartCardManager {
   private device: USBDevice | null = null;
@@ -25,193 +17,142 @@ export class SmartCardManager {
   private seq: number = 0;
 
   /**
-   * Demande à l'utilisateur de sélectionner un périphérique USB
+   * Tente de se connecter au lecteur
    */
   async connect(): Promise<boolean> {
     try {
-      // Filtre générique pour les lecteurs de cartes ou connexion sans filtre
       this.device = await navigator.usb.requestDevice({ filters: [] });
-      
       await this.device.open();
       
-      // Sélectionner la configuration (généralement 1)
+      // Sélection de la configuration
       if (this.device.configuration === null) {
         await this.device.selectConfiguration(1);
       }
-      
-      console.log("Interfaces disponibles:", this.device.configuration?.interfaces);
 
-      // Tenter de réclamer une interface disponible (boucle sur toutes)
-      // Chrome bloque souvent la classe 0x0B (Smart Card) et 0x03 (HID)
+      // On parcourt les interfaces pour trouver celle qui est libre
+      // Chrome bloque souvent la classe 0x0B (SmartCard), c'est une limitation connue.
+      const interfaces = this.device.configuration?.interfaces || [];
       let claimed = false;
-      
-      if (!this.device.configuration?.interfaces) {
-         throw new Error("Pas d'interfaces USB trouvées.");
-      }
 
-      for (const iface of this.device.configuration.interfaces) {
-        const ifaceNum = iface.interfaceNumber;
-        const ifaceClass = iface.alternates[0].interfaceClass;
-        
-        console.log(`Tentative sur Interface #${ifaceNum} (Classe 0x${ifaceClass.toString(16)})...`);
-        
+      for (const iface of interfaces) {
         try {
-          await this.device.claimInterface(ifaceNum);
-          this.interfaceNumber = ifaceNum;
+          await this.device.claimInterface(iface.interfaceNumber);
+          this.interfaceNumber = iface.interfaceNumber;
           
-          // Trouver les endpoints (In/Out)
+          // Recherche des endpoints
           const endpoints = iface.alternates[0].endpoints;
           this.endpointIn = endpoints.find(e => e.direction === 'in')?.endpointNumber || 0;
           this.endpointOut = endpoints.find(e => e.direction === 'out')?.endpointNumber || 0;
-          
-          if (this.endpointIn === 0 || this.endpointOut === 0) {
-             console.warn(`Interface #${ifaceNum} réclamée mais endpoints introuvables.`);
-             await this.device.releaseInterface(ifaceNum);
-             continue; // Essayer la suivante
-          }
 
-          console.log(`Interface #${ifaceNum} réclamée avec succès !`);
-          claimed = true;
-          break; // Succès !
+          if (this.endpointIn && this.endpointOut) {
+            claimed = true;
+            console.log(`Interface #${this.interfaceNumber} réclamée.`);
+            break; 
+          } else {
+             await this.device.releaseInterface(this.interfaceNumber);
+          }
         } catch (e) {
-          console.warn(`Echec sur Interface #${ifaceNum}:`, e);
-          // On continue vers la prochaine interface
+          console.warn(`Interface #${iface.interfaceNumber} inaccessible:`, e);
         }
       }
 
       if (!claimed) {
-        throw new Error("Impossible de réclamer une interface (Accès refusé par le navigateur). Vérifiez le pilote Zadig.");
+        throw new Error("Accès refusé par le navigateur (SecurityError). Chrome bloque souvent les lecteurs CCID natifs.");
       }
 
-      console.log(`Connecté: ${this.device.productName}`);
       return true;
     } catch (error) {
-      console.error("Erreur de connexion USB:", error);
-      return false;
+      console.error("Erreur connexion USB:", error);
+      // On propage l'erreur pour que l'UI puisse afficher le mode simulation
+      throw error;
     }
   }
 
-  /**
-   * Construit une trame CCID (PC_to_RDR_XfrBlock)
-   */
   private buildCcidFrame(apdu: Uint8Array): Uint8Array {
     this.seq++;
     const length = apdu.length;
-    
     const header = new Uint8Array([
-      0x6F,             // Message Type: PC_to_RDR_XfrBlock
-      length & 0xFF,    // Length (LSB)
-      (length >> 8) & 0xFF, // Length
-      (length >> 16) & 0xFF, // Length
-      (length >> 24) & 0xFF, // Length (MSB)
-      0x00,             // Slot
-      this.seq,         // Seq
-      0x00,             // BWI
-      0x00, 0x00        // Level Parameter
+      0x6F, length & 0xFF, (length >> 8) & 0xFF, (length >> 16) & 0xFF, (length >> 24) & 0xFF, 
+      0x00, this.seq, 0x00, 0x00, 0x00
     ]);
-
     const frame = new Uint8Array(header.length + apdu.length);
     frame.set(header);
     frame.set(apdu, header.length);
     return frame;
   }
 
-  /**
-   * Envoie une commande et attend la réponse
-   */
   async transmit(apdu: number[] | Uint8Array): Promise<Uint8Array> {
-    if (!this.device) throw new Error("Périphérique non connecté");
-
-    const commandFrame = this.buildCcidFrame(new Uint8Array(apdu));
+    if (!this.device) throw new Error("Non connecté");
     
-    // Envoyer
-    await this.device.transferOut(this.endpointOut, commandFrame);
-
-    // Recevoir (On attend le header CCID 10 octets + données)
-    // Pour simplifier, on lit 64 octets (taille standard d'un paquet USB)
+    await this.device.transferOut(this.endpointOut, this.buildCcidFrame(new Uint8Array(apdu)));
     const result = await this.device.transferIn(this.endpointIn, 64);
     
-    if (!result.data) throw new Error("Pas de réponse du lecteur");
-
-    // Décoder la réponse CCID (RDR_to_PC_DataBlock starts usually with 0x80)
-    const view = new DataView(result.data.buffer);
-    const dataLength = view.getUint32(1, true); // Little endian length at offset 1
+    if (!result.data) throw new Error("Pas de réponse");
     
-    // Les données réelles commencent à l'offset 10 (header CCID)
-    const responseData = new Uint8Array(result.data.buffer, 10, dataLength);
-    
-    return responseData;
+    // Skip CCID header (10 bytes)
+    return new Uint8Array(result.data.buffer, 10);
   }
 
-  /**
-   * SLE4442: Vérifie le code de sécurité (PSC)
-   * Par défaut FF FF FF
-   */
   async verifyPsc(): Promise<boolean> {
-    // Commande standard PC/SC pour vérifier SLE4442: FF 20 00 00 03 FF FF FF
-    const response = await this.transmit(APDU.VERIFY_PSC);
-    // Si succès, SW1 SW2 est souvent 90 00
-    return this.checkSuccess(response);
+    const res = await this.transmit(APDU.VERIFY_PSC);
+    return this.checkSuccess(res);
   }
 
-  /**
-   * SLE4442: Écrit des données
-   * On écrit dans la mémoire principale (Main Memory, adresse 32 à 255)
-   * pour éviter d'écraser la zone protégée par erreur.
-   */
   async writeData(address: number, data: Uint8Array): Promise<boolean> {
-    // Max 255 bytes, offset > 32
-    if (address < 32) throw new Error("Protection: Écriture interdite sous l'adresse 32");
+    if (address < 32) throw new Error("Zone protégée (0-31). Écriture annulée.");
     
-    const len = data.length;
-    // Commande: FF D0 00 [Addr] [Len] [Data...]
-    const cmd = new Uint8Array(5 + len);
+    // Commande UPDATE BINARY
+    const cmd = new Uint8Array(5 + data.length);
     cmd.set(APDU.UPDATE_BINARY.slice(0, 3), 0);
     cmd[3] = address;
-    cmd[4] = len;
+    cmd[4] = data.length;
     cmd.set(data, 5);
 
-    const response = await this.transmit(cmd);
-    return this.checkSuccess(response);
+    const res = await this.transmit(cmd);
+    return this.checkSuccess(res);
   }
 
   private checkSuccess(sw: Uint8Array): boolean {
     if (sw.length < 2) return false;
-    const sw1 = sw[sw.length - 2];
-    const sw2 = sw[sw.length - 1];
-    return sw1 === 0x90 && sw2 === 0x00;
+    // 0x90 0x00 = Succès
+    return sw[sw.length - 2] === 0x90 && sw[sw.length - 1] === 0x00;
   }
 
   async disconnect() {
-    if (this.device && this.device.opened) {
-      // Libérer l'interface si elle a été réclamée
-      try {
-          if (this.interfaceNumber !== 0) {
-             await this.device.releaseInterface(this.interfaceNumber);
-          }
-      } catch(e) { console.error(e); }
+    if (this.device?.opened) {
+      try { await this.device.releaseInterface(this.interfaceNumber); } catch {}
       await this.device.close();
     }
   }
 }
 
 /**
- * Convertit une chaine en tableau d'octets pour l'écriture
- */
-export const stringToBytes = (str: string): Uint8Array => {
-  return new TextEncoder().encode(str);
-};
-
-/**
- * Formate les données de la carte pour l'encodage
+ * Prépare les données dans un format binaire compact (compatible SLE4442)
+ * Structure : [MAGIC 1B] [NUMERO 18B] [EXP 4B] [NOM VARIABLE]
  */
 export const prepareCardData = (cardNumber: string, name: string, expiry: string): Uint8Array => {
-  // Création d'un format simple TLV ou JSON stringifié
-  // Pour SLE4442 (256 octets), on reste simple: format JSON
-  const data = JSON.stringify({
-    n: cardNumber.replace(/\s/g, ''),
-    h: name.substring(0, 20), // Max length
-    e: expiry
-  });
-  return stringToBytes(data);
+  const enc = new TextEncoder();
+  
+  // Nettoyage
+  const cleanNum = cardNumber.replace(/[^A-Z0-9]/g, '').padEnd(18, ' ').substring(0, 18); // 18 chars fixes
+  const cleanExp = expiry.replace('/', '').substring(0, 4); // 4 chars (MMYY)
+  const cleanName = name.substring(0, 30); // Max 30 chars
+  
+  // Construction du buffer
+  // Magic byte 0xID (Inglis Dominion) pour reconnaitre nos cartes
+  const magic = new Uint8Array([0x1D]); 
+  const numBytes = enc.encode(cleanNum);
+  const expBytes = enc.encode(cleanExp);
+  const nameBytes = enc.encode(cleanName);
+
+  const totalLength = magic.length + numBytes.length + expBytes.length + nameBytes.length;
+  const finalBuffer = new Uint8Array(totalLength);
+
+  let offset = 0;
+  finalBuffer.set(magic, offset); offset += magic.length;
+  finalBuffer.set(numBytes, offset); offset += numBytes.length;
+  finalBuffer.set(expBytes, offset); offset += expBytes.length;
+  finalBuffer.set(nameBytes, offset);
+
+  return finalBuffer;
 };
