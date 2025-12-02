@@ -35,25 +35,53 @@ export class SmartCardManager {
       await this.device.open();
       
       // Sélectionner la configuration (généralement 1)
-      await this.device.selectConfiguration(1);
+      if (this.device.configuration === null) {
+        await this.device.selectConfiguration(1);
+      }
       
-      // Trouver l'interface CCID (Smart Card)
-      // Class Code 0x0B = Smart Card
-      const interfaceCandidate = this.device.configuration?.interfaces.find(i => 
-        i.alternates[0].interfaceClass === 0x0B
-      ) || this.device.configuration?.interfaces[0];
+      console.log("Interfaces disponibles:", this.device.configuration?.interfaces);
 
-      if (!interfaceCandidate) {
-        throw new Error("Aucune interface compatible trouvée.");
+      // Tenter de réclamer une interface disponible (boucle sur toutes)
+      // Chrome bloque souvent la classe 0x0B (Smart Card) et 0x03 (HID)
+      let claimed = false;
+      
+      if (!this.device.configuration?.interfaces) {
+         throw new Error("Pas d'interfaces USB trouvées.");
       }
 
-      this.interfaceNumber = interfaceCandidate.interfaceNumber;
-      await this.device.claimInterface(this.interfaceNumber);
+      for (const iface of this.device.configuration.interfaces) {
+        const ifaceNum = iface.interfaceNumber;
+        const ifaceClass = iface.alternates[0].interfaceClass;
+        
+        console.log(`Tentative sur Interface #${ifaceNum} (Classe 0x${ifaceClass.toString(16)})...`);
+        
+        try {
+          await this.device.claimInterface(ifaceNum);
+          this.interfaceNumber = ifaceNum;
+          
+          // Trouver les endpoints (In/Out)
+          const endpoints = iface.alternates[0].endpoints;
+          this.endpointIn = endpoints.find(e => e.direction === 'in')?.endpointNumber || 0;
+          this.endpointOut = endpoints.find(e => e.direction === 'out')?.endpointNumber || 0;
+          
+          if (this.endpointIn === 0 || this.endpointOut === 0) {
+             console.warn(`Interface #${ifaceNum} réclamée mais endpoints introuvables.`);
+             await this.device.releaseInterface(ifaceNum);
+             continue; // Essayer la suivante
+          }
 
-      // Trouver les endpoints (In/Out)
-      const endpoints = interfaceCandidate.alternates[0].endpoints;
-      this.endpointIn = endpoints.find(e => e.direction === 'in')?.endpointNumber || 0;
-      this.endpointOut = endpoints.find(e => e.direction === 'out')?.endpointNumber || 0;
+          console.log(`Interface #${ifaceNum} réclamée avec succès !`);
+          claimed = true;
+          break; // Succès !
+        } catch (e) {
+          console.warn(`Echec sur Interface #${ifaceNum}:`, e);
+          // On continue vers la prochaine interface
+        }
+      }
+
+      if (!claimed) {
+        throw new Error("Impossible de réclamer une interface (Accès refusé par le navigateur). Vérifiez le pilote Zadig.");
+      }
 
       console.log(`Connecté: ${this.device.productName}`);
       return true;
@@ -156,6 +184,12 @@ export class SmartCardManager {
 
   async disconnect() {
     if (this.device && this.device.opened) {
+      // Libérer l'interface si elle a été réclamée
+      try {
+          if (this.interfaceNumber !== 0) {
+             await this.device.releaseInterface(this.interfaceNumber);
+          }
+      } catch(e) { console.error(e); }
       await this.device.close();
     }
   }
