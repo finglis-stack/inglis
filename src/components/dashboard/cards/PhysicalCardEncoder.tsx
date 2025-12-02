@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Usb, CheckCircle, AlertTriangle, Loader2, Zap, RefreshCw, HardDrive } from 'lucide-react';
+import { Usb, CheckCircle, AlertTriangle, Loader2, Zap, RefreshCw, HardDrive, CreditCard } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 
 interface PhysicalCardEncoderProps {
@@ -21,16 +21,17 @@ export const PhysicalCardEncoder = ({ cardData, onSuccess }: PhysicalCardEncoder
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
 
   const addLog = (msg: string) => setLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
 
   const checkBridgeConnection = async () => {
     setStatus('checking');
     setErrorMsg(null);
+    setErrorCode(null);
     addLog("Recherche du service local (Bridge)...");
     
     try {
-      // On tente de contacter le script Python
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
       
@@ -48,7 +49,7 @@ export const PhysicalCardEncoder = ({ cardData, onSuccess }: PhysicalCardEncoder
           addLog(`Service connecté. Lecteur détecté: ${data.reader}`);
         } else {
           setStatus('error');
-          setErrorMsg("Le service tourne, mais aucun lecteur n'est branché.");
+          setErrorMsg("Le service tourne, mais aucun lecteur n'est branché ou détecté.");
           addLog("Service OK, mais lecteur absent.");
         }
       } else {
@@ -66,6 +67,8 @@ export const PhysicalCardEncoder = ({ cardData, onSuccess }: PhysicalCardEncoder
     
     setStatus('writing');
     setProgress(10);
+    setErrorMsg(null);
+    setErrorCode(null);
     addLog("Envoi des données au service local...");
 
     try {
@@ -86,11 +89,18 @@ export const PhysicalCardEncoder = ({ cardData, onSuccess }: PhysicalCardEncoder
         showSuccess("Carte physique encodée avec succès !");
         if (onSuccess) onSuccess();
       } else {
-        throw new Error(result.error || "Erreur inconnue du lecteur");
+        // Extraction du code d'erreur si présent
+        const msg = result.error || "Erreur inconnue";
+        if (msg.includes("0x80100066") || msg.includes("réinitialisation")) {
+           setErrorCode("CARD_MUTE");
+        } else if (msg.includes("0x80100069") || msg.includes("removed")) {
+           setErrorCode("CARD_REMOVED");
+        }
+        throw new Error(msg);
       }
 
     } catch (err: any) {
-      setStatus('error');
+      setStatus('connected'); // On revient à connected pour permettre de réessayer
       setErrorMsg(err.message);
       addLog(`ERREUR D'ÉCRITURE: ${err.message}`);
     }
@@ -151,18 +161,34 @@ export const PhysicalCardEncoder = ({ cardData, onSuccess }: PhysicalCardEncoder
             </div>
           </div>
 
-          {/* Error Message */}
-          {status === 'error' && errorMsg && (
+          {/* Error Message Contextuel */}
+          {errorMsg && (
             <Alert variant="destructive" className="py-2">
               <AlertTriangle className="h-4 w-4" />
-              <AlertTitle className="text-sm">Connexion échouée</AlertTitle>
+              <AlertTitle className="text-sm">Échec de l'opération</AlertTitle>
               <AlertDescription className="text-xs mt-1">
-                {errorMsg}
-                <div className="mt-2 p-2 bg-black/10 rounded font-mono">
-                  1. Ouvrez un terminal<br/>
-                  2. Installez les dépendances: <span className="select-all font-bold">pip install flask flask-cors pyscard</span><br/>
-                  3. Lancez le script: <span className="select-all font-bold">python local-bridge/bridge.py</span>
-                </div>
+                {errorCode === "CARD_MUTE" ? (
+                    <div className="font-semibold">
+                        La carte ne répond pas. Solutions probables :
+                        <ul className="list-disc pl-4 mt-1 font-normal">
+                            <li>La carte est insérée à l'envers (puce vers le bas ?).</li>
+                            <li>La carte n'est pas enfoncée à fond.</li>
+                            <li>La puce est sale (frottez-la).</li>
+                            <li>Ce n'est pas une carte SLE4442 vierge.</li>
+                        </ul>
+                    </div>
+                ) : errorCode === "CARD_REMOVED" ? (
+                    "La carte a été retirée pendant l'opération."
+                ) : (
+                    errorMsg
+                )}
+                
+                {status === 'error' && (
+                    <div className="mt-2 p-2 bg-black/10 rounded font-mono">
+                    1. Ouvrez un terminal<br/>
+                    2. Lancez le script: <span className="select-all font-bold">python local-bridge/bridge.py</span>
+                    </div>
+                )}
               </AlertDescription>
             </Alert>
           )}
