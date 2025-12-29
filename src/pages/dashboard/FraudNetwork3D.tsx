@@ -15,7 +15,7 @@ import { showError } from '@/utils/toast';
 interface NetworkNode {
   id: string;
   type: 'profile' | 'card' | 'ip' | 'device';
-  label: string; // Sera masqué
+  label: string; // Sera masqué ou descriptif
   realName?: string; // Nom réel (optionnel, pour debug ou admin)
   lon: number;
   lat: number;
@@ -56,12 +56,8 @@ const maskData = (text: string, type: 'name' | 'card' | 'other'): string => {
     return text.split(' ').map(part => part[0] + '*'.repeat(Math.max(0, part.length - 1))).join(' ');
   }
   
-  if (type === 'card') {
-    // 4500...1234 -> Carte **** 1234
-    if (text.length > 4) return `Carte **** ${text.slice(-4)}`;
-    return 'Carte ****';
-  }
-
+  // Note: Le type 'card' n'est plus masqué ici car on va afficher le nom du programme
+  
   return text;
 };
 
@@ -163,7 +159,7 @@ const NetworkMap = ({ apiKey, nodes, edges, center, onNodeClick, selectedNode, o
           <Marker
             key={node.id}
             position={{ lat: node.lat, lng: node.lon }}
-            title={node.label} // Le label est déjà masqué
+            title={node.label}
             onClick={() => onNodeClick(node)}
             icon={{
               path: google.maps.SymbolPath.CIRCLE,
@@ -385,6 +381,25 @@ const FraudNetwork3D = () => {
         profiles?.forEach(p => profileNames.set(p.id, p.full_name || p.legal_name));
       }
 
+      // Récupération des infos de cartes (Programme + Type)
+      const cardIds = Array.from(allNodeInfos.values()).filter(n => n.type === 'card').map(n => n.id);
+      const cardDetails = new Map<string, string>();
+      if (cardIds.length > 0) {
+        const { data: cards } = await supabase
+          .from('cards')
+          .select('id, card_programs(program_name, card_type)')
+          .in('id', cardIds);
+        
+        cards?.forEach(c => {
+          const progData = c.card_programs;
+          const prog = Array.isArray(progData) ? progData[0] : progData;
+          // Format: "Visa Gold (Crédit)"
+          if (prog) {
+            cardDetails.set(c.id, `${prog.program_name} (${prog.card_type === 'credit' ? 'Crédit' : 'Débit'})`);
+          }
+        });
+      }
+
       // Création des objets Node
       allNodeInfos.forEach(nodeInfo => {
         let label = nodeInfo.id;
@@ -394,8 +409,8 @@ const FraudNetwork3D = () => {
           const realName = profileNames.get(nodeInfo.id) || 'Inconnu';
           label = maskData(realName, 'name');
         } else if (nodeInfo.type === 'card') {
-          // On suppose que l'ID de la carte n'est pas le PAN, mais on masque quand même pour l'uniformité
-          label = "Carte ****"; 
+          // Utilisation du nom du programme au lieu de "Carte ****"
+          label = cardDetails.get(nodeInfo.id) || "Carte Inconnue";
         } else if (nodeInfo.type === 'device') {
           label = `Device ${nodeInfo.id.substring(0, 6)}...`;
         } else if (nodeInfo.type === 'ip') {
