@@ -202,10 +202,10 @@ const DomainRouter = ({ children }) => {
 };
 
 const AppContent = () => {
-  const [localhostApp, setLocalhostApp] = useState(() => localStorage.getItem('app-choice'));
+  const [localhostApp, setLocalhostApp] = useState(() => localStorage.getItem('dyad-app-choice'));
 
   const handleAppChoice = (choice: 'main' | 'q12x' | 'apply') => {
-    localStorage.setItem('app-choice', choice);
+    localStorage.setItem('dyad-app-choice', choice);
     setLocalhostApp(choice);
   };
 

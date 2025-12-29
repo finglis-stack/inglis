@@ -64,7 +64,7 @@ const LocalhostChooser: React.FC<LocalhostChooserProps> = ({ onChoose }) => {
         </Card>
       </div>
        <p className="text-xs text-gray-400 mt-8">
-        Pour changer d'application, effacez la clé 'app-choice' dans le Local Storage de votre navigateur.
+        Pour changer d'application, effacez la clé 'dyad-app-choice' dans le Local Storage de votre navigateur.
       </p>
     </div>
   );
