@@ -454,8 +454,16 @@ const CreditAccountDetails = () => {
           <TabsContent value="statements">
             <Card>
               <CardHeader>
-                <CardTitle>{t('accounts.statementsHistory')}</CardTitle>
-                <CardDescription>Historique complet des relevés générés.</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>{t('accounts.statementsHistory')}</CardTitle>
+                    <CardDescription>Historique complet des relevés générés.</CardDescription>
+                  </div>
+                  <Button onClick={handleGenerateStatement} disabled={isGeneratingStatement} variant="outline">
+                    {isGeneratingStatement ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                    {t('accounts.generateStatement')}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <Table>
