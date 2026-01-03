@@ -155,7 +155,7 @@ const StatementDetails = () => {
           <div>
             <CardTitle className="flex items-center gap-2">
               {t('accounts.statementDetailsTitle')}
-              {statement.is_closed && <Badge variant="secondary">Fermé</Badge>}
+              {statement.is_closed && <Badge variant="destructive" className="uppercase font-bold">Fermé</Badge>}
             </CardTitle>
             <CardDescription>
               {t('accounts.statementDetailsPeriod', { 

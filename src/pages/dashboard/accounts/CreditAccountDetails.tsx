@@ -196,6 +196,9 @@ const CreditAccountDetails = () => {
   };
 
   const getStatementStatus = (statement: any) => {
+    if (statement.is_closed) {
+      return { text: 'Fermé', variant: 'destructive' as 'destructive', className: 'uppercase font-bold' };
+    }
     const unbilledPayments = transactions
       .filter(tx => tx.type === 'payment')
       .reduce((sum, tx) => sum + tx.amount, 0);
