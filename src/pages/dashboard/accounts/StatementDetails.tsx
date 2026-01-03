@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, PlusCircle, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, PlusCircle, AlertTriangle, Lock } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
@@ -75,17 +75,19 @@ const StatementDetails = () => {
   const [statement, setStatement] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [cardId, setCardId] = useState<string | null>(null);
+  const [currentStatementId, setCurrentStatementId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchDetails = async () => {
     if (!statementId || !accountId) return;
     setLoading(true);
 
-    const { data: accountData, error: accountError } = await supabase.from('credit_accounts').select('card_id').eq('id', accountId).single();
+    const { data: accountData, error: accountError } = await supabase.from('credit_accounts').select('card_id, current_statement_id').eq('id', accountId).single();
     if (accountError) {
       showError("Impossible de trouver la carte associée.");
     } else {
       setCardId(accountData.card_id);
+      setCurrentStatementId(accountData.current_statement_id);
     }
 
     const { data: statementData, error: statementError } = await supabase
@@ -120,6 +122,18 @@ const StatementDetails = () => {
     fetchDetails();
   }, [statementId, accountId, t]);
 
+  const handleCloseStatement = async () => {
+    if (!accountId) return;
+    try {
+      const { error } = await supabase.rpc('close_current_statement', { p_account_id: accountId });
+      if (error) throw error;
+      showSuccess('Relevé fermé avec succès !');
+      await fetchDetails();
+    } catch (error) {
+      showError(`Erreur lors de la fermeture du relevé: ${error.message}`);
+    }
+  };
+
   if (loading) {
     return <Skeleton className="h-96 w-full" />;
   }
@@ -147,7 +161,15 @@ const StatementDetails = () => {
               })}
             </CardDescription>
           </div>
-          {cardId && <RecordPaymentDialog cardId={cardId} onPaymentSuccess={fetchDetails} />}
+          <div className="flex items-center gap-2">
+            {cardId && <RecordPaymentDialog cardId={cardId} onPaymentSuccess={fetchDetails} />}
+            {currentStatementId === statement.id && (
+              <Button variant="outline" onClick={handleCloseStatement}>
+                <Lock className="mr-2 h-4 w-4" />
+                Fermer le relevé
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           {statement.carried_over_to_statement_id && (
