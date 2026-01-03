@@ -142,6 +142,27 @@ const StatementDetails = () => {
     return <p>{t('accounts.statementNotFound')}</p>;
   }
 
+  const getPaymentStatus = (s: any) => {
+    const now = new Date();
+    // Payé en entier
+    if (s.is_paid_in_full || (s.closing_balance > 0 && s.total_payments >= s.closing_balance)) {
+      return { text: t('accounts.statementPaid'), variant: 'default' as 'default', className: '' };
+    }
+    // Défaut de paiement si après échéance et minimum non payé
+    if (now > new Date(s.payment_due_date) && s.total_payments < s.minimum_payment) {
+      return { text: 'Défaut de paiement', variant: 'destructive' as 'destructive', className: '' };
+    }
+    // Paiement minimum effectué (mais solde > 0)
+    if (s.total_payments >= s.minimum_payment && s.closing_balance > 0) {
+      return { text: t('accounts.minimumPaid'), variant: 'default' as 'default', className: 'bg-green-600 hover:bg-green-700' };
+    }
+    // Payé partiellement (quelque paiement mais < solde)
+    if (s.total_payments > 0 && s.total_payments < s.closing_balance) {
+      return { text: 'Payé partiellement', variant: 'secondary' as 'secondary', className: '' };
+    }
+    // Non payé
+    return { text: t('accounts.statementUnpaid'), variant: 'secondary' as 'secondary', className: '' };
+  };
   const formatCurrency = (amount: number) => new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(amount);
 
   return (
@@ -155,7 +176,14 @@ const StatementDetails = () => {
           <div>
             <CardTitle className="flex items-center gap-2">
               {t('accounts.statementDetailsTitle')}
-              {statement.is_closed && <Badge variant="destructive" className="uppercase font-bold">Fermé</Badge>}
+              {statement.is_closed && (
+                <div className="flex items-center gap-2">
+                  <Badge variant="destructive" className="uppercase font-bold">Fermé</Badge>
+                  <Badge variant={getPaymentStatus(statement).variant} className={getPaymentStatus(statement).className}>
+                    {getPaymentStatus(statement).text}
+                  </Badge>
+                </div>
+              )}
             </CardTitle>
             <CardDescription>
               {t('accounts.statementDetailsPeriod', { 
