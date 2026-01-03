@@ -153,7 +153,10 @@ const StatementDetails = () => {
       <Card>
         <CardHeader className="flex flex-row justify-between items-start">
           <div>
-            <CardTitle>{t('accounts.statementDetailsTitle')}</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              {t('accounts.statementDetailsTitle')}
+              {statement.is_closed && <Badge variant="secondary">Fermé</Badge>}
+            </CardTitle>
             <CardDescription>
               {t('accounts.statementDetailsPeriod', { 
                 start: new Date(statement.statement_period_start).toLocaleDateString('fr-CA'), 
@@ -163,7 +166,7 @@ const StatementDetails = () => {
           </div>
           <div className="flex items-center gap-2">
             {cardId && <RecordPaymentDialog cardId={cardId} onPaymentSuccess={fetchDetails} />}
-            {currentStatementId === statement.id && (
+            {currentStatementId === statement.id && !statement.is_closed && (
               <Button variant="outline" onClick={handleCloseStatement}>
                 <Lock className="mr-2 h-4 w-4" />
                 Fermer le relevé
