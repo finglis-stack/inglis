@@ -215,7 +215,7 @@ const CreditAccountDetails = () => {
       return { text: t('accounts.statementPaid'), variant: 'default' as 'default', className: '' };
     }
     if (new Date() > new Date(statement.payment_due_date) && totalPaymentsMade < statement.minimum_payment) {
-      return { text: 'Impayé (Retard)', variant: 'destructive' as 'destructive', className: '' };
+      return { text: 'Défaut de paiement', variant: 'destructive' as 'destructive', className: '' };
     }
     if (totalPaymentsMade >= statement.minimum_payment && statement.closing_balance > 0) {
       return { text: t('accounts.minimumPaid'), variant: 'default' as 'default', className: 'bg-green-600 hover:bg-green-700' };
