@@ -119,7 +119,6 @@ const Cards = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="text-sm space-y-2">
-                  <p className="font-mono text-xs">{card.card_number}</p>
                   <div className="flex items-center justify-between">
                     <Badge variant={getStatusVariant(card.card_status)}>{card.card_status}</Badge>
                     <p className="text-muted-foreground text-xs">
@@ -160,7 +159,6 @@ const Cards = () => {
               <TableRow>
                 <TableHead>{t('cards.colHolder')}</TableHead>
                 <TableHead>{t('cards.colProgram')}</TableHead>
-                <TableHead>{t('cards.colNumber')}</TableHead>
                 <TableHead>{t('cards.colStatus')}</TableHead>
                 <TableHead>{t('cards.colDate')}</TableHead>
                 <TableHead className="text-right">{t('cards.colActions')}</TableHead>
@@ -180,7 +178,6 @@ const Cards = () => {
                   <TableRow key={card.card_id}>
                     <TableCell className="font-medium">{card.profile_name}</TableCell>
                     <TableCell>{card.program_name}</TableCell>
-                    <TableCell className="font-mono">{card.card_number}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(card.card_status)}>{card.card_status}</Badge>
                     </TableCell>

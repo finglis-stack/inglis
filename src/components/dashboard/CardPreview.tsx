@@ -51,35 +51,36 @@ export const CardPreview = ({
       style={!useImage ? { background: cardColor } : undefined}
     >
       {useImage && (
-        <>
-          <div
-            className="absolute inset-0 bg-center bg-cover"
-            style={{ backgroundImage: `url(${cardImageUrl})` }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/20" />
-        </>
+        <div
+          className="absolute inset-0 bg-center bg-cover"
+          style={{ backgroundImage: `url(${cardImageUrl})` }}
+        />
       )}
 
-      <div className="relative z-10 flex justify-between items-start">
-        <div>
-          <p className="text-sm opacity-80">{programName}</p>
-          <p className="text-lg font-semibold uppercase">{t(`newCardProgram.${cardType}`)}</p>
+      {!useImage && (
+        <div className="relative z-10 flex justify-between items-start">
+          <div>
+            <p className="text-sm opacity-80">{programName}</p>
+            <p className="text-lg font-semibold uppercase">{t(`newCardProgram.${cardType}`)}</p>
+          </div>
+          <img src="/logo.png" alt="Logo" className={cn("h-8", !useImage && !cardColor.includes('fde0cf') ? "brightness-0 invert" : "")} />
         </div>
-        <img src="/logo.png" alt="Logo" className={cn("h-8", !useImage && !cardColor.includes('fde0cf') ? "brightness-0 invert" : "")} />
-      </div>
+      )}
 
-      <div className="relative z-10">
-        {showCardNumber && (
-          <>
-            <div className="w-12 h-8 bg-yellow-400 rounded-md mb-2 border border-yellow-500" />
-            <p className="text-2xl tracking-widest">{displayCardNumber}</p>
-          </>
-        )}
-        <div className={cn("flex justify-between text-sm", showCardNumber && "mt-2")}>
-          <span>{displayName}</span>
-          <span>{displayExpiry}</span>
+      {!useImage && (
+        <div className="relative z-10">
+          {showCardNumber && (
+            <>
+              <div className="w-12 h-8 bg-yellow-400 rounded-md mb-2 border border-yellow-500" />
+              <p className="text-2xl tracking-widest">{displayCardNumber}</p>
+            </>
+          )}
+          <div className={cn("flex justify-between text-sm", showCardNumber && "mt-2")}>
+            <span>{displayName}</span>
+            <span>{displayExpiry}</span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
