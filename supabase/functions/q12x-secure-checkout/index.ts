@@ -366,15 +366,24 @@ serve(async (req) => {
 
     // 5. AMOUNT ANALYSIS
     const LOW_VALUE_THRESHOLD = 25.00;
-    if (amountToCharge <= LOW_VALUE_THRESHOLD) {
+    const HIGH_VALUE_THRESHOLD = 10000.00; // pénalité sans baseline
+    const ABSOLUTE_MAX = 1000000.00; // blocage dur
+
+    if (amountToCharge >= ABSOLUTE_MAX) {
+      riskScore -= 100;
+      analysisLog.push({ step: "Analyse du montant", result: `Montant excessif (${new Intl.NumberFormat('fr-CA', { style: 'currency', currency: cardCurrency }).format(amountToCharge)})`, impact: "-100", timestamp: Date.now() - startTime });
+    } else if (amountToCharge <= LOW_VALUE_THRESHOLD) {
       riskScore += 5;
       analysisLog.push({ step: "Analyse du montant", result: "Transaction de faible valeur, tolérée", impact: "+5", timestamp: Date.now() - startTime });
     } else if (profile.avg_transaction_amount > 0 && profile.transaction_amount_stddev > 0) {
       if (amountToCharge > profile.avg_transaction_amount) {
         const z_score = (amountToCharge - profile.avg_transaction_amount) / profile.transaction_amount_stddev;
-        if (z_score > 2.5) {
+        if (z_score > 3.5) {
+          riskScore -= 80;
+          analysisLog.push({ step: "Analyse du montant", result: `Montant extrême vs baseline (Z-score: ${z_score.toFixed(2)})`, impact: "-80", timestamp: Date.now() - startTime });
+        } else if (z_score > 2.5) {
           riskScore -= 40;
-          analysisLog.push({ step: "Analyse du montant", result: `Montant très élevé par rapport à la moyenne (Z-score: ${z_score.toFixed(2)})`, impact: "-40", timestamp: Date.now() - startTime });
+          analysisLog.push({ step: "Analyse du montant", result: `Montant très élevé vs moyenne (Z-score: ${z_score.toFixed(2)})`, impact: "-40", timestamp: Date.now() - startTime });
         } else if (z_score > 1.5) {
           riskScore -= 20;
           analysisLog.push({ step: "Analyse du montant", result: `Montant plus élevé que la normale (Z-score: ${z_score.toFixed(2)})`, impact: "-20", timestamp: Date.now() - startTime });
@@ -386,7 +395,12 @@ serve(async (req) => {
         analysisLog.push({ step: "Analyse du montant", result: "Montant inférieur à la moyenne, non suspect", impact: "+5", timestamp: Date.now() - startTime });
       }
     } else {
-      analysisLog.push({ step: "Analyse du montant", result: "Pas d'historique pour l'analyse du montant", impact: "+0", timestamp: Date.now() - startTime });
+      if (amountToCharge > HIGH_VALUE_THRESHOLD) {
+        riskScore -= 30;
+        analysisLog.push({ step: "Analyse du montant", result: `Montant élevé sans baseline`, impact: "-30", timestamp: Date.now() - startTime });
+      } else {
+        analysisLog.push({ step: "Analyse du montant", result: "Pas d'historique pour l'analyse du montant", impact: "+0", timestamp: Date.now() - startTime });
+      }
     }
 
     // 6. VELOCITY CHECKS
@@ -398,6 +412,7 @@ serve(async (req) => {
     if (creditAccountIds.length > 0) orConditions.push(`credit_account_id.in.(${creditAccountIds.join(',')})`);
 
     if (orConditions.length > 0) {
+      // Fenêtre courte (10 min) pour les rafales
       const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
       const { data: recentTransactions, error: velocityError } = await supabaseAdmin
         .from('transactions')
@@ -418,77 +433,73 @@ serve(async (req) => {
         } else {
           analysisLog.push({ step: "Vélocité par carte", result: `${transactionCount} transaction(s) en 10 minutes - normal`, impact: "+0", timestamp: Date.now() - startTime });
         }
+      }
 
-        const lastTransaction = recentTransactions[0];
-        
-        if (lastTransaction && ipAddress) {
-          try {
-            const timeDiffMinutes = (new Date().getTime() - new Date(lastTransaction.created_at).getTime()) / (1000 * 60);
+      // Comparaison Haversine avec la DERNIÈRE transaction connue (hors fenêtre courte)
+      let lastTransactionGlobal = null;
+      try {
+        const { data: lastGlobal } = await supabaseAdmin
+          .from('transactions')
+          .select('id, created_at, ip_address')
+          .or(orConditions.join(','))
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        lastTransactionGlobal = lastGlobal;
+      } catch (_) {}
+
+      if (lastTransactionGlobal && ipAddress) {
+        try {
+          const timeDiffMinutes = (new Date().getTime() - new Date(lastTransactionGlobal.created_at).getTime()) / (1000 * 60);
+
+          if (lastTransactionGlobal.ip_address) {
+            const [currentGeoResult, lastGeoResult] = await Promise.all([
+              supabaseAdmin.functions.invoke('get-ip-geolocation', { body: { ipAddress } }),
+              supabaseAdmin.functions.invoke('get-ip-geolocation', { body: { ipAddress: lastTransactionGlobal.ip_address } })
+            ]);
             
-            if (timeDiffMinutes < 1) {
-              riskScore -= 30;
-              analysisLog.push({ 
-                step: "Vélocité temporelle", 
-                result: `Transactions trop rapprochées (${Math.round(timeDiffMinutes * 60)} secondes)`, 
-                impact: "-30", 
-                timestamp: Date.now() - startTime 
-              });
-            }
+            const currentGeo = currentGeoResult.data;
+            const lastGeo = lastGeoResult.data;
 
-            if (lastTransaction.ip_address && (lastTransaction.ip_address !== ipAddress || timeDiffMinutes > 5)) {
-              try {
-                const [currentGeoResult, lastGeoResult] = await Promise.all([
-                  supabaseAdmin.functions.invoke('get-ip-geolocation', { body: { ipAddress } }),
-                  supabaseAdmin.functions.invoke('get-ip-geolocation', { body: { ipAddress: lastTransaction.ip_address } })
-                ]);
-                
-                const currentGeo = currentGeoResult.data;
-                const lastGeo = lastGeoResult.data;
-                
-                if (currentGeo?.status !== 'success' || lastGeo?.status !== 'success') {
-                  analysisLog.push({ 
-                    step: "Vélocité géographique", 
-                    result: `Erreur géolocalisation: ${currentGeo?.message || lastGeo?.message || 'Unknown'}`, 
-                    impact: "+0", 
-                    timestamp: Date.now() - startTime 
+            if (currentGeo?.status !== 'success' || lastGeo?.status !== 'success') {
+              analysisLog.push({
+                step: "Vélocité géographique",
+                result: `Erreur géolocalisation: ${currentGeo?.message || lastGeo?.message || 'Unknown'}`,
+                impact: "+0",
+                timestamp: Date.now() - startTime
+              });
+            } else if (currentGeo.lat && lastGeo.lat) {
+              const distanceKm = haversineDistance(
+                { lat: currentGeo.lat, lon: currentGeo.lon },
+                { lat: lastGeo.lat, lon: lastGeo.lon }
+              );
+              
+              const timeDiffHours = Math.max(timeDiffMinutes / 60, 0.0001);
+              if (distanceKm > 1) {
+                const speedKmh = distanceKm / timeDiffHours;
+
+                if (speedKmh > 900) {
+                  riskScore -= 50;
+                  analysisLog.push({
+                    step: "Vélocité géographique",
+                    result: `Déplacement impossible (${Math.round(speedKmh)} km/h, ${Math.round(distanceKm)} km en ${Math.round(timeDiffMinutes)} min)`,
+                    impact: "-50",
+                    timestamp: Date.now() - startTime
                   });
-                } else if (currentGeo.lat && lastGeo.lat) {
-                  const distanceKm = haversineDistance(
-                    { lat: currentGeo.lat, lon: currentGeo.lon }, 
-                    { lat: lastGeo.lat, lon: lastGeo.lon }
-                  );
-                  
-                  const timeDiffHours = timeDiffMinutes / 60;
-                  
-                  if (timeDiffHours > 0 && distanceKm > 1) {
-                    const speedKmh = distanceKm / timeDiffHours;
-                    
-                    if (speedKmh > 900) {
-                      riskScore -= 50;
-                      analysisLog.push({ 
-                        step: "Vélocité géographique", 
-                        result: `Déplacement impossible (${Math.round(speedKmh)} km/h)`, 
-                        impact: "-50", 
-                        timestamp: Date.now() - startTime 
-                      });
-                    } else if (speedKmh > 500) {
-                      riskScore -= 25;
-                      analysisLog.push({ 
-                        step: "Vélocité géographique", 
-                        result: `Déplacement très rapide (${Math.round(speedKmh)} km/h)`, 
-                        impact: "-25", 
-                        timestamp: Date.now() - startTime 
-                      });
-                    }
-                  }
+                } else if (speedKmh > 500) {
+                  riskScore -= 25;
+                  analysisLog.push({
+                    step: "Vélocité géographique",
+                    result: `Déplacement très rapide (${Math.round(speedKmh)} km/h, ${Math.round(distanceKm)} km)`,
+                    impact: "-25",
+                    timestamp: Date.now() - startTime
+                  });
                 }
-              } catch (geoError) {
-                console.error("Geolocation error:", geoError);
               }
             }
-          } catch (e) { 
-            console.error("Velocity check failed:", e.message);
           }
+        } catch (e) {
+          console.error("Global velocity check failed:", e.message);
         }
       }
     }
