@@ -33,6 +33,20 @@ async function hashData(text) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+function normalizeAddress(addressObj) {
+  if (!addressObj) return '';
+  const parts = [
+    addressObj.street,
+    addressObj.city,
+    addressObj.state || addressObj.province,
+    addressObj.postalCode || addressObj.postal_code,
+    addressObj.country
+  ]
+    .filter(Boolean)
+    .map((p) => String(p).toLowerCase().replace(/\s+/g, ' ').trim());
+  return parts.join('|');
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -68,30 +82,62 @@ serve(async (req) => {
     if (!encryptionKey) throw new Error("Configuration serveur incomplète.");
     const encryptedAddress = await encryptAddress(profileData.address, encryptionKey);
 
-    const profileToInsert = {
-      institution_id: form.institution_id,
-      type: 'personal',
-      full_name: `${profileData.firstName} ${profileData.lastName}`,
-      email: profileData.email,
-      phone: profileData.phone,
-      dob: profileData.dob,
-      address: encryptedAddress, // Stocké chiffré
-      sin: hashedSin, // Stocké haché (SHA-256)
-      pin: hashedPin,
-      status: 'inactive',
-    };
+    // Déduplication du profil
+    const fullName = `${profileData.firstName} ${profileData.lastName}`.trim();
+    const addressHash = await hashData(normalizeAddress(profileData.address));
 
-    const { data: newProfile, error: insertProfileError } = await supabaseAdmin
+    // Chercher un profil existant sur la combinaison nom + téléphone + adresse (hashée)
+    const { data: existingProfile, error: existingErr } = await supabaseAdmin
       .from('profiles')
-      .insert(profileToInsert)
-      .select('id')
-      .single();
+      .select('id, sin')
+      .eq('institution_id', form.institution_id)
+      .eq('type', 'personal')
+      .eq('full_name', fullName)
+      .eq('phone', profileData.phone)
+      .eq('address_hash', addressHash)
+      .maybeSingle();
 
-    if (insertProfileError) throw insertProfileError;
+    if (existingErr) throw existingErr;
+
+    let profileId;
+
+    if (existingProfile?.id) {
+      // Profil trouvé: ne pas créer de nouveau compte, ignorer le nouveau NIP
+      profileId = existingProfile.id;
+
+      // Vérifier NAS en second: si présent et cohérent, OK; si différent, consigner mais on réutilise le même compte
+      if (hashedSin && existingProfile.sin && existingProfile.sin !== hashedSin) {
+        console.warn('SIN mismatch for deduped profile; reusing existing profile id.');
+      }
+    } else {
+      // Nouveau client: insérer un nouveau profil avec NIP et adresse chiffrée
+      const profileToInsert = {
+        institution_id: form.institution_id,
+        type: 'personal',
+        full_name: fullName,
+        email: profileData.email,
+        phone: profileData.phone,
+        dob: profileData.dob,
+        address: encryptedAddress, // Stocké chiffré
+        sin: hashedSin, // Stocké haché (SHA-256)
+        pin: hashedPin, // Nouveau NIP accepté seulement si nouveau client
+        address_hash: addressHash,
+        status: 'inactive',
+      };
+
+      const { data: newProfile, error: insertProfileError } = await supabaseAdmin
+        .from('profiles')
+        .insert(profileToInsert)
+        .select('id')
+        .single();
+
+      if (insertProfileError) throw insertProfileError;
+      profileId = newProfile.id;
+    }
 
     const applicationToInsert = {
       form_id: formId,
-      profile_id: newProfile.id,
+      profile_id: profileId,
       selected_card_program_id: profileData.selectedProgramId,
       employment_status: profileData.employmentStatus,
       employer: profileData.employer,
