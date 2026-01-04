@@ -12,6 +12,7 @@ interface CardPreviewProps {
   expiryDate?: string;
   overlayCardNumber?: boolean;
   blurCardNumber?: boolean;
+  imageOnly?: boolean; // nouveau: image seule (pas d’overlay ni de textes)
 }
 
 const getInitials = (name?: string): string => {
@@ -36,7 +37,8 @@ export const CardPreview = ({
   cardNumber,
   expiryDate,
   overlayCardNumber = false,
-  blurCardNumber = false
+  blurCardNumber = false,
+  imageOnly = false
 }: CardPreviewProps) => {
   const { t } = useTranslation('dashboard');
 
@@ -61,17 +63,22 @@ export const CardPreview = ({
         />
       )}
 
-      {!useImage && (
+      {/* En mode imageOnly, on n'affiche rien par-dessus */}
+      {!imageOnly && !useImage && (
         <div className="relative z-10 flex justify-between items-start">
           <div>
             <p className="text-sm opacity-80">{programName}</p>
             <p className="text-lg font-semibold uppercase">{t(`newCardProgram.${cardType}`)}</p>
           </div>
-          <img src="/logo.png" alt="Logo" className={cn("h-8", !useImage && !cardColor.includes('fde0cf') ? "brightness-0 invert" : "")} />
+          <img
+            src="/logo.png"
+            alt="Logo"
+            className={cn("h-8", !useImage && !cardColor.includes('fde0cf') ? "brightness-0 invert" : "")}
+          />
         </div>
       )}
 
-      {!useImage && (
+      {!imageOnly && !useImage && (
         <div className="relative z-10">
           {showCardNumber && (
             <>
@@ -86,11 +93,13 @@ export const CardPreview = ({
         </div>
       )}
 
-      {useImage && overlayCardNumber && showCardNumber && (
+      {!imageOnly && useImage && overlayCardNumber && showCardNumber && (
         <div className="absolute inset-x-6 bottom-6 z-10">
-          <div className={cn(
-            "px-4 py-2 rounded-md bg-black/50 backdrop-blur-md border border-white/20 inline-block"
-          )}>
+          <div
+            className={cn(
+              "px-4 py-2 rounded-md bg-black/50 backdrop-blur-md border border-white/20 inline-block"
+            )}
+          >
             <p className={cn("text-2xl tracking-widest", blurCardNumber && "blur-sm select-none")}>
               {displayCardNumber}
             </p>

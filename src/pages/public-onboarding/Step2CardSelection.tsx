@@ -47,6 +47,7 @@ const Step2CardSelection = () => {
                 cardImageUrl={program.card_image_url}
                 showCardNumber={false}
                 overlayCardNumber={false}
+                imageOnly
               />
             </div>
             <div className="text-center">
