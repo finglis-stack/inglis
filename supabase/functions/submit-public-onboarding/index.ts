@@ -47,6 +47,14 @@ function normalizeAddress(addressObj) {
   return parts.join('|');
 }
 
+function normalizePhone(phone) {
+  return String(phone || '').replace(/[^\d]/g, '');
+}
+
+function normalizeName(name) {
+  return String(name || '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -82,31 +90,45 @@ serve(async (req) => {
     if (!encryptionKey) throw new Error("Configuration serveur incomplète.");
     const encryptedAddress = await encryptAddress(profileData.address, encryptionKey);
 
-    // Déduplication du profil
+    // Déduplication du profil (nom + téléphone + adresse normalisée)
     const fullName = `${profileData.firstName} ${profileData.lastName}`.trim();
     const addressHash = await hashData(normalizeAddress(profileData.address));
 
-    // Chercher un profil existant sur la combinaison nom + téléphone + adresse (hashée)
-    const { data: existingProfile, error: existingErr } = await supabaseAdmin
+    // Chercher des candidats par nom et institution
+    const { data: candidates, error: existingErr } = await supabaseAdmin
       .from('profiles')
-      .select('id, sin')
+      .select('id, full_name, phone, address_hash, sin')
       .eq('institution_id', form.institution_id)
       .eq('type', 'personal')
-      .eq('full_name', fullName)
-      .eq('phone', profileData.phone)
-      .eq('address_hash', addressHash)
-      .maybeSingle();
+      .eq('full_name', fullName);
 
     if (existingErr) throw existingErr;
 
+    const normalizedPhone = normalizePhone(profileData.phone);
+    const normalizedName = normalizeName(fullName);
+
+    const matchedProfile = (candidates || []).find((p) => {
+      return normalizeName(p.full_name) === normalizedName &&
+             normalizePhone(p.phone) === normalizedPhone &&
+             (p.address_hash ? p.address_hash === addressHash : true);
+    });
+
     let profileId;
 
-    if (existingProfile?.id) {
-      // Profil trouvé: ne pas créer de nouveau compte, ignorer le nouveau NIP
-      profileId = existingProfile.id;
+    if (matchedProfile?.id) {
+      // Profil trouvé: réutiliser et ignorer le nouveau NIP
+      profileId = matchedProfile.id;
 
-      // Vérifier NAS en second: si présent et cohérent, OK; si différent, consigner mais on réutilise le même compte
-      if (hashedSin && existingProfile.sin && existingProfile.sin !== hashedSin) {
+      // Si l'adresse_hash est absente sur le profil existant, la renseigner pour améliorer les matchs futurs
+      if (!matchedProfile.address_hash && addressHash) {
+        await supabaseAdmin
+          .from('profiles')
+          .update({ address_hash: addressHash })
+          .eq('id', matchedProfile.id);
+      }
+
+      // Vérifier NAS en second: consigner si différent, mais réutiliser le même compte (blocage en fin du process)
+      if (hashedSin && matchedProfile.sin && matchedProfile.sin !== hashedSin) {
         console.warn('SIN mismatch for deduped profile; reusing existing profile id.');
       }
     } else {
