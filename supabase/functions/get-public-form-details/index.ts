@@ -52,7 +52,7 @@ serve(async (req) => {
     if (form.linked_card_program_ids && form.linked_card_program_ids.length > 0) {
       const { data: programsData, error: programsError } = await supabaseAdmin
         .from('card_programs')
-        .select('id, program_name, card_type, card_color')
+        .select('id, program_name, card_type, card_color, card_image_url')
         .in('id', form.linked_card_program_ids);
       
       if (programsError) throw programsError;
