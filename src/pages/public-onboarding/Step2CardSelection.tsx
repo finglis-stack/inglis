@@ -4,7 +4,6 @@ import { usePublicOnboarding } from '@/context/PublicOnboardingContext';
 import { Button } from '@/components/ui/button';
 import { CardPreview } from '@/components/dashboard/CardPreview';
 import { cn } from '@/lib/utils';
-import { CheckCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const Step2CardSelection = () => {
@@ -41,18 +40,14 @@ const Step2CardSelection = () => {
               )}
               onClick={() => handleSelect(program.id)}
             >
-              <CardPreview 
+              <CardPreview
                 programName={program.program_name}
                 cardType={program.card_type}
                 cardColor={program.card_color}
+                cardImageUrl={program.card_image_url}
                 showCardNumber={false}
-                userName={formData.firstName ? `${formData.firstName} ${formData.lastName}` : undefined}
+                overlayCardNumber={false}
               />
-              {selectedProgramId === program.id && (
-                <div className="absolute top-2 right-2 bg-white rounded-full p-1">
-                  <CheckCircle className="h-6 w-6 text-primary" />
-                </div>
-              )}
             </div>
             <div className="text-center">
               <h3 className="font-semibold">{program.program_name}</h3>
