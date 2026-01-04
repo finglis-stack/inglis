@@ -112,6 +112,29 @@ Le système enregistre comment l'utilisateur bouge sa souris et tape au clavier.
 ### 🕸️ Réseau de Fraude (Graph)
 Le système construit un graphe de connexions. Si une carte frauduleuse a touché l'IP `1.2.3.4`, toutes les autres cartes ayant touché cette IP deviennent suspectes. On peut visualiser ce réseau en 3D dans le dashboard.
 
+### 🔧 Anti-Fraude modulable par profil
+Le moteur anti-fraude est configurable finement à l’échelle du profil (personnel ou entreprise) :
+- Activation/désactivation de règles par profil (fingerprinting, biométrie, géo-vélocité, IP, réseau).
+- Seuils de vélocité géographique (distance minimale, vitesse très rapide, vitesse impossible).
+- Fenêtre temporelle et seuils de vélocité IP (nombre de tentatives, profils/cartes uniques).
+- Listes de confiance et de blocage pour appareils et adresses IP (is_trusted, is_blocked).
+- Détection VPN/Proxy/Tor activable avec paramètres ajustables.
+- Biométrie comportementale (vitesse de souris/clavier, copier-coller) avec seuils modulables.
+- Pondération/impact par règle sur le score de risque et priorités des règles.
+- Seuils pour la détection de “fraud rings” (cartes/profils reliés).
+
+### ⛔ Blocage avec raison et réémission (PAN) automatique
+- Suspension de carte avec action, raison et description, journalisée et visible dans le dashboard (traçabilité complète).
+- Réémission automatique d’une carte avec un nouveau PAN (nouvelle carte) en cas de compromission; l’ancienne est désactivée et l’opération est auditée.
+- Historique horodaté des décisions (qui, quand, pourquoi) accessible pour contrôle et conformité.
+
+### 🗺️ Carte Google pour la vélocité géographique
+- Affichage de 2 points et d’une flèche entre la localisation précédente et actuelle; si la distance est nulle, un seul point est affiché.
+- La carte reste visible même en cas de tentative refusée grâce au recours à la dernière IP observée du profil.
+
+### ⚙️ Chargement Google Maps fiable
+- Chargement stabilisé via un renderer dédié pour éviter l’erreur “Loader must not be called again with different options”.
+
 ---
 
 ## 5. Fonctionnalités Techniques Avancées
