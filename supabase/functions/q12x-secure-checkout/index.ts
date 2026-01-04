@@ -73,10 +73,17 @@ serve(async (req) => {
     const checkoutCurrency = checkout.currency;
 
     const { data: cardData, error: cardError } = await supabaseAdmin
-      .from('cards').select('id, pin, expires_at, profile_id, profiles(*, debit_accounts(id, currency), credit_accounts(id, currency))').match({ id: cardId }).single();
+      .from('cards')
+      .select('id, status, pin, expires_at, profile_id, profiles(*, debit_accounts(id, currency), credit_accounts(id, currency))')
+      .eq('id', cardId)
+      .single();
     
     if (cardError || !cardData) throw new Error('Payment declined by issuer.');
-    analysisLog.push({ step: "Validation de la carte", result: `Carte ${cardData.id} trouvée`, impact: "+0", timestamp: Date.now() - startTime });
+    if (cardData.status !== 'active') {
+      analysisLog.push({ step: "Validation de la carte", result: `Carte ${cardData.id} statut: ${cardData.status}`, impact: "-100", timestamp: Date.now() - startTime });
+      throw new Error('Cette carte est bloquée ou inactive. Paiement refusé.');
+    }
+    analysisLog.push({ step: "Validation de la carte", result: `Carte ${cardData.id} active`, impact: "+0", timestamp: Date.now() - startTime });
 
     const cardCurrency = cardData.profiles.debit_accounts[0]?.currency || cardData.profiles.credit_accounts[0]?.currency;
     if (!cardCurrency) throw new Error("Could not determine card's currency.");
