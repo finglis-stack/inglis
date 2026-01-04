@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import RiskScoreGauge from '@/components/dashboard/users/RiskScoreGauge';
 import { showError } from '@/utils/toast';
 import RiskAnalysisLog from '@/components/dashboard/risk/RiskAnalysisLog';
+import GeoVelocityMap from '@/components/dashboard/risk/GeoVelocityMap';
 import { getIpCoordinates } from '@/utils/ipGeolocation';
 
 type Assessment = {
@@ -62,6 +63,9 @@ const RiskAnalysisDetails = () => {
   const [profileStats, setProfileStats] = useState<ProfileStats | null>(null);
   const [geoPrefs, setGeoPrefs] = useState(defaultGeo);
   const [geoLogItem, setGeoLogItem] = useState<any | null>(null);
+  const [currCoords, setCurrCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [prevCoords, setPrevCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [distanceKmState, setDistanceKmState] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -183,6 +187,11 @@ const RiskAnalysisDetails = () => {
               } else {
                 resultText = `Déplacement local (${Math.round(distanceKm)} km) — vitesse non significative`;
               }
+
+              // Stocker les coordonnées pour la carte
+              setCurrCoords({ lat: currCoords.lat, lon: currCoords.lon });
+              setPrevCoords({ lat: lastCoords.lat, lon: lastCoords.lon });
+              setDistanceKmState(distanceKm);
 
               setGeoLogItem({
                 step: 'Vélocité géographique',
@@ -332,8 +341,14 @@ const RiskAnalysisDetails = () => {
         </div>
       </div>
       {combinedLog && combinedLog.length > 0 && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-4">
           <RiskAnalysisLog log={combinedLog} />
+          {currCoords && (
+            <GeoVelocityMap
+              current={{ lat: currCoords.lat, lon: currCoords.lon }}
+              previous={distanceKmState && distanceKmState > 0 && prevCoords ? { lat: prevCoords.lat, lon: prevCoords.lon } : undefined}
+            />
+          )}
         </div>
       )}
     </div>
