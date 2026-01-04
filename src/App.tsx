@@ -45,6 +45,7 @@ import CreditReportAccess from "@/pages/CreditReportAccess";
 import CardPrograms from "@/pages/dashboard/settings/CardPrograms";
 import NewCardProgram from "@/pages/dashboard/settings/NewCardProgram";
 import CardProgramLayout from "@/pages/dashboard/settings/CardProgramLayout";
+import EditCardProgram from "@/pages/dashboard/settings/EditCardProgram";
 import NewUserLayout from "@/pages/dashboard/users/NewUserLayout";
 import { NewCardProvider } from "@/context/NewCardContext";
 import CreateCardLayout from "@/pages/dashboard/cards/CreateCardLayout";
@@ -161,7 +162,10 @@ const MainAppRoutes = () => (
     <Route element={<NewTransactionProvider />}><Route path="/dashboard/accounts/credit/:accountId/new-transaction" element={<NewTransactionLayout />}><Route index element={<Step1Details />} /><Route path="step-2" element={<Step2Security />} /><Route path="step-3" element={<Step3Review />} /></Route></Route>
     <Route element={<NewUserProvider />}><Route path="/dashboard/users/new" element={<NewUserTypeSelection />} /><Route element={<NewUserLayout />}><Route path="/dashboard/users/new/personal/step-1" element={<Step1Name />} /><Route path="/dashboard/users/new/personal/step-2" element={<Step2Address />} /><Route path="/dashboard/users/new/personal/step-3" element={<Step3ContactIdentity />} /><Route path="/dashboard/users/new/personal/step-4" element={<Step4SetPin />} /><Route path="/dashboard/users/new/personal/step-5" element={<Step5Review />} /><Route path="/dashboard/users/new/corporate/step-1" element={<Step1BusinessInfo />} /><Route path="/dashboard/users/new/corporate/step-2" element={<Step2Registration />} /><Route path="/dashboard/users/new/corporate/step-3" element={<Step3AddressCorp />} /><Route path="/dashboard/users/new/corporate/step-4" element={<Step4SetPin />} /><Route path="/dashboard/users/new/corporate/step-5" element={<Step5ReviewCorp />} /></Route></Route>
     <Route element={<NewCardProvider />}><Route element={<CreateCardLayout />}><Route path="/dashboard/cards/new" element={<CreateCardStep1 />} /><Route path="/dashboard/cards/new/step-2" element={<CreateCardStep2 />} /><Route path="/dashboard/cards/new/step-3" element={<CreateCardStep3SetLimits />} /><Route path="/dashboard/cards/new/step-4" element={<CreateCardStep4 />} /></Route></Route>
-    <Route element={<CardProgramLayout />}><Route path="/dashboard/settings/card-programs/new" element={<NewCardProgram />} /></Route>
+    <Route element={<CardProgramLayout />}>
+      <Route path="/dashboard/settings/card-programs/new" element={<NewCardProgram />} />
+      <Route path="/dashboard/settings/card-programs/edit/:programId" element={<EditCardProgram />} />
+    </Route>
     <Route element={<OnboardingFormLayout />}><Route path="/dashboard/settings/forms/new" element={<OnboardingFormEditor />} /><Route path="/dashboard/settings/forms/edit/:formId" element={<OnboardingFormEditor />} /></Route>
     <Route path="*" element={<NotFound />} />
   </Routes>

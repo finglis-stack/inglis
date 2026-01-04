@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
@@ -120,7 +120,14 @@ const CardPrograms = () => {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-base">{program.program_name}</CardTitle>
-                    {renderDeleteAction(program)}
+                    <div className="flex items-center gap-2">
+                      <Button asChild variant="ghost" size="icon" aria-label="Modifier">
+                        <Link to={`/dashboard/settings/card-programs/edit/${program.id}`}>
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                      {renderDeleteAction(program)}
+                    </div>
                   </div>
                   <CardDescription className="text-xs">{program.program_id}</CardDescription>
                 </CardHeader>
@@ -185,7 +192,14 @@ const CardPrograms = () => {
                     <TableCell>{program.card_type}</TableCell>
                     <TableCell>{program.status}</TableCell>
                     <TableCell className="text-right">
-                      {renderDeleteAction(program)}
+                      <div className="flex justify-end gap-2">
+                        <Button asChild variant="ghost" size="icon" aria-label="Modifier">
+                          <Link to={`/dashboard/settings/card-programs/edit/${program.id}`}>
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        {renderDeleteAction(program)}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
