@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePublicOnboarding } from '@/context/PublicOnboardingContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
@@ -12,22 +12,85 @@ import { useTranslation } from 'react-i18next';
 import Lottie from "lottie-react";
 import { getFunctionError } from '@/lib/utils';
 
+type ProcessingState = 'idle' | 'submitting' | 'processing' | 'approved' | 'rejected' | 'error';
+
 const Step6Review = () => {
   const navigate = useNavigate();
   const { t } = useTranslation('public-onboarding');
   const { formConfig, formData, resetData } = usePublicOnboarding();
   
-  const [processingState, setProcessingState] = useState<'idle' | 'submitting' | 'processing' | 'approved' | 'rejected' | 'error'>('idle');
+  const [processingState, setProcessingState] = useState<ProcessingState>('idle');
   const [decisionData, setDecisionData] = useState<any>(null);
   const [consentPI, setConsentPI] = useState(false);
   const [consentFinancial, setConsentFinancial] = useState(false);
   const [consentBiometric, setConsentBiometric] = useState(false);
-  const [animationData, setAnimationData] = useState(null);
+  const [animationData, setAnimationData] = useState<any>(null);
+  const [applicationId, setApplicationId] = useState<string | null>(null);
+
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const fallbackTimerRef = useRef<number | null>(null);
+  const pollIntervalRef = useRef<number | null>(null);
+  const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
     fetch('/animations/ai-loading-model.json')
       .then((response) => response.json())
       .then((data) => setAnimationData(data));
+  }, []);
+
+  useEffect(() => {
+    // Lancer le polling si on est en traitement et qu'on a un applicationId
+    if (processingState === 'processing' && applicationId && !hasNavigatedRef.current) {
+      // Poll toutes les 3 secondes le statut de la demande
+      pollIntervalRef.current = window.setInterval(async () => {
+        const { data: app, error } = await supabase
+          .from('onboarding_applications')
+          .select('id, status, approved_credit_limit, rejection_reason, selected_card_program_id')
+          .eq('id', applicationId)
+          .maybeSingle();
+
+        if (!error && app && (app.status === 'approved' || app.status === 'rejected')) {
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+            pollIntervalRef.current = null;
+          }
+          if (channelRef.current) {
+            channelRef.current.unsubscribe();
+            channelRef.current = null;
+          }
+          hasNavigatedRef.current = true;
+          showSuccess(t('review.decision_received'));
+          navigate('../step-7', { state: { status: app.status, decisionData: app, selectedProgramId: formData.selectedProgramId } });
+          resetData();
+        }
+      }, 3000);
+    }
+
+    return () => {
+      // Nettoyage si on quitte le composant
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, [processingState, applicationId, navigate, formData.selectedProgramId, resetData, t]);
+
+  useEffect(() => {
+    // Nettoyage global (subscription + timers) quand on quitte la page
+    return () => {
+      if (channelRef.current) {
+        channelRef.current.unsubscribe();
+        channelRef.current = null;
+      }
+      if (fallbackTimerRef.current) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
   }, []);
 
   const selectedProgram = formConfig.cardPrograms.find(p => p.id === formData.selectedProgramId);
@@ -42,29 +105,50 @@ const Step6Review = () => {
         throw new Error(getFunctionError(error, "Une erreur est survenue lors de la soumission."));
       }
 
+      setApplicationId(data.applicationId);
+
       if (formConfig.formDetails.auto_approve_enabled) {
         setProcessingState('processing');
+
+        // Canal temps réel: mise à jour de la demande
         const channel = supabase.channel(`application-decision-${data.applicationId}`)
           .on(
             'postgres_changes',
             { event: 'UPDATE', schema: 'public', table: 'onboarding_applications', filter: `id=eq.${data.applicationId}` },
             (payload) => {
-              if (payload.new.status === 'approved' || payload.new.status === 'rejected') {
-                setTimeout(() => { // Délai artificiel pour l'UX
-                  channel.unsubscribe();
-                  navigate('../step-7', { state: { status: payload.new.status, decisionData: payload.new, selectedProgramId: formData.selectedProgramId } });
-                  resetData();
-                }, 3000);
+              const newStatus = (payload as any)?.new?.status;
+              if ((newStatus === 'approved' || newStatus === 'rejected') && !hasNavigatedRef.current) {
+                hasNavigatedRef.current = true;
+                if (pollIntervalRef.current) {
+                  clearInterval(pollIntervalRef.current);
+                  pollIntervalRef.current = null;
+                }
+                channel.unsubscribe();
+                channelRef.current = null;
+                showSuccess(t('review.decision_received'));
+                navigate('../step-7', { state: { status: newStatus, decisionData: (payload as any).new, selectedProgramId: formData.selectedProgramId } });
+                resetData();
               }
             }
           )
           .subscribe();
+
+        channelRef.current = channel;
         
-        // Fallback au cas où le temps de traitement est trop long
-        const fallbackTimer = setTimeout(() => {
-          channel.unsubscribe();
-          navigate('../step-7', { state: { status: 'pending', selectedProgramId: formData.selectedProgramId } });
-          resetData();
+        // Fallback: au cas où le temps est trop long ou Realtime indisponible
+        fallbackTimerRef.current = window.setTimeout(() => {
+          if (!hasNavigatedRef.current) {
+            if (channelRef.current) {
+              channelRef.current.unsubscribe();
+              channelRef.current = null;
+            }
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
+            navigate('../step-7', { state: { status: 'pending', selectedProgramId: formData.selectedProgramId } });
+            resetData();
+          }
         }, 45000);
 
       } else {
@@ -97,7 +181,7 @@ const Step6Review = () => {
         <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
         <h1 className="text-2xl font-bold tracking-tight">{t('review.approved_title')}</h1>
         <p className="mt-2 text-muted-foreground">{t('review.approved_desc')}</p>
-        {decisionData.approved_credit_limit > 0 && (
+        {decisionData?.approved_credit_limit > 0 && (
           <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-sm text-green-800">{t('review.credit_limit_approved')}</p>
             <p className="text-2xl font-bold text-green-900">{new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(decisionData.approved_credit_limit)}</p>
@@ -114,11 +198,11 @@ const Step6Review = () => {
         <XCircle className="mx-auto h-16 w-16 text-red-500 mb-4" />
         <h1 className="text-2xl font-bold tracking-tight">{t('review.rejected_title')}</h1>
         <p className="mt-2 text-muted-foreground">{t('review.rejected_desc')}</p>
-        {decisionData.rejection_reason && (
+        {decisionData?.rejection_reason && (
           <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-left">
             <p className="text-sm font-semibold text-red-800">{t('review.rejection_reasons')}:</p>
             <ul className="list-disc pl-5 mt-2 text-sm text-red-700">
-              {(decisionData.rejection_reason).split('; ').map((reason, i) => (
+              {(decisionData.rejection_reason).split('; ').map((reason: string, i: number) => (
                 <li key={i}>{reason}</li>
               ))}
             </ul>
