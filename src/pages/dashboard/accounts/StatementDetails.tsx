@@ -100,8 +100,10 @@ const StatementDetails = () => {
       .eq('id', accountData?.profile_id).single();
     setProfile(profileData || null);
 
-    const { data: institutionData } = await supabase.from('institutions')
+    const { data: institutionData } = await supabase
+      .from('institutions')
       .select('id, name, address, city, country, phone_number')
+      .eq('id', profileData?.institution_id)
       .single();
     setInstitution(institutionData || null);
 
