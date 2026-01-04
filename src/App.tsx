@@ -133,7 +133,6 @@ const MainAppRoutes = () => (
       <Route path="applications/:id" element={<ApplicationDetails />} />
       <Route path="cards" element={<Cards />} />
       <Route path="cards/:cardId/suspend" element={<SuspendCard />} />
-      <Route path="cards/:cardId/suspend" element={<Suspense fallback={<div className='p-8'>Chargement...</div>}><div><import-placeholder /></div></Suspense>} />
       <Route path="transactions" element={<Transactions />} />
       <Route path="transactions/:id" element={<TransactionDetails />} />
       <Route path="credit-files" element={<CreditFiles />} />
