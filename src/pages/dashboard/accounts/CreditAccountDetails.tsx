@@ -299,11 +299,11 @@ const CreditAccountDetails = () => {
               cardColor={account.cards.card_programs.card_color}
               cardImageUrl={account.cards.card_programs.card_image_url}
               userName={profileName}
-              showCardNumber={true}
+              showCardNumber={false}
               cardNumber={fullCardNumber}
               expiryDate={cardExpiry}
-              overlayCardNumber={true}
-              blurCardNumber={!isCardNumberVisible}
+              overlayCardNumber={false}
+              blurCardNumber={false}
             />
           </div>
           <div className="mt-4 flex justify-center gap-2">
