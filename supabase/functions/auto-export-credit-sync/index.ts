@@ -370,10 +370,15 @@ serve(async (req) => {
 
       const { data: profile, error: profileError } = await supabaseAdmin
         .from("profiles")
-        .select("id, type, full_name, legal_name, email, phone, sin, address, institution_id")
+        .select("id, type, full_name, legal_name, email, phone, sin, address, institution_id, credit_bureau_auto_consent")
         .eq("id", pref.profile_id)
         .single()
       if (profileError || !profile) { details.push({ profile_id: pref.profile_id, status: "error", error: "Profil introuvable" }); continue }
+      // Loi 25: si le profil n'a pas consenti à l'export automatique, on saute
+      if (!profile.credit_bureau_auto_consent) {
+        details.push({ profile_id: pref.profile_id, status: "skipped", reason: "auto_consent_disabled" });
+        continue;
+      }
 
       const { data: institution, error: instError } = await supabaseAdmin
         .from("institutions")
