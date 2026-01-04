@@ -144,6 +144,7 @@ serve(async (req) => {
       annual_income: profileData.annualIncome ? parseFloat(profileData.annualIncome) : null,
       t4_income: profileData.t4Income ? parseFloat(profileData.t4Income) : null,
       credit_bureau_verification_status: profileData.creditBureauVerification,
+      submitted_sin_hash: hashedSin || null,
       status: 'pending',
     };
 

@@ -243,7 +243,12 @@ serve(async (req) => {
     }
 
     if (isApproved && program.min_credit_score_requirement) {
-       if (!profile.sin) {
+       // Blocage si le NAS soumis ne correspond pas au NAS du profil existant (même nom/compte réutilisé)
+       if (application.submitted_sin_hash && profile.sin && application.submitted_sin_hash !== profile.sin) {
+         isApproved = false;
+         reasons.push("Conflit d'identité: le NAS fourni ne correspond pas au profil existant.");
+         await logProgress(applicationId, "Règle échouée: NAS ne correspond pas au profil.", "warning");
+       } else if (!profile.sin) {
           await logProgress(applicationId, "Aucun NAS fourni. La vérification du crédit est ignorée.", "info");
        } else {
           await logProgress(applicationId, "Vérification du score de crédit en cours...", "info");
@@ -264,7 +269,6 @@ serve(async (req) => {
                 await logProgress(applicationId, `Erreur technique lors de la récupération du dossier: ${reportError.message}`, "warning");
              } else if (!report) {
                 await logProgress(applicationId, "Aucun dossier de crédit trouvé pour ce NAS.", "warning");
-                // Optionnel: Rejeter si le dossier est introuvable ? Pour l'instant on laisse passer.
              } else {
                 await logProgress(applicationId, `Score de crédit trouvé: ${report.credit_score}`, "success");
                 latestCreditScore = report.credit_score;
