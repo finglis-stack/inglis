@@ -10,6 +10,8 @@ interface CardPreviewProps {
   showCardNumber?: boolean;
   cardNumber?: string;
   expiryDate?: string;
+  overlayCardNumber?: boolean;
+  blurCardNumber?: boolean;
 }
 
 const getInitials = (name?: string): string => {
@@ -32,7 +34,9 @@ export const CardPreview = ({
   userName,
   showCardNumber = true,
   cardNumber,
-  expiryDate
+  expiryDate,
+  overlayCardNumber = false,
+  blurCardNumber = false
 }: CardPreviewProps) => {
   const { t } = useTranslation('dashboard');
 
@@ -78,6 +82,18 @@ export const CardPreview = ({
           <div className={cn("flex justify-between text-sm", showCardNumber && "mt-2")}>
             <span>{displayName}</span>
             <span>{displayExpiry}</span>
+          </div>
+        </div>
+      )}
+
+      {useImage && overlayCardNumber && showCardNumber && (
+        <div className="absolute inset-x-6 bottom-6 z-10">
+          <div className={cn(
+            "px-4 py-2 rounded-md bg-black/50 backdrop-blur-md border border-white/20 inline-block"
+          )}>
+            <p className={cn("text-2xl tracking-widest", blurCardNumber && "blur-sm select-none")}>
+              {displayCardNumber}
+            </p>
           </div>
         </div>
       )}

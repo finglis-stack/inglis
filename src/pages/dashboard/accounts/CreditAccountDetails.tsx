@@ -288,34 +288,21 @@ const CreditAccountDetails = () => {
 
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="w-full lg:w-96 flex-shrink-0">
-          <div className="relative group">
-            <div className={cn("transition-all duration-300", !isCardNumberVisible && "blur-sm select-none")}>
-              <CardPreview
-                programName={account.cards.card_programs.program_name}
-                cardType={account.cards.card_programs.card_type}
-                cardColor={account.cards.card_programs.card_color}
-                cardImageUrl={account.cards.card_programs.card_image_url}
-                userName={profileName}
-                showCardNumber={true}
-                cardNumber={isCardNumberVisible ? fullCardNumber : maskedCardNumber}
-                expiryDate={cardExpiry}
-              />
-            </div>
-            
-            {!isCardNumberVisible && (
-              <div className="absolute inset-0 flex items-center justify-center z-10">
-                <Button 
-                  onClick={handleRevealCard} 
-                  className="bg-black/50 hover:bg-black/70 text-white backdrop-blur-md border border-white/20"
-                  disabled={isSendingOtp}
-                >
-                  {isSendingOtp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
-                  Voir le numéro
-                </Button>
-              </div>
-            )}
+          <div className="relative">
+            <CardPreview
+              programName={account.cards.card_programs.program_name}
+              cardType={account.cards.card_programs.card_type}
+              cardColor={account.cards.card_programs.card_color}
+              cardImageUrl={account.cards.card_programs.card_image_url}
+              userName={profileName}
+              showCardNumber={true}
+              cardNumber={fullCardNumber}
+              expiryDate={cardExpiry}
+              overlayCardNumber={true}
+              blurCardNumber={!isCardNumberVisible}
+            />
           </div>
-
+        </div>
           <div className="mt-4 flex justify-center gap-2">
              <Badge variant="outline" className="text-xs">{account.currency}</Badge>
              <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
@@ -501,9 +488,21 @@ const CreditAccountDetails = () => {
                  <CardContent className="space-y-4">
                    <div>
                      <p className="text-sm text-muted-foreground mb-1">Numéro de carte</p>
-                     <div className={cn("font-mono text-lg bg-muted p-2 rounded text-center transition-all", !isCardNumberVisible && "blur-sm")}>
-                        {isCardNumberVisible ? fullCardNumber : maskedCardNumber}
+                     <div className={cn("font-mono text-lg bg-muted p-2 rounded text-center transition-all", !isCardNumberVisible && "blur-sm select-none")}>
+                        {fullCardNumber}
                      </div>
+                     {!isCardNumberVisible && (
+                       <div className="mt-2 flex justify-center">
+                         <Button
+                           onClick={handleRevealCard}
+                           className="bg-black/50 hover:bg-black/70 text-white backdrop-blur-md border border-white/20"
+                           disabled={isSendingOtp}
+                         >
+                           {isSendingOtp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
+                           Voir le numéro
+                         </Button>
+                       </div>
+                     )}
                    </div>
                    <div className="grid grid-cols-2 gap-4">
                       <div>
