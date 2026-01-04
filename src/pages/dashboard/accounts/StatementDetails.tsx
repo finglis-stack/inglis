@@ -164,6 +164,7 @@ const StatementDetails = () => {
     return { text: t('accounts.statementUnpaid'), variant: 'secondary' as 'secondary', className: '' };
   };
   const formatCurrency = (amount: number) => new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(amount);
+  const interestCharged = transactions.filter(tx => tx.type === 'interest_charge').reduce((sum, tx) => sum + tx.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -229,6 +230,10 @@ const StatementDetails = () => {
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm text-muted-foreground">{t('accounts.statementNewBalance')}</p>
               <p className="text-lg font-bold">{formatCurrency(statement.closing_balance)}</p>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-muted-foreground">Intérêts facturés</p>
+              <p className="text-lg font-bold">{formatCurrency(interestCharged)}</p>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm text-muted-foreground">{t('accounts.statementMinimumPayment')}</p>
