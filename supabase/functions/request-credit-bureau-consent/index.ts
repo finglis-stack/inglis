@@ -66,7 +66,12 @@ serve(async (req) => {
     const { data: institution } = await supabaseAdmin.from('institutions').select('id, name').eq('user_id', user.id).single();
     if (!institution) throw new Error("Institution non trouvée pour l'utilisateur.");
 
-    const { data: profile, error: profileError } = await supabaseAdmin.from('profiles').select('id, full_name, legal_name, type, email').eq('id', profile_id).eq('institution_id', institution.id).single();
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('id, full_name, legal_name, type, email, phone, sin, address, credit_bureau_auto_consent')
+      .eq('id', profile_id)
+      .eq('institution_id', institution.id)
+      .single();
     if (profileError || !profile) throw new Error("Profil non trouvé ou accès refusé.");
     if (!profile.email) throw new Error("Le profil n'a pas d'adresse e-mail.");
 

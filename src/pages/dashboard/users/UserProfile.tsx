@@ -28,6 +28,7 @@ import {
   SelectGroup,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import CreditSyncHeader from '@/components/dashboard/users/CreditSyncHeader';
 
 type ExportFrequency = 'minute' | 'hour' | 'day' | 'week' | 'month';
 
@@ -332,57 +333,23 @@ const UserProfile = () => {
           )}
 
           {profile.type === 'personal' && (
-            <div className="flex flex-col gap-3 mb-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Button onClick={handlePushToCreditBureau} disabled={isPushing || !profile.sin}>
-                  {isPushing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
-                  {t('userProfile.pushToCreditBureau')}
-                </Button>
-
-                {/* Options d’auto-export: fréquence + switch */}
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={autoExportFrequency}
-                    onValueChange={(val: ExportFrequency) => {
-                      setAutoExportFrequency(val);
-                      saveExportPreferences(undefined, val);
-                    }}
-                  >
-                    <SelectTrigger className="w-44">
-                      <SelectValue placeholder="Fréquence" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Fréquence d’export</SelectLabel>
-                        <SelectItem value="minute">Minute</SelectItem>
-                        <SelectItem value="hour">Heure</SelectItem>
-                        <SelectItem value="day">Jour</SelectItem>
-                        <SelectItem value="week">Semaine</SelectItem>
-                        <SelectItem value="month">Mois</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={autoExportEnabled}
-                      onCheckedChange={(checked) => {
-                        setAutoExportEnabled(checked);
-                        saveExportPreferences(checked, undefined);
-                      }}
-                    />
-                    <span className="text-sm text-muted-foreground">Auto-export</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-start">
-                <Button variant="outline" onClick={handleRequestReport} disabled={isRequesting || !profile.sin}>
-                  {isRequesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <DownloadCloud className="mr-2 h-4 w-4" />}
-                  {t('userProfile.requestCreditReport')}
-                </Button>
-              </div>
-            </div>
+            <CreditSyncHeader
+              isPushing={isPushing}
+              onPush={handlePushToCreditBureau}
+              autoExportEnabled={autoExportEnabled}
+              autoExportFrequency={autoExportFrequency}
+              onToggleAutoExport={(enabled) => {
+                setAutoExportEnabled(enabled);
+                saveExportPreferences(enabled, undefined);
+              }}
+              onChangeFrequency={(val: ExportFrequency) => {
+                setAutoExportFrequency(val);
+                saveExportPreferences(undefined, val);
+              }}
+              isRequesting={isRequesting}
+              onRequestReport={handleRequestReport}
+              disabled={!profile.sin}
+            />
           )}
           
           {profile.type === 'personal' && (
