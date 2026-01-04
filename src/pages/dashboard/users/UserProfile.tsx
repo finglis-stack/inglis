@@ -411,6 +411,9 @@ const UserProfile = () => {
               <ResetPinDialog profileId={profile.id}>
                 <Button variant="secondary">{t('userProfile.resetProfilePin')}</Button>
               </ResetPinDialog>
+              <Button onClick={() => navigate(`/dashboard/users/profile/${profile.id}/fraud-settings`)}>
+                Personnaliser l’anti‑fraude
+              </Button>
             </div>
           </div>
         )}

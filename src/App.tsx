@@ -40,6 +40,7 @@ import Step2Registration from "@/pages/dashboard/users/corporate/Step2Registrati
 import Step3AddressCorp from "@/pages/dashboard/users/corporate/Step3Address";
 import Step5ReviewCorp from "@/pages/dashboard/users/corporate/Step5Review";
 import UserProfile from "@/pages/dashboard/users/UserProfile";
+import FraudSettings from "@/pages/dashboard/users/FraudSettings";
 import CreditFiles from "@/pages/dashboard/CreditFiles";
 import CreditReportAccess from "@/pages/CreditReportAccess";
 import CardPrograms from "@/pages/dashboard/settings/CardPrograms";
@@ -145,6 +146,7 @@ const MainAppRoutes = () => (
       <Route path="settings/domains" element={<DomainsSettings />} />
       <Route path="users" element={<Users />} />
       <Route path="users/profile/:id" element={<UserProfile />} />
+      <Route path="users/profile/:id/fraud-settings" element={<FraudSettings />} />
       <Route path="fraud-analytics" element={<FraudAnalytics />} />
       <Route path="fraud-network" element={
         <Suspense fallback={<div className="p-8">Chargement...</div>}>

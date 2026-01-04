@@ -104,11 +104,43 @@ serve(async (req) => {
     // --- ADVANCED RISK ANALYSIS ---
     const profile = cardData.profiles;
 
+    // Charger préférences anti-fraude par profil (avec valeurs sûres par défaut)
+    const defaultCfg = {
+      amount: { low_value_threshold: 25, high_value_threshold: 10000, absolute_max: 1000000, high_value_no_baseline_penalty: 30, below_mean_bonus: 5 },
+      zscore: { mild: 1.5, high: 2.5, extreme: 3.5, weights: { mild: 20, high: 40, extreme: 80 } },
+      geo: { impossible_speed_kmh: 900, very_fast_speed_kmh: 500, distance_min_km: 1 },
+      velocity: { burst_window_minutes: 10, penalty_3: 20, penalty_5: 40 },
+      decision: { block_threshold: 40 },
+      device: { blocked_penalty: 100, trusted_bonus: 15, recognized_bonus: 10, new_device_penalty: 15, low_confidence_threshold: 0.5, low_confidence_penalty: 10 },
+      behavioral: { bot_penalty: 60, no_mouse_penalty: 25, short_time_ms: 3000, short_time_penalty: 20, suspicious_pattern_weight: 5, pan_fast_ms: 1000, pan_fast_penalty: 15, paste_penalty: 20 },
+      ip: { blocked_penalty: 100, vpn_proxy_tor_penalty: 30, block_on_vpn: false }
+    };
+    let cfg = defaultCfg;
+    try {
+      const { data: pref } = await supabaseAdmin
+        .from('fraud_preferences')
+        .select('settings')
+        .eq('profile_id', profile.id)
+        .maybeSingle();
+      if (pref?.settings) {
+        const s = pref.settings;
+        cfg = {
+          amount: { ...defaultCfg.amount, ...(s.amount || {}) },
+          zscore: { ...defaultCfg.zscore, ...(s.zscore || {}), weights: { ...defaultCfg.zscore.weights, ...(s.zscore?.weights || {}) } },
+          geo: { ...defaultCfg.geo, ...(s.geo || {}) },
+          velocity: { ...defaultCfg.velocity, ...(s.velocity || {}) },
+          decision: { ...defaultCfg.decision, ...(s.decision || {}) },
+          device: { ...defaultCfg.device, ...(s.device || {}) },
+          behavioral: { ...defaultCfg.behavioral, ...(s.behavioral || {}) },
+          ip: { ...defaultCfg.ip, ...(s.ip || {}) }
+        };
+      }
+    } catch (_) {}
+
     // 1. DEVICE FINGERPRINTING ANALYSIS
     if (fraud_signals?.device_fingerprint) {
       const deviceId = fraud_signals.device_fingerprint.visitorId;
       
-      // Check if device exists in database
       const { data: existingDevice } = await supabaseAdmin
         .from('device_fingerprints')
         .select('*')
@@ -117,7 +149,6 @@ serve(async (req) => {
         .single();
 
       if (existingDevice) {
-        // Update existing device
         await supabaseAdmin
           .from('device_fingerprints')
           .update({
@@ -128,17 +159,16 @@ serve(async (req) => {
           .eq('id', existingDevice.id);
 
         if (existingDevice.is_blocked) {
-          riskScore -= 100;
-          analysisLog.push({ step: "Analyse du dispositif", result: "Dispositif bloqué", impact: "-100", timestamp: Date.now() - startTime });
+          riskScore -= cfg.device.blocked_penalty;
+          analysisLog.push({ step: "Analyse du dispositif", result: "Dispositif bloqué", impact: `-${cfg.device.blocked_penalty}`, timestamp: Date.now() - startTime });
         } else if (existingDevice.is_trusted) {
-          riskScore += 15;
-          analysisLog.push({ step: "Analyse du dispositif", result: "Dispositif de confiance", impact: "+15", timestamp: Date.now() - startTime });
+          riskScore += cfg.device.trusted_bonus;
+          analysisLog.push({ step: "Analyse du dispositif", result: "Dispositif de confiance", impact: `+${cfg.device.trusted_bonus}`, timestamp: Date.now() - startTime });
         } else {
-          riskScore += 10;
-          analysisLog.push({ step: "Analyse du dispositif", result: "Dispositif reconnu", impact: "+10", timestamp: Date.now() - startTime });
+          riskScore += cfg.device.recognized_bonus;
+          analysisLog.push({ step: "Analyse du dispositif", result: "Dispositif reconnu", impact: `+${cfg.device.recognized_bonus}`, timestamp: Date.now() - startTime });
         }
       } else {
-        // New device - insert into database
         await supabaseAdmin
           .from('device_fingerprints')
           .insert({
@@ -148,17 +178,15 @@ serve(async (req) => {
             device_data: fraud_signals.device_fingerprint.components
           });
 
-        riskScore -= 15;
-        analysisLog.push({ step: "Analyse du dispositif", result: "Nouveau dispositif jamais vu", impact: "-15", timestamp: Date.now() - startTime });
+        riskScore -= cfg.device.new_device_penalty;
+        analysisLog.push({ step: "Analyse du dispositif", result: "Nouveau dispositif jamais vu", impact: `-${cfg.device.new_device_penalty}`, timestamp: Date.now() - startTime });
       }
 
-      // Check device confidence score
-      if (fraud_signals.device_fingerprint.confidence < 0.5) {
-        riskScore -= 10;
-        analysisLog.push({ step: "Analyse du dispositif", result: `Confiance faible du fingerprint (${fraud_signals.device_fingerprint.confidence})`, impact: "-10", timestamp: Date.now() - startTime });
+      if (fraud_signals.device_fingerprint.confidence < cfg.device.low_confidence_threshold) {
+        riskScore -= cfg.device.low_confidence_penalty;
+        analysisLog.push({ step: "Analyse du dispositif", result: `Confiance faible (${fraud_signals.device_fingerprint.confidence})`, impact: `-${cfg.device.low_confidence_penalty}`, timestamp: Date.now() - startTime });
       }
 
-      // Store device-card relationship in fraud network
       await supabaseAdmin
         .from('fraud_network_edges')
         .upsert({
@@ -178,7 +206,6 @@ serve(async (req) => {
     if (fraud_signals?.behavioral_signals) {
       const behavioral = fraud_signals.behavioral_signals;
       
-      // Store behavioral pattern in database
       await supabaseAdmin
         .from('behavioral_patterns')
         .insert({
@@ -196,44 +223,41 @@ serve(async (req) => {
           suspicious_patterns: behavioral.suspiciousPatterns
         });
       
-      // Bot detection
       if (behavioral.isLikelyBot) {
-        riskScore -= 60;
-        analysisLog.push({ step: "Détection de bot", result: `Bot détecté: ${behavioral.suspiciousPatterns.join(', ')}`, impact: "-60", timestamp: Date.now() - startTime });
+        riskScore -= cfg.behavioral.bot_penalty;
+        analysisLog.push({ step: "Détection de bot", result: `Bot détecté: ${behavioral.suspiciousPatterns.join(', ')}`, impact: `-${cfg.behavioral.bot_penalty}`, timestamp: Date.now() - startTime });
       }
       
-      // Mouse movement analysis
       if (behavioral.mouseMovements && behavioral.mouseMovements.length === 0 && behavioral.totalTimeOnPage > 5000) {
-        riskScore -= 25;
-        analysisLog.push({ step: "Analyse comportementale", result: "Aucun mouvement de souris", impact: "-25", timestamp: Date.now() - startTime });
+        riskScore -= cfg.behavioral.no_mouse_penalty;
+        analysisLog.push({ step: "Analyse comportementale", result: "Aucun mouvement de souris", impact: `-${cfg.behavioral.no_mouse_penalty}`, timestamp: Date.now() - startTime });
       }
       
-      // Time on page too short
-      if (behavioral.totalTimeOnPage < 3000) {
-        riskScore -= 20;
-        analysisLog.push({ step: "Analyse comportementale", result: `Temps sur la page trop court (${Math.round(behavioral.totalTimeOnPage / 1000)}s)`, impact: "-20", timestamp: Date.now() - startTime });
+      if (behavioral.totalTimeOnPage < cfg.behavioral.short_time_ms) {
+        riskScore -= cfg.behavioral.short_time_penalty;
+        analysisLog.push({ step: "Analyse comportementale", result: `Temps court (${Math.round(behavioral.totalTimeOnPage / 1000)}s)`, impact: `-${cfg.behavioral.short_time_penalty}`, timestamp: Date.now() - startTime });
       }
       
-      // Suspicious patterns
       if (behavioral.suspiciousPatterns && behavioral.suspiciousPatterns.length > 0) {
-        riskScore -= behavioral.suspiciousPatterns.length * 5;
-        analysisLog.push({ step: "Analyse comportementale", result: `Patterns suspects: ${behavioral.suspiciousPatterns.join(', ')}`, impact: `-${behavioral.suspiciousPatterns.length * 5}`, timestamp: Date.now() - startTime });
+        const penalty = behavioral.suspiciousPatterns.length * cfg.behavioral.suspicious_pattern_weight;
+        riskScore -= penalty;
+        analysisLog.push({ step: "Analyse comportementale", result: `Patterns suspects: ${behavioral.suspiciousPatterns.join(', ')}`, impact: `-${penalty}`, timestamp: Date.now() - startTime });
       }
     }
 
     // 3. TYPING PATTERN ANALYSIS
-    if (fraud_signals?.pan_entry_duration_ms < 1000) { 
-      riskScore -= 15; 
-      analysisLog.push({ step: "Analyse de frappe", result: "Saisie du PAN très rapide", impact: "-15", timestamp: Date.now() - startTime }); 
-    } else { 
-      analysisLog.push({ step: "Analyse de frappe", result: "Saisie du PAN normale", impact: "+0", timestamp: Date.now() - startTime }); 
+    if (fraud_signals?.pan_entry_duration_ms < cfg.behavioral.pan_fast_ms) {
+      riskScore -= cfg.behavioral.pan_fast_penalty;
+      analysisLog.push({ step: "Analyse de frappe", result: "Saisie du PAN très rapide", impact: `-${cfg.behavioral.pan_fast_penalty}`, timestamp: Date.now() - startTime });
+    } else {
+      analysisLog.push({ step: "Analyse de frappe", result: "Saisie du PAN normale", impact: "+0", timestamp: Date.now() - startTime });
     }
 
-    if (fraud_signals?.paste_events > 0) { 
-      riskScore -= 20; 
-      analysisLog.push({ step: "Analyse de frappe", result: "Utilisation du copier-coller", impact: "-20", timestamp: Date.now() - startTime }); 
-    } else { 
-      analysisLog.push({ step: "Analyse de frappe", result: "Aucun copier-coller détecté", impact: "+0", timestamp: Date.now() - startTime }); 
+    if (fraud_signals?.paste_events > 0) {
+      riskScore -= cfg.behavioral.paste_penalty;
+      analysisLog.push({ step: "Analyse de frappe", result: "Utilisation du copier-coller", impact: `-${cfg.behavioral.paste_penalty}`, timestamp: Date.now() - startTime });
+    } else {
+      analysisLog.push({ step: "Analyse de frappe", result: "Aucun copier-coller détecté", impact: "+0", timestamp: Date.now() - startTime });
     }
 
     // 4. IP ADDRESS ANALYSIS & STORAGE
@@ -324,9 +348,13 @@ serve(async (req) => {
 
       // VPN/Proxy/Tor detection
       if (isVpn) {
-        riskScore -= 30;
+        riskScore -= cfg.ip.vpn_proxy_tor_penalty;
         const suspectType = ipGeoData?.is_tor ? 'Tor' : ipGeoData?.is_vpn ? 'VPN' : ipGeoData?.is_proxy ? 'Proxy' : 'Hosting';
-        analysisLog.push({ step: "Détection VPN/Proxy/Tor", result: `${suspectType} détecté: ${ipGeoData?.org || 'Unknown'}`, impact: "-30", timestamp: Date.now() - startTime });
+        analysisLog.push({ step: "Détection VPN/Proxy/Tor", result: `${suspectType} détecté: ${ipGeoData?.org || 'Unknown'}`, impact: `-${cfg.ip.vpn_proxy_tor_penalty}`, timestamp: Date.now() - startTime });
+        if (cfg.ip.block_on_vpn) {
+          riskScore -= 100;
+          analysisLog.push({ step: "Blocage strict", result: "Blocage configuré si VPN/Proxy/Tor", impact: "-100", timestamp: Date.now() - startTime });
+        }
       } else {
         analysisLog.push({ step: "Détection VPN/Proxy", result: "IP résidentielle normale", impact: "+0", timestamp: Date.now() - startTime });
       }
@@ -365,39 +393,35 @@ serve(async (req) => {
     }
 
     // 5. AMOUNT ANALYSIS
-    const LOW_VALUE_THRESHOLD = 25.00;
-    const HIGH_VALUE_THRESHOLD = 10000.00; // pénalité sans baseline
-    const ABSOLUTE_MAX = 1000000.00; // blocage dur
-
-    if (amountToCharge >= ABSOLUTE_MAX) {
+    if (amountToCharge >= cfg.amount.absolute_max) {
       riskScore -= 100;
       analysisLog.push({ step: "Analyse du montant", result: `Montant excessif (${new Intl.NumberFormat('fr-CA', { style: 'currency', currency: cardCurrency }).format(amountToCharge)})`, impact: "-100", timestamp: Date.now() - startTime });
-    } else if (amountToCharge <= LOW_VALUE_THRESHOLD) {
-      riskScore += 5;
-      analysisLog.push({ step: "Analyse du montant", result: "Transaction de faible valeur, tolérée", impact: "+5", timestamp: Date.now() - startTime });
+    } else if (amountToCharge <= cfg.amount.low_value_threshold) {
+      riskScore += cfg.amount.below_mean_bonus;
+      analysisLog.push({ step: "Analyse du montant", result: "Transaction de faible valeur, tolérée", impact: `+${cfg.amount.below_mean_bonus}`, timestamp: Date.now() - startTime });
     } else if (profile.avg_transaction_amount > 0 && profile.transaction_amount_stddev > 0) {
       if (amountToCharge > profile.avg_transaction_amount) {
         const z_score = (amountToCharge - profile.avg_transaction_amount) / profile.transaction_amount_stddev;
-        if (z_score > 3.5) {
-          riskScore -= 80;
-          analysisLog.push({ step: "Analyse du montant", result: `Montant extrême vs baseline (Z-score: ${z_score.toFixed(2)})`, impact: "-80", timestamp: Date.now() - startTime });
-        } else if (z_score > 2.5) {
-          riskScore -= 40;
-          analysisLog.push({ step: "Analyse du montant", result: `Montant très élevé vs moyenne (Z-score: ${z_score.toFixed(2)})`, impact: "-40", timestamp: Date.now() - startTime });
-        } else if (z_score > 1.5) {
-          riskScore -= 20;
-          analysisLog.push({ step: "Analyse du montant", result: `Montant plus élevé que la normale (Z-score: ${z_score.toFixed(2)})`, impact: "-20", timestamp: Date.now() - startTime });
+        if (z_score > cfg.zscore.extreme) {
+          riskScore -= cfg.zscore.weights.extreme;
+          analysisLog.push({ step: "Analyse du montant", result: `Montant extrême vs baseline (Z-score: ${z_score.toFixed(2)})`, impact: `-${cfg.zscore.weights.extreme}`, timestamp: Date.now() - startTime });
+        } else if (z_score > cfg.zscore.high) {
+          riskScore -= cfg.zscore.weights.high;
+          analysisLog.push({ step: "Analyse du montant", result: `Montant très élevé vs moyenne (Z-score: ${z_score.toFixed(2)})`, impact: `-${cfg.zscore.weights.high}`, timestamp: Date.now() - startTime });
+        } else if (z_score > cfg.zscore.mild) {
+          riskScore -= cfg.zscore.weights.mild;
+          analysisLog.push({ step: "Analyse du montant", result: `Montant plus élevé que la normale (Z-score: ${z_score.toFixed(2)})`, impact: `-${cfg.zscore.weights.mild}`, timestamp: Date.now() - startTime });
         } else {
           analysisLog.push({ step: "Analyse du montant", result: "Montant dans la plage normale supérieure", impact: "+0", timestamp: Date.now() - startTime });
         }
       } else {
-        riskScore += 5;
-        analysisLog.push({ step: "Analyse du montant", result: "Montant inférieur à la moyenne, non suspect", impact: "+5", timestamp: Date.now() - startTime });
+        riskScore += cfg.amount.below_mean_bonus;
+        analysisLog.push({ step: "Analyse du montant", result: "Montant inférieur à la moyenne, non suspect", impact: `+${cfg.amount.below_mean_bonus}`, timestamp: Date.now() - startTime });
       }
     } else {
-      if (amountToCharge > HIGH_VALUE_THRESHOLD) {
-        riskScore -= 30;
-        analysisLog.push({ step: "Analyse du montant", result: `Montant élevé sans baseline`, impact: "-30", timestamp: Date.now() - startTime });
+      if (amountToCharge > cfg.amount.high_value_threshold) {
+        riskScore -= cfg.amount.high_value_no_baseline_penalty;
+        analysisLog.push({ step: "Analyse du montant", result: `Montant élevé sans baseline`, impact: `-${cfg.amount.high_value_no_baseline_penalty}`, timestamp: Date.now() - startTime });
       } else {
         analysisLog.push({ step: "Analyse du montant", result: "Pas d'historique pour l'analyse du montant", impact: "+0", timestamp: Date.now() - startTime });
       }
@@ -425,13 +449,13 @@ serve(async (req) => {
         const transactionCount = recentTransactions.length;
         
         if (transactionCount >= 5) {
-          riskScore -= 40;
-          analysisLog.push({ step: "Vélocité par carte", result: `${transactionCount} transactions en 10 minutes`, impact: "-40", timestamp: Date.now() - startTime });
+          riskScore -= cfg.velocity.penalty_5;
+          analysisLog.push({ step: "Vélocité par carte", result: `${transactionCount} transactions en ${cfg.velocity.burst_window_minutes} minutes`, impact: `-${cfg.velocity.penalty_5}`, timestamp: Date.now() - startTime });
         } else if (transactionCount >= 3) {
-          riskScore -= 20;
-          analysisLog.push({ step: "Vélocité par carte", result: `${transactionCount} transactions en 10 minutes`, impact: "-20", timestamp: Date.now() - startTime });
+          riskScore -= cfg.velocity.penalty_3;
+          analysisLog.push({ step: "Vélocité par carte", result: `${transactionCount} transactions en ${cfg.velocity.burst_window_minutes} minutes`, impact: `-${cfg.velocity.penalty_3}`, timestamp: Date.now() - startTime });
         } else {
-          analysisLog.push({ step: "Vélocité par carte", result: `${transactionCount} transaction(s) en 10 minutes - normal`, impact: "+0", timestamp: Date.now() - startTime });
+          analysisLog.push({ step: "Vélocité par carte", result: `${transactionCount} transaction(s) en ${cfg.velocity.burst_window_minutes} minutes - normal`, impact: "+0", timestamp: Date.now() - startTime });
         }
       }
 
@@ -478,7 +502,7 @@ serve(async (req) => {
               if (distanceKm > 1) {
                 const speedKmh = distanceKm / timeDiffHours;
 
-                if (speedKmh > 900) {
+                if (speedKmh > cfg.geo.impossible_speed_kmh) {
                   riskScore -= 50;
                   analysisLog.push({
                     step: "Vélocité géographique",
@@ -486,7 +510,7 @@ serve(async (req) => {
                     impact: "-50",
                     timestamp: Date.now() - startTime
                   });
-                } else if (speedKmh > 500) {
+                } else if (speedKmh > cfg.geo.very_fast_speed_kmh) {
                   riskScore -= 25;
                   analysisLog.push({
                     step: "Vélocité géographique",
@@ -504,7 +528,7 @@ serve(async (req) => {
       }
     }
 
-    const decision = riskScore < 40 ? 'BLOCK' : 'APPROVE';
+    const decision = riskScore < cfg.decision.block_threshold ? 'BLOCK' : 'APPROVE';
     analysisLog.push({ step: "Décision finale", result: `Score de confiance: ${riskScore}`, impact: "+0", timestamp: Date.now() - startTime });
 
     const { data: assessmentRecord, error: assessmentError } = await supabaseAdmin.from('transaction_risk_assessments').insert({
