@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, PlusCircle, AlertTriangle, Lock } from 'lucide-react';
+import { ArrowLeft, PlusCircle, AlertTriangle, Lock, Share2, FileDown } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import StatementPDF from '@/components/dashboard/accounts/StatementPDF';
 
 const RecordPaymentDialog = ({ cardId, onPaymentSuccess }) => {
   const { t } = useTranslation('dashboard');
@@ -26,24 +28,20 @@ const RecordPaymentDialog = ({ cardId, onPaymentSuccess }) => {
       showError(t('accounts.invalidPaymentAmount'));
       return;
     }
-    setLoading(true);
-    try {
-      const { error } = await supabase.rpc('process_transaction', {
-        p_card_id: cardId,
-        p_amount: paymentAmount,
-        p_type: 'payment',
-        p_description: t('accounts.paymentReceived'),
-      });
-      if (error) throw error;
-      showSuccess(t('accounts.paymentSuccess'));
-      onPaymentSuccess();
-      setOpen(false);
-      setAmount('');
-    } catch (error) {
+    const { error } = await supabase.rpc('process_transaction', {
+      p_card_id: cardId,
+      p_amount: paymentAmount,
+      p_type: 'payment',
+      p_description: t('accounts.paymentReceived'),
+    });
+    if (error) {
       showError(`${t('accounts.paymentError')}: ${error.message}`);
-    } finally {
-      setLoading(false);
+      return;
     }
+    showSuccess(t('accounts.paymentSuccess'));
+    onPaymentSuccess();
+    setOpen(false);
+    setAmount('');
   };
 
   return (
@@ -76,26 +74,42 @@ const StatementDetails = () => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [cardId, setCardId] = useState<string | null>(null);
   const [currentStatementId, setCurrentStatementId] = useState<string | null>(null);
+  const [account, setAccount] = useState<any>(null);
+  const [institution, setInstitution] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
 
   const fetchDetails = async () => {
     if (!statementId || !accountId) return;
     setLoading(true);
 
-    const { data: accountData, error: accountError } = await supabase.from('credit_accounts').select('card_id, current_statement_id').eq('id', accountId).single();
+    const { data: accountData, error: accountError } = await supabase.from('credit_accounts')
+      .select('card_id, current_statement_id, id, profile_id, interest_rate, cash_advance_rate, currency, credit_limit')
+      .eq('id', accountId).single();
     if (accountError) {
       showError("Impossible de trouver la carte associée.");
     } else {
       setCardId(accountData.card_id);
       setCurrentStatementId(accountData.current_statement_id);
+      setAccount(accountData);
     }
+
+    const { data: profileData } = await supabase.from('profiles')
+      .select('id, type, full_name, legal_name, email, institution_id')
+      .eq('id', accountData?.profile_id).single();
+    setProfile(profileData || null);
+
+    const { data: institutionData } = await supabase.from('institutions')
+      .select('id, name, address, city, country, phone_number')
+      .single();
+    setInstitution(institutionData || null);
 
     const { data: statementData, error: statementError } = await supabase
       .from('statements')
       .select('*')
       .eq('id', statementId)
       .single();
-    
     if (statementError) {
       showError(t('accounts.statementNotFound'));
       setLoading(false);
@@ -108,7 +122,6 @@ const StatementDetails = () => {
       .select('*')
       .eq('statement_id', statementId)
       .order('created_at', { ascending: true });
-    
     if (transactionsError) {
       showError(t('accounts.transactionError'));
     } else {
@@ -120,17 +133,53 @@ const StatementDetails = () => {
 
   useEffect(() => {
     fetchDetails();
-  }, [statementId, accountId, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statementId, accountId]);
 
   const handleCloseStatement = async () => {
     if (!accountId) return;
-    try {
-      const { error } = await supabase.rpc('close_current_statement', { p_account_id: accountId });
-      if (error) throw error;
-      showSuccess('Relevé fermé avec succès !');
-      await fetchDetails();
-    } catch (error) {
+    const { error } = await supabase.rpc('close_current_statement', { p_account_id: accountId });
+    if (error) {
       showError(`Erreur lors de la fermeture du relevé: ${error.message}`);
+      return;
+    }
+    showSuccess('Relevé fermé avec succès !');
+    await fetchDetails();
+  };
+
+  const getPaymentStatus = (s: any) => {
+    const now = new Date();
+    if (s.is_paid_in_full || (s.closing_balance > 0 && s.total_payments >= s.closing_balance)) {
+      return { text: t('accounts.statementPaid'), variant: 'default' as 'default', className: '' };
+    }
+    if (now > new Date(s.payment_due_date) && s.total_payments < s.minimum_payment) {
+      return { text: 'Défaut de paiement', variant: 'destructive' as 'destructive', className: '' };
+    }
+    if (s.total_payments >= s.minimum_payment && s.closing_balance > 0) {
+      return { text: t('accounts.minimumPaid'), variant: 'default' as 'default', className: 'bg-green-600 hover:bg-green-700' };
+    }
+    if (s.total_payments > 0 && s.total_payments < s.closing_balance) {
+      return { text: 'Payé partiellement', variant: 'secondary' as 'secondary', className: '' };
+    }
+    return { text: t('accounts.statementUnpaid'), variant: 'secondary' as 'secondary', className: '' };
+  };
+
+  const formatCurrency = (amount: number) => new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(amount);
+  const interestCharged = transactions.filter(tx => tx.type === 'interest_charge').reduce((sum, tx) => sum + tx.amount, 0);
+
+  const handleSendSecureLink = async () => {
+    if (!statement) return;
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('https://bsmclnbeywqosuhijhae.supabase.co/functions/v1/send-statement-link', {
+        body: { statement_id: statement.id }
+      });
+      if (error) throw error;
+      showSuccess('Lien sécurisé envoyé par e-mail.');
+    } catch (e: any) {
+      showError(e?.message || 'Erreur lors de l’envoi du lien.');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -141,30 +190,6 @@ const StatementDetails = () => {
   if (!statement) {
     return <p>{t('accounts.statementNotFound')}</p>;
   }
-
-  const getPaymentStatus = (s: any) => {
-    const now = new Date();
-    // Payé en entier
-    if (s.is_paid_in_full || (s.closing_balance > 0 && s.total_payments >= s.closing_balance)) {
-      return { text: t('accounts.statementPaid'), variant: 'default' as 'default', className: '' };
-    }
-    // Défaut de paiement si après échéance et minimum non payé
-    if (now > new Date(s.payment_due_date) && s.total_payments < s.minimum_payment) {
-      return { text: 'Défaut de paiement', variant: 'destructive' as 'destructive', className: '' };
-    }
-    // Paiement minimum effectué (mais solde > 0)
-    if (s.total_payments >= s.minimum_payment && s.closing_balance > 0) {
-      return { text: t('accounts.minimumPaid'), variant: 'default' as 'default', className: 'bg-green-600 hover:bg-green-700' };
-    }
-    // Payé partiellement (quelque paiement mais < solde)
-    if (s.total_payments > 0 && s.total_payments < s.closing_balance) {
-      return { text: 'Payé partiellement', variant: 'secondary' as 'secondary', className: '' };
-    }
-    // Non payé
-    return { text: t('accounts.statementUnpaid'), variant: 'secondary' as 'secondary', className: '' };
-  };
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(amount);
-  const interestCharged = transactions.filter(tx => tx.type === 'interest_charge').reduce((sum, tx) => sum + tx.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -201,6 +226,30 @@ const StatementDetails = () => {
                 Fermer le relevé
               </Button>
             )}
+            <Button variant="outline" onClick={handleSendSecureLink} disabled={sending}>
+              <Share2 className="mr-2 h-4 w-4" />
+              {sending ? 'Envoi...' : 'Envoyer lien sécurisé'}
+            </Button>
+            <PDFDownloadLink
+              document={
+                <StatementPDF
+                  institution={institution}
+                  profile={profile}
+                  account={account}
+                  statement={statement}
+                  transactions={transactions}
+                  interestCharged={interestCharged}
+                />
+              }
+              fileName={`Releve_${accountId}_${statement.id}.pdf`}
+            >
+              {({ loading: pdfLoading }) => (
+                <Button variant="outline">
+                  <FileDown className="mr-2 h-4 w-4" />
+                  {pdfLoading ? 'Préparation...' : 'Télécharger PDF'}
+                </Button>
+              )}
+            </PDFDownloadLink>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">

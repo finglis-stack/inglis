@@ -101,6 +101,7 @@ import Checkouts from "@/pages/q12x/Checkouts";
 import NewCheckout from "@/pages/q12x/NewCheckout";
 import PublicCheckoutPage from "@/pages/q12x/PublicCheckoutPage";
 import PaymentSuccess from "@/pages/q12x/PaymentSuccess";
+import PublicStatementPortal from "@/pages/PublicStatementPortal";
 
 const queryClient = new QueryClient();
 
@@ -119,6 +120,7 @@ const MainAppRoutes = () => (
     <Route path="/confirm-credit-pull/:token" element={<ConfirmCreditPull />} />
     <Route element={<HostedFormLayout />}><Route path="/checkout/v1/form" element={<HostedPaymentForm />} /></Route>
     <Route path="/pay/:checkoutId" element={<PublicCheckoutPage />} />
+    <Route path="/statement/:token" element={<PublicStatementPortal />} />
     <Route path="/onboarding/welcome" element={<Welcome />} />
     <Route path="/onboarding/create-account" element={<CreateAccount />} />
     <Route path="/onboarding/institution-info" element={<InstitutionInfo />} />
