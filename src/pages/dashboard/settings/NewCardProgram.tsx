@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { showSuccess, showError } from '@/utils/toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import CardImageUploader from '@/components/dashboard/cards/CardImageUploader';
 
 interface FormData {
   programName: string;
@@ -34,6 +35,7 @@ interface FormData {
   merchantTransactionFee: string;
   binType: 'dedicated' | 'shared';
   cardColor: string;
+  cardImageUrl?: string;
 }
 
 const NewCardProgram = () => {
@@ -61,6 +63,7 @@ const NewCardProgram = () => {
     merchantTransactionFee: '',
     binType: 'shared',
     cardColor: 'linear-gradient(to bottom right, #1e3a8a, #3b82f6)',
+    cardImageUrl: '',
   });
 
   const steps = [
@@ -144,6 +147,7 @@ const NewCardProgram = () => {
         bin_type: formData.binType,
         bin: bin,
         card_color: formData.cardColor,
+        card_image_url: formData.cardImageUrl || null,
       };
 
       const { error: insertError } = await supabase.from('card_programs').insert(programData);
@@ -152,7 +156,7 @@ const NewCardProgram = () => {
       showSuccess(t('newCardProgram.successMessage'));
       navigate('/dashboard/settings/card-programs');
 
-    } catch (error) {
+    } catch (error: any) {
       showError(error.message);
     } finally {
       setLoading(false);
@@ -332,6 +336,16 @@ const NewCardProgram = () => {
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">{t('newCardProgram.step5_title_design')}</h3>
               <p className="text-sm text-muted-foreground">{t('newCardProgram.step5_desc_design')}</p>
+
+              <CardImageUploader
+                value={formData.cardImageUrl}
+                onChange={(url) => setFormData(prev => ({ ...prev, cardImageUrl: url }))}
+                recommendedWidth={1200}
+                recommendedHeight={756}
+                className="mb-4"
+              />
+
+              <p className="text-xs text-muted-foreground">Optionnel: choisissez un dégradé de couleur si vous n’utilisez pas d’image.</p>
               <div className="grid grid-cols-2 gap-4">
                 {cardColors.map(color => (
                   <button key={color.name} onClick={() => handleColorChange(color.value)} className={cn("p-4 rounded-md border-2", formData.cardColor === color.value ? "border-primary" : "border-transparent")}>
@@ -358,6 +372,7 @@ const NewCardProgram = () => {
                   <p><strong>{t('newCardProgram.merchantFeeLabel')}:</strong> {formData.merchantTransactionFee || '0.0'}%</p>
                 </>)}
                 <p><strong>{t('newCardProgram.binTypeLabel')}:</strong> {formData.binType === 'dedicated' ? t('newCardProgram.binDedicated') : t('newCardProgram.binShared')}</p>
+                <p><strong>Image:</strong> {formData.cardImageUrl ? 'Personnalisée' : 'Non définie'}</p>
               </div>
               <Card>
                 <CardHeader><CardTitle>{t('newCardProgram.termsTitle')}</CardTitle></CardHeader>
@@ -386,7 +401,12 @@ const NewCardProgram = () => {
         </CardContent>
       </Card>
       <div className="lg:col-span-1">
-        <CardPreview {...formData} />
+        <CardPreview
+          programName={formData.programName || 'Programme'}
+          cardType={formData.cardType}
+          cardColor={formData.cardColor}
+          cardImageUrl={formData.cardImageUrl}
+        />
       </div>
     </div>
   );

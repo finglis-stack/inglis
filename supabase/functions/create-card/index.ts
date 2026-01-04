@@ -63,9 +63,7 @@ const convertAlphanumericToNumeric = (alphanumeric) => {
 }
 
 const getEmailHtml = (details) => {
-  const isLight = details.cardColor.includes('fde0cf');
-  const textColor = isLight ? '#1F2937' : '#FFFFFF';
-  const logoFilter = isLight ? '' : 'brightness(0) invert(1)';
+  const textColor = '#FFFFFF';
 
   return `
   <!DOCTYPE html>
@@ -80,7 +78,10 @@ const getEmailHtml = (details) => {
       .header { padding: 24px; text-align: center; background-color: #f1f3f5; }
       .content { padding: 32px; }
       .card-wrapper { margin: 24px 0; }
-      .card { border-radius: 12px; padding: 24px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 8px 16px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: space-between; height: 190px; color: ${textColor}; background: ${details.cardColor}; }
+      .card { border-radius: 12px; padding: 24px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 8px 16px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: space-between; height: 190px; color: ${textColor}; background: #000; position: relative; overflow: hidden; }
+      .card::before { content: ''; position: absolute; inset: 0; background-image: url('${details.cardImageUrl}'); background-size: cover; background-position: center; opacity: 1; }
+      .card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.3), rgba(0,0,0,0.2)); }
+      .card-inner { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
       .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
       .card-details { font-size: 20px; letter-spacing: 2px; margin-top: 16px; }
       .card-footer { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; text-transform: uppercase; }
@@ -99,19 +100,21 @@ const getEmailHtml = (details) => {
         <p>Félicitations ! Votre nouvelle carte du programme <strong>${details.programName}</strong> a été créée avec succès. Voici un aperçu de votre carte :</p>
         <div class="card-wrapper">
           <div class="card">
-            <div class="card-header">
-              <div>
-                <p style="margin:0; font-size: 12px; opacity: 0.8;">${details.programName}</p>
-                <p style="margin:0; font-size: 16px; font-weight: bold; text-transform: uppercase;">${details.cardType}</p>
+            <div class="card-inner">
+              <div class="card-header">
+                <div>
+                  <p style="margin:0; font-size: 12px; opacity: 0.8;">${details.programName}</p>
+                  <p style="margin:0; font-size: 16px; font-weight: bold; text-transform: uppercase;">${details.cardType}</p>
+                </div>
+                <img src="https://www.inglisdominion.ca/logo.png" alt="Logo" style="height: 32px;">
               </div>
-              <img src="https://www.inglisdominion.ca/logo.png" alt="Logo" style="height: 32px; filter: ${logoFilter};">
-            </div>
-            <div>
-              <div style="width: 48px; height: 32px; background-color: #ffca28; border-radius: 6px; margin-bottom: 8px;"></div>
-              <p class="card-details">${details.cardNumber}</p>
-              <div class="card-footer">
-                <span>${details.profileName}</span>
-                <span>${details.expiresAt}</span>
+              <div>
+                <div style="width: 48px; height: 32px; background-color: #ffca28; border-radius: 6px; margin-bottom: 8px;"></div>
+                <p class="card-details">${details.cardNumber}</p>
+                <div class="card-footer">
+                  <span>${details.profileName}</span>
+                  <span>${details.expiresAt}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -158,7 +161,12 @@ serve(async (req) => {
     const { data: profile, error: profileError } = await supabaseAdmin.from('profiles').select('id, full_name, legal_name, type, email').eq('id', profile_id).eq('institution_id', institution.id).single();
     if (profileError || !profile) throw new Error("Profile not found or access denied.");
 
-    const { data: program, error: programError } = await supabaseAdmin.from('card_programs').select('id, bin, card_type, program_name, card_color, currency').eq('id', card_program_id).eq('institution_id', institution.id).single();
+    const { data: program, error: programError } = await supabaseAdmin
+      .from('card_programs')
+      .select('id, bin, card_type, program_name, card_color, card_image_url, currency')
+      .eq('id', card_program_id)
+      .eq('institution_id', institution.id)
+      .single();
     if (programError || !program) throw new Error("Card program not found or access denied.");
 
     const user_initials = getInitials(profile.type === 'personal' ? profile.full_name : profile.legal_name);
@@ -226,7 +234,7 @@ serve(async (req) => {
           profileName,
           programName: program.program_name,
           cardType: program.card_type,
-          cardColor: program.card_color,
+          cardImageUrl: program.card_image_url || 'https://www.inglisdominion.ca/card-default.jpg',
           cardNumber,
           expiresAt: expires_at_display,
           pinSetupLink: `https://www.inglisdominion.ca/set-card-pin/${pinSetupToken}`,

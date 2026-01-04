@@ -164,9 +164,8 @@ const CreateCardStep4 = () => {
             programName={program.program_name}
             cardType={program.card_type}
             cardColor={program.card_color}
+            cardImageUrl={program.card_image_url}
             userName={userName}
-            // En mode prévisualisation, on ne montre pas de numéro réel pour la sécurité
-            // sauf si on est en mode encodage physique où on a besoin de visualiser
           />
         </div>
       </div>

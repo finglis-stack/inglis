@@ -68,7 +68,7 @@ const DebitAccountDetails = () => {
         .from('debit_accounts')
         .select(`
           *,
-          cards(*, card_programs(program_name, card_type, card_color)),
+          cards(*, card_programs(program_name, card_type, card_color, card_image_url)),
           profiles(full_name, legal_name, type)
         `)
         .eq('id', accountId)
@@ -382,6 +382,7 @@ const DebitAccountDetails = () => {
                   programName={account.cards.card_programs.program_name}
                   cardType={account.cards.card_programs.card_type}
                   cardColor={account.cards.card_programs.card_color}
+                  cardImageUrl={account.cards.card_programs.card_image_url}
                   userName={profileName}
                   showCardNumber={true}
                   cardNumber={isCardNumberVisible ? fullCardNumber : maskedCardNumber}
