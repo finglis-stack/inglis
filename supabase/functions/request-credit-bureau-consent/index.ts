@@ -70,6 +70,118 @@ serve(async (req) => {
     if (profileError || !profile) throw new Error("Profil non trouvé ou accès refusé.");
     if (!profile.email) throw new Error("Le profil n'a pas d'adresse e-mail.");
 
+    // Si l’auto-consentement est actif, on synchronise immédiatement sans email
+    if (profile.credit_bureau_auto_consent) {
+      // Vérifications de NAS
+      if (!profile.sin) throw new Error("Aucun NAS associé au profil.");
+      if (profile.sin.startsWith('$2')) throw new Error("Format de NAS obsolète. Recréez le profil utilisateur.");
+
+      // Récupérer comptes
+      const { data: creditAccounts, error: creditError } = await supabaseAdmin
+        .from('credit_accounts')
+        .select('*, cards(*, card_programs(program_name))')
+        .eq('profile_id', profile.id)
+        .neq('status', 'closed');
+
+      const { data: debitAccounts, error: debitError } = await supabaseAdmin
+        .from('debit_accounts')
+        .select('*, cards(*, card_programs(program_name))')
+        .eq('profile_id', profile.id)
+        .neq('status', 'closed');
+
+      if (creditError || debitError) throw new Error("Erreur lors de la récupération des comptes.");
+
+      const newHistoryEntries = [];
+      const currencyFormatter = new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' });
+      const dateStr = new Date().toISOString().split('T')[0];
+
+      // Comptes de crédit
+      if (creditAccounts) {
+        for (const acc of creditAccounts) {
+          const { data: balanceData } = await supabaseAdmin.rpc('get_credit_account_balance', { p_account_id: acc.id }).single();
+          const current_balance = balanceData?.current_balance || 0;
+          const debtRatio = acc.credit_limit > 0 ? (current_balance / acc.credit_limit) * 100 : 0;
+          const programName = acc.cards?.card_programs?.program_name || 'Carte de Crédit';
+          newHistoryEntries.push({
+            date: dateStr,
+            type: programName,
+            details: `Émetteur: ${institution.name}, Solde: ${currencyFormatter.format(current_balance)}, Limite: ${currencyFormatter.format(acc.credit_limit)}, Ratio: ${debtRatio.toFixed(1)}%`,
+            status: acc.status === 'active' ? 'Active' : 'Review'
+          });
+        }
+      }
+
+      // Comptes de débit
+      if (debitAccounts) {
+        for (const acc of debitAccounts) {
+          const { data: balanceData } = await supabaseAdmin.rpc('get_debit_account_balance', { p_account_id: acc.id }).single();
+          const current_balance = balanceData?.current_balance || 0;
+          const programName = acc.cards?.card_programs?.program_name || 'Carte de Débit';
+          newHistoryEntries.push({
+            date: dateStr,
+            type: programName,
+            details: `Émetteur: ${institution.name}, Solde: ${currencyFormatter.format(current_balance)}`,
+            status: acc.status === 'active' ? 'Active' : 'Inactive'
+          });
+        }
+      }
+
+      // Dossier de crédit: créer si absent, sinon mettre à jour
+      const { data: existingReport, error: fetchError } = await supabaseAdmin
+        .from('credit_reports')
+        .select('id, credit_history')
+        .eq('ssn', profile.sin)
+        .maybeSingle();
+      if (fetchError) throw fetchError;
+
+      // Préparer adresse (si non chiffrée, on laisse vide pour éviter de stocker en clair ici)
+      const addressToStore = profile.address && profile.address.encrypted ? profile.address : null;
+
+      let reportId = existingReport?.id;
+      if (!existingReport) {
+        const { data: created, error: createError } = await supabaseAdmin
+          .from('credit_reports')
+          .insert({
+            full_name: profile.full_name || profile.legal_name || 'Client',
+            ssn: profile.sin,
+            address: addressToStore,
+            phone_number: profile.phone || null,
+            email: profile.email || null,
+            credit_history: [],
+            credit_score: 700
+          })
+          .select('id')
+          .single();
+        if (createError) throw createError;
+        reportId = created.id;
+      }
+
+      const previousHistory = existingReport?.credit_history || [];
+      const filteredHistory = previousHistory.filter(entry =>
+        !(entry.date === dateStr && entry.details.includes(`Émetteur: ${institution.name}`))
+      );
+      const updatedHistory = [...newHistoryEntries, ...filteredHistory];
+      updatedHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      const { error: updateErrorReport } = await supabaseAdmin
+        .from('credit_reports')
+        .update({
+          credit_history: updatedHistory,
+          updated_at: new Date().toISOString(),
+          full_name: profile.full_name || profile.legal_name || 'Client',
+          email: profile.email || null,
+          phone_number: profile.phone || null
+        })
+        .eq('id', reportId);
+      if (updateErrorReport) throw updateErrorReport;
+
+      return new Response(JSON.stringify({ message: "Synchronisation automatique effectuée (sans e-mail)." }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    }
+
+    // Sinon: flux normal – créer un token et envoyer l’e-mail de consentement
     const consentToken = crypto.randomUUID();
     const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 

@@ -97,12 +97,63 @@ async function pushDataToCreditBureau(supabaseAdmin, profile, institutionName) {
     throw fetchError;
   }
 
+  let reportId = existingReport?.id;
+
+  // Créer le dossier s’il n’existe pas, avec les informations disponibles
   if (!existingReport) {
-    console.error(`[CreditPush] No credit report found for SIN hash: ${profile.sin.substring(0, 10)}...`);
-    // Si le profil a un NAS mais pas de dossier de crédit, on devrait peut-être le créer ?
-    // Pour l'instant, on retourne une erreur car le dossier devrait avoir été créé à l'inscription.
-    return { success: false, error: "Dossier de crédit introuvable pour ce NAS." };
+    console.log(`[CreditPush] No report found; creating new credit report for SIN hash: ${profile.sin.substring(0, 10)}...`);
+
+    const { data: created, error: createError } = await supabaseAdmin
+      .from('credit_reports')
+      .insert({
+        full_name: profile.full_name || profile.legal_name || 'Client',
+        ssn: profile.sin,
+        address: profile.address || null, // conserve l’adresse chiffrée si présente
+        phone_number: profile.phone || null,
+        email: profile.email || null,
+        credit_history: [],
+        credit_score: 700 // valeur par défaut raisonnable; ajustée ensuite par le système
+      })
+      .select('id')
+      .single();
+
+    if (createError) {
+      console.error(`[CreditPush] Failed to create credit report:`, createError);
+      throw createError;
+    }
+    reportId = created.id;
   }
+
+  // Fusionner l’historique: éviter les doublons pour cette institution aujourd’hui
+  const previousHistory = existingReport?.credit_history || [];
+  const filteredHistory = previousHistory.filter(entry =>
+    !(entry.date === dateStr && entry.details.includes(`Émetteur: ${institutionName}`))
+  );
+
+  const updatedHistory = [...newHistoryEntries, ...filteredHistory];
+  
+  // Trier par date décroissante
+  updatedHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const { error: updateError } = await supabaseAdmin
+    .from('credit_reports')
+    .update({
+      credit_history: updatedHistory,
+      updated_at: new Date().toISOString(),
+      // Petites mises à jour de cohérence si le dossier existait déjà
+      full_name: profile.full_name || profile.legal_name || 'Client',
+      email: profile.email || null,
+      phone_number: profile.phone || null
+    })
+    .eq('id', reportId);
+
+  if (updateError) {
+    console.error(`[CreditPush] Update failed:`, updateError);
+    throw updateError;
+  }
+
+  console.log(`[CreditPush] Successfully pushed ${newHistoryEntries.length} entries.`);
+  return { success: true };
 
   // Fusionner l'historique : On enlève les anciennes entrées de CETTE institution pour ce jour pour éviter les doublons
   const previousHistory = existingReport.credit_history || [];
