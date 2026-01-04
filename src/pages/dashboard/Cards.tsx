@@ -78,6 +78,11 @@ const Cards = () => {
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link to={`/dashboard/cards/${card.card_id}/suspend`}>
+            {t('accounts.blockAccount')}
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem>{t('cards.actionView')}</DropdownMenuItem>
         <DropdownMenuItem>{t('cards.actionDeactivate')}</DropdownMenuItem>
       </DropdownMenuContent>

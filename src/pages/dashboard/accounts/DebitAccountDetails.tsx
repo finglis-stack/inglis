@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { PhysicalCardEncoder } from '@/components/dashboard/cards/PhysicalCardEncoder';
+import CardSuspensionLog from '@/components/dashboard/cards/CardSuspensionLog';
 
 const DebitAccountDetails = () => {
   const { t } = useTranslation('dashboard');
@@ -313,7 +314,9 @@ const DebitAccountDetails = () => {
               </Link>
             </Button>
             <AddToGoogleWalletButton cardId={account.card_id} />
-            <Button variant="destructive">{t('accounts.blockAccount')}</Button>
+            <Button asChild variant="destructive">
+              <Link to={`/dashboard/cards/${account.cards.id}/suspend`}>{t('accounts.blockAccount')}</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -437,6 +440,7 @@ const DebitAccountDetails = () => {
           </CardContent>
         </Card>
         <DebitAccountAccessLog logs={accessLogs} className="md:col-span-2" />
+        <CardSuspensionLog cardId={account.cards.id} className="md:col-span-2" showUnblock status={account.cards.status} />
       </div>
 
       <Dialog open={isOtpDialogOpen} onOpenChange={setIsOtpDialogOpen}>

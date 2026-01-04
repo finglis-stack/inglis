@@ -52,6 +52,7 @@ import CreateCardStep1 from "@/pages/dashboard/cards/CreateCardStep1";
 import CreateCardStep2 from "@/pages/dashboard/cards/CreateCardStep2";
 import CreateCardStep3SetLimits from "@/pages/dashboard/cards/CreateCardStep3SetLimits";
 import CreateCardStep4 from "@/pages/dashboard/cards/CreateCardStep4";
+import SuspendCard from "@/pages/dashboard/cards/SuspendCard";
 import DebitAccountDetails from "@/pages/dashboard/accounts/DebitAccountDetails";
 import CreditAccountDetails from "@/pages/dashboard/accounts/CreditAccountDetails";
 import StatementDetails from "@/pages/dashboard/accounts/StatementDetails";
@@ -131,6 +132,8 @@ const MainAppRoutes = () => (
       <Route path="applications" element={<Applications />} />
       <Route path="applications/:id" element={<ApplicationDetails />} />
       <Route path="cards" element={<Cards />} />
+      <Route path="cards/:cardId/suspend" element={<SuspendCard />} />
+      <Route path="cards/:cardId/suspend" element={<Suspense fallback={<div className='p-8'>Chargement...</div>}><div><import-placeholder /></div></Suspense>} />
       <Route path="transactions" element={<Transactions />} />
       <Route path="transactions/:id" element={<TransactionDetails />} />
       <Route path="credit-files" element={<CreditFiles />} />

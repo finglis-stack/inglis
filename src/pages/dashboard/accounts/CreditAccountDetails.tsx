@@ -36,6 +36,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PhysicalCardEncoder } from '@/components/dashboard/cards/PhysicalCardEncoder';
+import CardSuspensionLog from '@/components/dashboard/cards/CardSuspensionLog';
 
 const CreditAccountDetails = () => {
   const { t } = useTranslation(['dashboard', 'common']);
@@ -274,9 +275,11 @@ const CreditAccountDetails = () => {
                   <span>{t('accounts.generateStatement')}</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => {}}>
-                  <Ban className="mr-2 h-4 w-4" />
-                  <span className="font-medium">{t('accounts.blockAccount')}</span>
+              <DropdownMenuItem className="text-destructive focus:text-destructive" asChild>
+                  <Link to={`/dashboard/cards/${account.cards.id}/suspend`}>
+                    <Ban className="mr-2 h-4 w-4" />
+                    <span className="font-medium">{t('accounts.blockAccount')}</span>
+                  </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -564,6 +567,8 @@ const CreditAccountDetails = () => {
           <TabsContent value="security" className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
                <CreditAccountAccessLog logs={accessLogs} className="w-full" />
+               
+               <CardSuspensionLog cardId={account.cards.id} className="w-full" showUnblock status={account.cards.status} />
                
                <Card>
                  <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> Paramètres de sécurité</CardTitle></CardHeader>
