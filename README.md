@@ -79,10 +79,12 @@ Nous avons conçu un PAN de 18 caractères alphanumériques validé par Luhn, po
 *   **Sécurité des données :** Les informations sensibles (NAS, Adresses) sont chiffrées dans la base de données. Seuls les employés autorisés avec les bonnes permissions RLS (Row Level Security) peuvent les déchiffrer.
 *   **Gestion du NIP :** Système sécurisé pour permettre aux utilisateurs de définir leur NIP de carte via un lien unique envoyé par courriel (utilisant l'API Resend).
 
-### 🏦 Bureau de Crédit (Simulation)
-J'ai codé un mini-bureau de crédit interne :
-*   **Pulling :** L'institution peut "tirer" le dossier de crédit d'un client (avec son consentement tracé par token) pour voir son score, son historique et ses dettes.
-*   **Reporting :** Le système rapporte automatiquement les balances et l'historique de paiement des comptes de crédit Inglis Dominion au bureau de crédit simulé.
+### 🏦 Bureau de Crédit
+Un bureau de crédit complet intégré côté émetteur :
+*   **Pulling sécurisé avec consentement :** L’institution consulte le dossier du client (score, historique, dettes, limites) via un consentement traçable et à durée limitée, avec chiffrement et contrôle d’accès.
+*   **Reporting continu :** Les comptes de crédit et l’historique de paiements sont synchronisés régulièrement et consolidés, incluant multi-comptes, multi-devises, règles de grâce et intérêts.
+*   **Gouvernance & confidentialité :** Consentement horodaté, jetons temporaires, chiffrement des données sensibles, RLS et journalisation des accès garantissent une visibilité mesurée et sécurisée.
+*   **Expérience unifiée :** Vue claire du profil, chronologie des mises à jour et indicateurs clés pour faciliter les décisions, sans friction pour l’utilisateur.
 
 ### 💰 Gestion des Comptes
 *   **Ledger (Grand Livre) :** Suivi en temps réel des soldes (Solde comptable vs Solde disponible).
