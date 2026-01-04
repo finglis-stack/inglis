@@ -225,22 +225,22 @@ const RiskAnalysisDetails = () => {
   const decisionInfo = getDecisionInfo(assessment.decision);
   const transactionAmount = transaction?.amount ?? assessment.signals?.amount;
   const merchantName = transaction?.merchant_accounts?.name ?? assessment.signals?.merchant_name;
-  const locationDisplay = useMemo(() => {
-    const ipLoc = assessment.signals?.ipAddress; // l’IP courante peut ne pas être re‑géolocalisée ici
+  const locationDisplay = (() => {
+    const ipLoc = assessment?.signals?.ipAddress; // l’IP courante peut ne pas être re‑géolocalisée ici
     return transaction?.ip_address ? (ipLoc ? ipLoc : 'N/A') : 'N/A';
-  }, [transaction, assessment]);
+  })();
 
   // Fusionner le log d’analyse avec l’item géo calculé côté client
   const baseLogRaw = assessment.signals?.analysis_log;
   const baseLog = Array.isArray(baseLogRaw) ? baseLogRaw : [];
-  const combinedLog = useMemo(() => {
+  const combinedLog = (() => {
     if (geoLogItem) {
       // Éviter les doublons s’il existe déjà une entrée "Vélocité géographique"
       const hasGeo = baseLog.some((it) => String(it.step).toLowerCase().includes('vélocité géographique'));
       return hasGeo ? baseLog : [...baseLog, geoLogItem];
     }
     return baseLog;
-  }, [baseLog, geoLogItem]);
+  })();
 
   const riskSignals = combinedLog.filter((log: any) => {
     const impactVal = typeof log.impact === 'number' ? log.impact : parseInt(String(log.impact), 10);
