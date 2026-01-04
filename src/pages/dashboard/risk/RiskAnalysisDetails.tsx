@@ -155,20 +155,38 @@ const RiskAnalysisDetails = () => {
             lastTx = lastGlobal || null;
           }
 
-          if (lastTx?.ip_address) {
-            const [currCoords, lastCoords] = await Promise.all([
-              getIpCoordinates(currentIP),
-              getIpCoordinates(lastTx.ip_address),
-            ]);
+          // Déterminer l'IP précédente: transaction ou dernière IP observée pour le profil
+          let lastIp: string | null = lastTx?.ip_address || null;
+          if (!lastIp) {
+            const { data: lastIpRow } = await supabase
+              .from('ip_addresses')
+              .select('ip_address, last_seen_at')
+              .eq('profile_id', assessmentData.profile_id)
+              .neq('ip_address', currentIP)
+              .order('last_seen_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            lastIp = lastIpRow?.ip_address || null;
+          }
 
-            if (currCoords?.lat && lastCoords?.lat) {
+          const [currCoordsRes, lastCoordsRes] = await Promise.all([
+            currentIP ? getIpCoordinates(currentIP) : null,
+            lastIp ? getIpCoordinates(lastIp) : null,
+          ]);
+
+          const currCoordsVal = currCoordsRes;
+          const lastCoordsVal = lastCoordsRes;
+
+          if (currCoordsVal?.lat) {
+            // Toujours afficher le point actuel; afficher le précédent + la ligne si disponible
+            if (lastCoordsVal?.lat) {
               const distanceKm = haversineDistanceKm(
-                { lat: currCoords.lat, lon: currCoords.lon },
-                { lat: lastCoords.lat, lon: lastCoords.lon }
+                { lat: currCoordsVal.lat, lon: currCoordsVal.lon },
+                { lat: lastCoordsVal.lat, lon: lastCoordsVal.lon }
               );
 
               const tNow = new Date(currentCreatedAt).getTime();
-              const tPrev = new Date(lastTx.created_at).getTime();
+              const tPrev = new Date(lastTx?.created_at || assessmentData.created_at).getTime();
               const timeDiffMinutes = Math.max((tNow - tPrev) / (1000 * 60), 0.0001);
               const timeDiffHours = timeDiffMinutes / 60;
               let speedKmh = distanceKm / (timeDiffHours || 0.0001);
@@ -189,8 +207,8 @@ const RiskAnalysisDetails = () => {
               }
 
               // Stocker les coordonnées pour la carte
-              setCurrCoords({ lat: currCoords.lat, lon: currCoords.lon });
-              setPrevCoords({ lat: lastCoords.lat, lon: lastCoords.lon });
+              setCurrCoords({ lat: currCoordsVal.lat, lon: currCoordsVal.lon });
+              setPrevCoords({ lat: lastCoordsVal.lat, lon: lastCoordsVal.lon });
               setDistanceKmState(distanceKm);
 
               setGeoLogItem({
@@ -198,6 +216,17 @@ const RiskAnalysisDetails = () => {
                 result: resultText,
                 impact,
                 timestamp: 0, // horodatage relatif non pertinent côté client
+              });
+            } else {
+              // Pas d'IP précédente: afficher un seul point sans flèche
+              setCurrCoords({ lat: currCoordsVal.lat, lon: currCoordsVal.lon });
+              setPrevCoords(null);
+              setDistanceKmState(0);
+              setGeoLogItem({
+                step: 'Vélocité géographique',
+                result: `Aucun historique d'IP — point actuel affiché`,
+                impact: '+0',
+                timestamp: 0,
               });
             }
           }
