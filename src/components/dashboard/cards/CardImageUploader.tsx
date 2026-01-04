@@ -34,12 +34,34 @@ export const CardImageUploader: React.FC<CardImageUploaderProps> = ({
     }
 
     setUploading(true);
-    try {
-      const fileExt = file.name.split('.').pop();
-      const filePath = `card-designs/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
+    const fileExt = file.name.split('.').pop();
+    const filePath = `card-designs/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
 
+    const doUpload = async () => {
       const { error: uploadError } = await supabase.storage.from('card-designs').upload(filePath, file, { upsert: true });
-      if (uploadError) throw uploadError;
+      return uploadError;
+    };
+
+    try {
+      const firstError = await doUpload();
+      if (firstError) {
+        // Si le bucket n'existe pas, on le crée via l'Edge Function et on réessaie
+        const msg = String(firstError.message || '').toLowerCase();
+        if (msg.includes('bucket') || msg.includes('not found')) {
+          const { error: ensureErr } = await supabase.functions.invoke('ensure-card-designs-bucket');
+          if (ensureErr) {
+            showError(ensureErr.message || 'Impossible de créer le bucket "card-designs".');
+            return;
+          }
+          const retryError = await doUpload();
+          if (retryError) {
+            showError(retryError.message || 'Erreur lors du téléversement après création du bucket.');
+            return;
+          }
+        } else {
+          throw firstError;
+        }
+      }
 
       const { data: publicUrlData } = supabase.storage.from('card-designs').getPublicUrl(filePath);
       const publicUrl = publicUrlData.publicUrl;
@@ -48,7 +70,7 @@ export const CardImageUploader: React.FC<CardImageUploaderProps> = ({
       onChange(publicUrl);
       showSuccess('Image téléversée avec succès.');
     } catch (err: any) {
-      showError(err?.message || 'Erreur lors du téléversement. Assurez-vous que le bucket "card-designs" existe et est public.');
+      showError(err?.message || 'Erreur lors du téléversement. Vérifiez le bucket "card-designs".');
     } finally {
       setUploading(false);
     }
