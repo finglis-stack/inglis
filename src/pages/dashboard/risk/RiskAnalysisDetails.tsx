@@ -76,7 +76,7 @@ const RiskAnalysisDetails = () => {
 
       if (assessmentError || !assessmentData) {
         showError("Évaluation de risque non trouvée.");
-        navigate(-1);
+        navigate('/dashboard', { replace: true });
         return;
       }
 
@@ -231,7 +231,8 @@ const RiskAnalysisDetails = () => {
   }, [transaction, assessment]);
 
   // Fusionner le log d’analyse avec l’item géo calculé côté client
-  const baseLog = (assessment.signals?.analysis_log as any[]) || [];
+  const baseLogRaw = assessment.signals?.analysis_log;
+  const baseLog = Array.isArray(baseLogRaw) ? baseLogRaw : [];
   const combinedLog = useMemo(() => {
     if (geoLogItem) {
       // Éviter les doublons s’il existe déjà une entrée "Vélocité géographique"
@@ -242,8 +243,8 @@ const RiskAnalysisDetails = () => {
   }, [baseLog, geoLogItem]);
 
   const riskSignals = combinedLog.filter((log: any) => {
-    const impactNum = parseInt(log.impact, 10);
-    return !isNaN(impactNum) && impactNum < 0;
+    const impactVal = typeof log.impact === 'number' ? log.impact : parseInt(String(log.impact), 10);
+    return !isNaN(impactVal) && impactVal < 0;
   });
 
   return (
