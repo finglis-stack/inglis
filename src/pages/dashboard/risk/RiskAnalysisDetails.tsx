@@ -303,7 +303,16 @@ const RiskAnalysisDetails = () => {
                 {renderDetailItem(<CreditCard className="h-5 w-5" />, "Saisie du PAN", `${assessment.signals?.pan_entry_duration_ms ?? 'N/A'} ms`)}
                 {renderDetailItem(<Calendar className="h-5 w-5" />, "Saisie de l'expiration", `${assessment.signals?.expiry_entry_duration_ms ?? 'N/A'} ms`)}
                 {renderDetailItem(<KeyRound className="h-5 w-5" />, "Saisie du NIP", `${assessment.signals?.pin_entry_duration_ms ?? 'N/A'} ms`)}
-                {renderDetailItem(<Timer className="h-5 w-5" />, "Cadence NIP (moy/chiffre)", `${assessment.signals?.pin_inter_digit_avg_ms?.toFixed(0) ?? 'N/A'} ms`)}
+                {renderDetailItem(
+                  <Timer className="h-5 w-5" />,
+                  "Cadence NIP (moy/chiffre)",
+                  (() => {
+                    const v = assessment.signals?.pin_inter_digit_avg_ms;
+                    if (typeof v === 'number') return `${v.toFixed(0)} ms`;
+                    if (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v))) return `${Number(v).toFixed(0)} ms`;
+                    return 'N/A';
+                  })()
+                )}
               </CardContent>
             </Card>
             <Card>
