@@ -114,7 +114,7 @@ const PublicStatementPortal = () => {
                         interestCharged={interestCharged}
                       />
                     }
-                    fileName={`Releve_${data.account?.id}_${data.statement?.id}.pdf`}
+                    fileName={`Releve_${(data.institution?.name || 'Institution').replace(/\s+/g,'_')}_${data.account?.id}_${data.statement?.id}.pdf`}
                   >
                     {({ loading }) => (
                       <Button variant="outline">{loading ? 'Préparation...' : 'Télécharger le PDF du relevé'}</Button>

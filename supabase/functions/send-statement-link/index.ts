@@ -113,7 +113,25 @@ serve(async (req) => {
     if (insertError) throw insertError
 
     // Lien public
-    const publicLink = `https://www.inglisdominion.ca/statement/${token}`
+    const { data: customDomain } = await admin
+      .from('custom_domains')
+      .select('domain_name')
+      .eq('institution_id', institution.id)
+      .eq('status', 'verified')
+      .limit(1)
+      .maybeSingle();
+
+    let baseUrl = '';
+    if (customDomain?.domain_name) {
+      baseUrl = `https://${customDomain.domain_name}`;
+    } else {
+      const originHeader = req.headers.get('Origin') || req.headers.get('origin') || '';
+      if (originHeader) baseUrl = originHeader;
+    }
+    if (!baseUrl) {
+      throw new Error('Aucun domaine public configuré pour les relevés.');
+    }
+    const publicLink = `${baseUrl.replace(/\/$/, '')}/statement/${token}`;
 
     // Email via Resend
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')

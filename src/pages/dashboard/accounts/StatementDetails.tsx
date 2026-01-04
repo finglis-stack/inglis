@@ -171,7 +171,7 @@ const StatementDetails = () => {
     if (!statement) return;
     setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke('https://bsmclnbeywqosuhijhae.supabase.co/functions/v1/send-statement-link', {
+      const { data, error } = await supabase.functions.invoke('send-statement-link', {
         body: { statement_id: statement.id }
       });
       if (error) throw error;
@@ -241,7 +241,7 @@ const StatementDetails = () => {
                   interestCharged={interestCharged}
                 />
               }
-              fileName={`Releve_${accountId}_${statement.id}.pdf`}
+              fileName={`Releve_${(institution?.name || 'Institution').replace(/\s+/g,'_')}_${accountId}_${statement.id}.pdf`}
             >
               {({ loading: pdfLoading }) => (
                 <Button variant="outline">
