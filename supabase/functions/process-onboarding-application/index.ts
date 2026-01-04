@@ -314,8 +314,17 @@ serve(async (req) => {
             approvedLimit = Math.round(approvedLimit * scoreFactor);
           }
         }
+
+        // Arrondi en paliers de 50$ vers le haut
+        approvedLimit = Math.ceil(approvedLimit / 50) * 50;
+
+        // Appliquer les plafonds éventuels
         if (form.soft_credit_limit) approvedLimit = Math.min(approvedLimit, form.soft_credit_limit);
         if (program.max_credit_limit) approvedLimit = Math.min(approvedLimit, program.max_credit_limit);
+
+        // Conserver un multiple de 50$ sans dépasser les plafonds
+        approvedLimit = Math.floor(approvedLimit / 50) * 50;
+
         await logProgress(applicationId, `Limite de crédit calculée: ${approvedLimit}`, "info");
       }
 
