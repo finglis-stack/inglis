@@ -65,14 +65,20 @@ export function validateLuhnAlphanumeric(pan: string): boolean {
 }
 
 export function getFunctionError(error: any, fallbackMessage: string = 'An unknown error occurred.'): string {
+  // Supabase Functions client generic error → utiliser le message de refus générique
+  const message = typeof error?.message === 'string' ? error.message : '';
+  if (message && /Edge Function returned a non-2xx status code/i.test(message)) {
+    return fallbackMessage;
+  }
+
   if (error?.context?.error) {
-    // This handles errors from my edge functions that return { error: '...' }
+    // Erreurs renvoyées par les edge functions { error: '...' }
     return error.context.error;
   }
   if (error instanceof Error) {
-    // This handles generic JS errors and Supabase client errors
+    // Erreurs JS et Supabase client
     return error.message;
   }
-  // Fallback for other cases
+  // Fallback
   return fallbackMessage;
 }
