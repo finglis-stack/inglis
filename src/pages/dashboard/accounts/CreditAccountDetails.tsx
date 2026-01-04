@@ -4,14 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, PlusCircle, RefreshCw, FileText, Loader2, MoreHorizontal, Ban, Shield, User, CreditCard, Calendar, Clock, Lock, Eye, Usb } from 'lucide-react';
+import { ArrowLeft, PlusCircle, RefreshCw, FileText, Loader2, MoreHorizontal, Ban, Shield, User, CreditCard, Calendar, Clock, Eye, Usb } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { showError, showSuccess } from '@/utils/toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import CreditAccountAccessLog from '@/components/dashboard/accounts/CreditAccountAccessLog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { useCreditAccountBalance } from '@/hooks/useCreditAccountBalance';
 import { useTranslation } from 'react-i18next';
 import { cn, getFunctionError } from '@/lib/utils';
@@ -51,14 +49,14 @@ const CreditAccountDetails = () => {
   const [pendingAuthCount, setPendingAuthCount] = useState(0);
   const [isGeneratingStatement, setIsGeneratingStatement] = useState(false);
   
-  // États pour la sécurité du numéro de carte
+  // Sécurité du numéro de carte
   const [isCardNumberVisible, setIsCardNumberVisible] = useState(false);
   const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
   const [otp, setOtp] = useState('');
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   
-  // État pour l'encodage physique
+  // Encodage physique
   const [showPhysicalEncoder, setShowPhysicalEncoder] = useState(false);
 
   const { data: balanceData, isLoading: balanceLoading, refetch: refetchBalance, secondsUntilRefresh } = useCreditAccountBalance(accountId!);
@@ -91,7 +89,7 @@ const CreditAccountDetails = () => {
     }
     setAccount(accountData);
 
-    // Check session storage for previous verification
+    // Révélation précédente en session
     if (sessionStorage.getItem(`card_reveal_${accountData.card_id}`)) {
       setIsCardNumberVisible(true);
     }
@@ -106,14 +104,23 @@ const CreditAccountDetails = () => {
     if (transactionsError) showError(`${t('accounts.transactionError')}: ${transactionsError.message}`);
     else setTransactions(transactionsData);
 
-    const { count } = await supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('credit_account_id', accountId).eq('status', 'authorized');
+    const { count } = await supabase
+      .from('transactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('credit_account_id', accountId)
+      .eq('status', 'authorized');
     setPendingAuthCount(count || 0);
 
-    const { data: statementsData, error: statementsError } = await supabase.from('statements').select('*').eq('credit_account_id', accountId).order('statement_period_end', { ascending: false });
+    const { data: statementsData, error: statementsError } = await supabase
+      .from('statements')
+      .select('*')
+      .eq('credit_account_id', accountId)
+      .order('statement_period_end', { ascending: false });
     if (statementsError) showError(`Erreur relevés: ${statementsError.message}`);
     else setStatements(statementsData);
 
-    const { data: logsData, error: logsError } = await supabase.rpc('get_credit_account_access_logs', { p_account_id: accountId });
+    const { data: logsData, error: logsError } = await supabase
+      .rpc('get_credit_account_access_logs', { p_account_id: accountId });
     if (logsError) showError(`${t('accounts.accessLogError')}: ${logsError.message}`);
     else setAccessLogs(logsData || []);
 
@@ -131,13 +138,18 @@ const CreditAccountDetails = () => {
       return;
     }
     try {
-      const { error } = await supabase.rpc('process_transaction', { p_card_id: account.card_id, p_amount: amount, p_type: 'payment', p_description: t('accounts.paymentReceived') });
+      const { error } = await supabase.rpc('process_transaction', {
+        p_card_id: account.card_id,
+        p_amount: amount,
+        p_type: 'payment',
+        p_description: t('accounts.paymentReceived')
+      });
       if (error) throw error;
       showSuccess(t('accounts.paymentSuccess'));
       setPaymentAmount('');
       refetchBalance();
       fetchAllDetails();
-    } catch (error) {
+    } catch (error: any) {
       showError(`${t('accounts.paymentError')}: ${error.message}`);
     }
   };
@@ -150,7 +162,7 @@ const CreditAccountDetails = () => {
       showSuccess(t('accounts.generateStatementSuccess'));
       await fetchAllDetails();
       await refetchBalance();
-    } catch (error) {
+    } catch (error: any) {
       showError(`${t('accounts.generateStatementError')}: ${error.message}`);
     } finally {
       setIsGeneratingStatement(false);
@@ -159,15 +171,13 @@ const CreditAccountDetails = () => {
 
   const handleRevealCard = async () => {
     if (isCardNumberVisible) return;
-    
     setIsSendingOtp(true);
     try {
       const { error } = await supabase.functions.invoke('send-admin-otp');
       if (error) throw new Error(getFunctionError(error));
-      
       setIsOtpDialogOpen(true);
       showSuccess("Un code de vérification a été envoyé à votre adresse courriel.");
-    } catch (err) {
+    } catch (err: any) {
       showError(err instanceof Error ? err.message : "Erreur lors de l'envoi du code.");
     } finally {
       setIsSendingOtp(false);
@@ -180,16 +190,14 @@ const CreditAccountDetails = () => {
       const { data, error } = await supabase.functions.invoke('verify-admin-otp', {
         body: { code: otp }
       });
-
       if (error) throw new Error(getFunctionError(error));
-
       if (data.success) {
         setIsCardNumberVisible(true);
         sessionStorage.setItem(`card_reveal_${account.card_id}`, 'true');
         setIsOtpDialogOpen(false);
         showSuccess("Numéro de carte déverrouillé pour cette session.");
       }
-    } catch (err) {
+    } catch (err: any) {
       showError(err instanceof Error ? err.message : "Code invalide.");
     } finally {
       setIsVerifyingOtp(false);
@@ -207,7 +215,7 @@ const CreditAccountDetails = () => {
     let totalPaymentsMade = statement.total_payments;
 
     if (statement.id !== account.current_statement_id) {
-      const nextStatement = statements.find(s => s.id === statement.carried_over_to_statement_id);
+      const nextStatement = statements.find((s: any) => s.id === statement.carried_over_to_statement_id);
       if (nextStatement) {
         totalPaymentsMade += nextStatement.total_payments;
       }
@@ -231,38 +239,32 @@ const CreditAccountDetails = () => {
   if (!account) return <div>{t('accounts.accountNotFound')}</div>;
 
   const profileName = account.profiles.type === 'personal' ? account.profiles.full_name : account.profiles.legal_name;
-  
-  // Construction du numéro de carte
   const fullCardNumber = `${account.cards.user_initials} ${account.cards.issuer_id} ${account.cards.random_letters} ${account.cards.unique_identifier} ${account.cards.check_digit}`;
-  const maskedCardNumber = `${account.cards.user_initials} ${account.cards.issuer_id} ${account.cards.random_letters} ****${account.cards.unique_identifier.slice(-3)} ${account.cards.check_digit}`;
-  
   const currentBalance = balanceData?.current_balance || 0;
   const creditLimit = account.credit_limit || 1;
   const utilization = Math.min(100, Math.max(0, (currentBalance / creditLimit) * 100));
 
-  // Formatage de la date d'expiration
   const formatExpiry = (dateStr: string) => {
     if (!dateStr) return "MM/YY";
-    // On suppose le format YYYY-MM-DD de la base de données
     const [year, month] = dateStr.split('-');
     return `${month}/${year.slice(-2)}`;
   };
-
   const cardExpiry = formatExpiry(account.cards.expires_at);
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <Link to="/dashboard/cards" className="flex items-center text-sm text-muted-foreground hover:text-primary transition-colors">
           <ArrowLeft className="mr-2 h-4 w-4" />
           {t('accounts.backToCards')}
         </Link>
         <div className="flex items-center gap-2">
-           <span className="text-sm text-muted-foreground">Dernière mise à jour: {secondsUntilRefresh}s</span>
-           <Button variant="ghost" size="icon" onClick={() => refetchBalance()} disabled={balanceLoading}>
-             <RefreshCw className={`h-4 w-4 ${balanceLoading ? 'animate-spin' : ''}`} />
-           </Button>
-           <DropdownMenu>
+          <span className="text-sm text-muted-foreground">Dernière mise à jour: {secondsUntilRefresh}s</span>
+          <Button variant="ghost" size="icon" onClick={() => refetchBalance()} disabled={balanceLoading}>
+            <RefreshCw className={`h-4 w-4 ${balanceLoading ? 'animate-spin' : ''}`} />
+          </Button>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon">
                 <MoreHorizontal className="h-4 w-4" />
@@ -271,22 +273,24 @@ const CreditAccountDetails = () => {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions administratives</DropdownMenuLabel>
               <DropdownMenuItem onClick={handleGenerateStatement} disabled={isGeneratingStatement}>
-                  {isGeneratingStatement ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
-                  <span>{t('accounts.generateStatement')}</span>
+                {isGeneratingStatement ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+                <span>{t('accounts.generateStatement')}</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive focus:text-destructive" asChild>
-                  <Link to={`/dashboard/cards/${account.cards.id}/suspend`}>
-                    <Ban className="mr-2 h-4 w-4" />
-                    <span className="font-medium">{t('accounts.blockAccount')}</span>
-                  </Link>
+                <Link to={`/dashboard/cards/${account.cards.id}/suspend`}>
+                  <Ban className="mr-2 h-4 w-4" />
+                  <span className="font-medium">{t('accounts.blockAccount')}</span>
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
+      {/* Two-column layout */}
       <div className="flex flex-col lg:flex-row gap-8">
+        {/* Left column: card preview + badges + encoder */}
         <div className="w-full lg:w-96 flex-shrink-0">
           <div className="relative">
             <CardPreview
@@ -302,15 +306,17 @@ const CreditAccountDetails = () => {
               blurCardNumber={!isCardNumberVisible}
             />
           </div>
-        </div>
           <div className="mt-4 flex justify-center gap-2">
-             <Badge variant="outline" className="text-xs">{account.currency}</Badge>
-             <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
+            <Badge variant="outline" className="text-xs">{account.currency}</Badge>
+            <Badge variant={account.status === 'active' ? 'default' : 'destructive'}>{account.status}</Badge>
           </div>
-          
           {isCardNumberVisible && (
-            <div className="mt-4 flex justify-center">
-              <Button variant="outline" className="w-full border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700" onClick={() => setShowPhysicalEncoder(true)}>
+            <div className="mt-4">
+              <Button
+                variant="outline"
+                className="w-full border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700"
+                onClick={() => setShowPhysicalEncoder(true)}
+              >
                 <Usb className="mr-2 h-4 w-4" />
                 Encoder carte physique
               </Button>
@@ -318,6 +324,7 @@ const CreditAccountDetails = () => {
           )}
         </div>
 
+        {/* Right column: account details */}
         <div className="flex-1 space-y-6">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{t('accounts.accountOf', { name: profileName })}</h1>
@@ -345,10 +352,10 @@ const CreditAccountDetails = () => {
             </div>
 
             <div className="space-y-1">
-               <p className="text-sm font-medium text-muted-foreground">{t('accounts.availableCredit')}</p>
-               <p className="text-4xl font-bold text-green-600">
-                  {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: account.currency }).format(balanceData?.available_credit ?? 0)}
-               </p>
+              <p className="text-sm font-medium text-muted-foreground">{t('accounts.availableCredit')}</p>
+              <p className="text-4xl font-bold text-green-600">
+                {new Intl.NumberFormat('fr-CA', { style: 'currency', currency: account.currency }).format(balanceData?.available_credit ?? 0)}
+              </p>
             </div>
           </div>
 
@@ -360,11 +367,11 @@ const CreditAccountDetails = () => {
               </Link>
             </Button>
             <div className="flex items-center gap-2 bg-muted/40 p-1 rounded-lg border">
-              <Input 
-                type="number" 
-                placeholder="0.00" 
-                value={paymentAmount} 
-                onChange={(e) => setPaymentAmount(e.target.value)} 
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(e.target.value)}
                 className="w-32 border-0 focus-visible:ring-0 h-9 bg-transparent"
               />
               <Button onClick={handlePayment} variant="secondary" size="sm">
@@ -375,6 +382,7 @@ const CreditAccountDetails = () => {
         </div>
       </div>
 
+      {/* Tabs */}
       <Tabs defaultValue="transactions" className="w-full mt-8">
         <TabsList className="w-full justify-start border-b bg-transparent p-0 h-auto rounded-none">
           <TabsTrigger value="transactions" className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">
@@ -461,7 +469,15 @@ const CreditAccountDetails = () => {
               </CardHeader>
               <CardContent>
                 <Table>
-                  <TableHeader><TableRow><TableHead>{t('accounts.statementPeriod')}</TableHead><TableHead>{t('accounts.statementDueDate')}</TableHead><TableHead>{t('accounts.statementClosingBalance')}</TableHead><TableHead>{t('accounts.statementMinimumPayment')}</TableHead><TableHead>{t('accounts.statementStatus')}</TableHead></TableRow></TableHeader>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('accounts.statementPeriod')}</TableHead>
+                      <TableHead>{t('accounts.statementDueDate')}</TableHead>
+                      <TableHead>{t('accounts.statementClosingBalance')}</TableHead>
+                      <TableHead>{t('accounts.statementMinimumPayment')}</TableHead>
+                      <TableHead>{t('accounts.statementStatus')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
                     {statements.length > 0 ? statements.map(s => {
                       const status = getStatementStatus(s);
@@ -482,112 +498,127 @@ const CreditAccountDetails = () => {
           </TabsContent>
 
           <TabsContent value="details" className="space-y-6">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <Card>
-                 <CardHeader><CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" /> {t('accounts.associatedCard')}</CardTitle></CardHeader>
-                 <CardContent className="space-y-4">
-                   <div>
-                     <p className="text-sm text-muted-foreground mb-1">Numéro de carte</p>
-                     <div className={cn("font-mono text-lg bg-muted p-2 rounded text-center transition-all", !isCardNumberVisible && "blur-sm select-none")}>
-                        {fullCardNumber}
-                     </div>
-                     {!isCardNumberVisible && (
-                       <div className="mt-2 flex justify-center">
-                         <Button
-                           onClick={handleRevealCard}
-                           className="bg-black/50 hover:bg-black/70 text-white backdrop-blur-md border border-white/20"
-                           disabled={isSendingOtp}
-                         >
-                           {isSendingOtp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
-                           Voir le numéro
-                         </Button>
-                       </div>
-                     )}
-                   </div>
-                   <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Programme</p>
-                        <p className="font-medium">{account.cards.card_programs.program_name}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" /> {t('accounts.associatedCard')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Numéro de carte</p>
+                    <div className={cn("font-mono text-lg bg-muted p-2 rounded text-center transition-all", !isCardNumberVisible && "blur-sm select-none")}>
+                      {fullCardNumber}
+                    </div>
+                    {!isCardNumberVisible && (
+                      <div className="mt-2 flex justify-center">
+                        <Button
+                          onClick={handleRevealCard}
+                          className="bg-black/50 hover:bg-black/70 text-white backdrop-blur-md border border-white/20"
+                          disabled={isSendingOtp}
+                        >
+                          {isSendingOtp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
+                          Voir le numéro
+                        </Button>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Statut</p>
-                        <Badge variant={account.cards.status === 'active' ? 'default' : 'destructive'}>{account.cards.status}</Badge>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Expiration</p>
-                        <p className="font-medium">{cardExpiry}</p>
-                      </div>
-                   </div>
-                 </CardContent>
-               </Card>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Programme</p>
+                      <p className="font-medium">{account.cards.card_programs.program_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Statut</p>
+                      <Badge variant={account.cards.status === 'active' ? 'default' : 'destructive'}>{account.cards.status}</Badge>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Expiration</p>
+                      <p className="font-medium">{cardExpiry}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-               <Card>
-                 <CardHeader><CardTitle className="flex items-center gap-2"><User className="h-5 w-5" /> {t('accounts.accountHolder')}</CardTitle></CardHeader>
-                 <CardContent className="space-y-4">
-                   <div>
-                      <p className="text-sm text-muted-foreground">Nom complet</p>
-                      <p className="font-semibold text-lg">{profileName}</p>
-                   </div>
-                   <div className="grid grid-cols-2 gap-4">
-                     <div>
-                        <p className="text-sm text-muted-foreground">Email</p>
-                        <p>{account.profiles.email || 'N/A'}</p>
-                     </div>
-                     <div>
-                        <p className="text-sm text-muted-foreground">Téléphone</p>
-                        <p>{account.profiles.phone || 'N/A'}</p>
-                     </div>
-                   </div>
-                   <Button variant="outline" className="w-full" asChild>
-                     <Link to={`/dashboard/users/profile/${account.profile_id}`}>{t('accounts.viewFullProfile')}</Link>
-                   </Button>
-                 </CardContent>
-               </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" /> {t('accounts.accountHolder')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nom complet</p>
+                    <p className="font-semibold text-lg">{profileName}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p>{account.profiles.email || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Téléphone</p>
+                      <p>{account.profiles.phone || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link to={`/dashboard/users/profile/${account.profile_id}`}>{t('accounts.viewFullProfile')}</Link>
+                  </Button>
+                </CardContent>
+              </Card>
 
-               <Card className="md:col-span-2">
-                 <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" /> Configuration Financière</CardTitle></CardHeader>
-                 <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                       <p className="text-sm text-muted-foreground">Cycle de facturation</p>
-                       <p className="font-medium">Jour {account.billing_cycle_anchor_day} du mois</p>
-                    </div>
-                    <div>
-                       <p className="text-sm text-muted-foreground">Taux d'intérêt (Achats)</p>
-                       <p className="font-medium">{account.interest_rate}%</p>
-                    </div>
-                    <div>
-                       <p className="text-sm text-muted-foreground">Taux d'intérêt (Avances)</p>
-                       <p className="font-medium">{account.cash_advance_rate}%</p>
-                    </div>
-                 </CardContent>
-               </Card>
-             </div>
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" /> Configuration Financière
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Cycle de facturation</p>
+                    <p className="font-medium">Jour {account.billing_cycle_anchor_day} du mois</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Taux d'intérêt (Achats)</p>
+                    <p className="font-medium">{account.interest_rate}%</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Taux d'intérêt (Avances)</p>
+                    <p className="font-medium">{account.cash_advance_rate}%</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="security" className="space-y-6">
             <div className="grid grid-cols-1 gap-6">
-               <CreditAccountAccessLog logs={accessLogs} className="w-full" />
-               
-               <CardSuspensionLog cardId={account.cards.id} className="w-full" showUnblock status={account.cards.status} />
-               
-               <Card>
-                 <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> Paramètres de sécurité</CardTitle></CardHeader>
-                 <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Le compte est actuellement <span className="font-bold text-foreground">{account.status === 'active' ? 'actif' : 'inactif'}</span> et sécurisé.
-                      Aucune activité suspecte majeure n'a été détectée récemment.
-                    </p>
-                    <Button variant="destructive">
-                      <Ban className="mr-2 h-4 w-4" />
-                      {t('accounts.blockAccount')}
-                    </Button>
-                 </CardContent>
-               </Card>
+              <CreditAccountAccessLog logs={accessLogs} className="w-full" />
+              <CardSuspensionLog cardId={account.cards.id} className="w-full" showUnblock status={account.cards.status} />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5" /> Paramètres de sécurité
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Le compte est actuellement <span className="font-bold text-foreground">{account.status === 'active' ? 'actif' : 'inactif'}</span> et sécurisé.
+                    Aucune activité suspecte majeure n'a été détectée récemment.
+                  </p>
+                  <Button variant="destructive">
+                    <Ban className="mr-2 h-4 w-4" />
+                    {t('accounts.blockAccount')}
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </div>
       </Tabs>
-      
+
+      {/* OTP Dialog */}
       <Dialog open={isOtpDialogOpen} onOpenChange={setIsOtpDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -621,6 +652,7 @@ const CreditAccountDetails = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Physical encoder Dialog */}
       <Dialog open={showPhysicalEncoder} onOpenChange={setShowPhysicalEncoder}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -629,14 +661,14 @@ const CreditAccountDetails = () => {
               Cette action va écrire les informations de la carte sur la puce SLE4442 insérée dans le lecteur.
             </DialogDescription>
           </DialogHeader>
-          <PhysicalCardEncoder 
+          <PhysicalCardEncoder
             cardData={{
               cardNumber: fullCardNumber,
               holderName: profileName,
               expiryDate: cardExpiry
             }}
             onSuccess={() => {
-              // Optionnel : Fermer le dialogue après succès ou laisser l'utilisateur le faire
+              // Optionnel
             }}
           />
         </DialogContent>
