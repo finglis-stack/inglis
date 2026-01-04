@@ -442,6 +442,7 @@ serve(async (req) => {
         .from('transactions')
         .select('id, created_at, ip_address')
         .or(orConditions.join(','))
+        .in('status', ['completed', 'captured'])
         .gte('created_at', tenMinutesAgo)
         .order('created_at', { ascending: false });
 
@@ -466,6 +467,7 @@ serve(async (req) => {
           .from('transactions')
           .select('id, created_at, ip_address')
           .or(orConditions.join(','))
+          .in('status', ['completed', 'captured'])
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
