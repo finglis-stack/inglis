@@ -155,32 +155,6 @@ async function pushDataToCreditBureau(supabaseAdmin, profile, institutionName) {
   console.log(`[CreditPush] Successfully pushed ${newHistoryEntries.length} entries.`);
   return { success: true };
 
-  // Fusionner l'historique : On enlève les anciennes entrées de CETTE institution pour ce jour pour éviter les doublons
-  const previousHistory = existingReport.credit_history || [];
-  const filteredHistory = previousHistory.filter(entry => 
-    !(entry.date === dateStr && entry.details.includes(`Émetteur: ${institutionName}`))
-  );
-
-  const updatedHistory = [...newHistoryEntries, ...filteredHistory];
-  
-  // Trier par date décroissante
-  updatedHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  const { error: updateError } = await supabaseAdmin
-    .from('credit_reports')
-    .update({ 
-      credit_history: updatedHistory,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', existingReport.id);
-
-  if (updateError) {
-    console.error(`[CreditPush] Update failed:`, updateError);
-    throw updateError;
-  }
-
-  console.log(`[CreditPush] Successfully pushed ${newHistoryEntries.length} entries.`);
-  return { success: true };
 }
 
 serve(async (req) => {
