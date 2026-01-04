@@ -51,9 +51,8 @@ const Step6Review = () => {
             (payload) => {
               if (payload.new.status === 'approved' || payload.new.status === 'rejected') {
                 setTimeout(() => { // Délai artificiel pour l'UX
-                  setDecisionData(payload.new);
-                  setProcessingState(payload.new.status);
                   channel.unsubscribe();
+                  navigate('../step-7', { state: { status: payload.new.status, decisionData: payload.new, selectedProgramId: formData.selectedProgramId } });
                   resetData();
                 }, 3000);
               }
@@ -62,12 +61,10 @@ const Step6Review = () => {
           .subscribe();
         
         // Fallback au cas où le temps de traitement est trop long
-        setTimeout(() => {
-          if (processingState === 'processing') {
-            channel.unsubscribe();
-            resetData();
-            navigate('../step-7'); // Page de confirmation générique
-          }
+        const fallbackTimer = setTimeout(() => {
+          channel.unsubscribe();
+          navigate('../step-7', { state: { status: 'pending', selectedProgramId: formData.selectedProgramId } });
+          resetData();
         }, 45000);
 
       } else {

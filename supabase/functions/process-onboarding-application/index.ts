@@ -157,6 +157,74 @@ serve(async (req) => {
     const reasons = [];
     let isApproved = true;
 
+    // Facteurs de décision
+    let occupationFactor = 1.0;
+    let ageFactor = 1.0;
+    let t4Factor = 1.0;
+    let latestCreditScore: number | null = null;
+
+    // Âge
+    let applicantAge: number | null = null;
+    if (profile?.dob) {
+      const birth = new Date(profile.dob);
+      if (!isNaN(birth.getTime())) {
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        applicantAge = age;
+      }
+    }
+
+    if (applicantAge !== null) {
+      await logProgress(applicationId, `Âge du demandeur: ${applicantAge}`, "info");
+      if (applicantAge < 18) {
+        isApproved = false;
+        reasons.push("Âge inférieur au minimum légal (18 ans).");
+        await logProgress(applicationId, "Règle échouée: Âge minimal.", "warning");
+      } else if (applicantAge < 21) {
+        ageFactor = 0.6;
+      } else if (applicantAge < 25) {
+        ageFactor = 0.8;
+      } else if (applicantAge > 75) {
+        ageFactor = 0.7;
+      } else if (applicantAge > 55) {
+        ageFactor = 0.9;
+      }
+    }
+
+    // Projection financière selon statut d'emploi (approximation prudente)
+    switch (application.employment_status) {
+      case 'employed':
+        occupationFactor = 1.0; break;
+      case 'self_employed':
+        occupationFactor = 0.85; break;
+      case 'student':
+        occupationFactor = 0.5; break;
+      case 'retired':
+        occupationFactor = 0.7; break;
+      case 'unemployed':
+        occupationFactor = 0.3; break;
+      default:
+        occupationFactor = 0.9;
+    }
+
+    // Salaire T4 vs salaire annuel
+    const hasT4 = typeof application.t4_income === 'number' && application.t4_income > 0;
+    const hasAnnual = typeof application.annual_income === 'number' && application.annual_income > 0;
+    if (hasT4 && hasAnnual) {
+      if (application.t4_income > application.annual_income * 1.5) {
+        reasons.push("Incohérence: T4 nettement supérieur au revenu annuel déclaré.");
+      } else if (application.t4_income < application.annual_income * 0.5) {
+        reasons.push("Incohérence: T4 nettement inférieur au revenu annuel déclaré.");
+      }
+      t4Factor = application.t4_income >= application.annual_income ? 1.1 : 0.9;
+    } else if (hasT4) {
+      t4Factor = 1.05;
+    } else {
+      t4Factor = 0.95;
+    }
+
     await logProgress(applicationId, "Démarrage du moteur de règles...", "info");
 
     if (form.is_credit_bureau_enabled) {
@@ -188,7 +256,7 @@ serve(async (req) => {
              // Recherche par Blind Index (SHA-256)
              const { data: report, error: reportError } = await supabaseAdmin
                 .from('credit_reports')
-                .select('credit_score')
+                .select('credit_score, credit_history')
                 .eq('ssn', profile.sin)
                 .maybeSingle();
 
@@ -199,6 +267,17 @@ serve(async (req) => {
                 // Optionnel: Rejeter si le dossier est introuvable ? Pour l'instant on laisse passer.
              } else {
                 await logProgress(applicationId, `Score de crédit trouvé: ${report.credit_score}`, "success");
+                latestCreditScore = report.credit_score;
+
+                const history = report.credit_history || {};
+                const late = Number(history.late_payments ?? history.latePayments ?? 0);
+                const utilization = Number(history.utilization ?? 0);
+                const lengthYears = Number(history.length_years ?? history.lengthYears ?? 0);
+
+                if (late > 2 || utilization > 0.8) {
+                  reasons.push("Historique de crédit à risque (retards fréquents ou utilisation élevée).");
+                  await logProgress(applicationId, "Observation: Historique de crédit à risque.", "warning");
+                }
                 
                 if (report.credit_score < program.min_credit_score_requirement) {
                    isApproved = false;
@@ -220,7 +299,16 @@ serve(async (req) => {
         if (form.credit_limit_type === 'fixed') {
           approvedLimit = form.fixed_credit_limit;
         } else {
-          approvedLimit = application.annual_income * 0.10;
+          const baseIncome = hasAnnual ? application.annual_income : (hasT4 ? application.t4_income : 0);
+          const baseLimit = baseIncome ? baseIncome * 0.10 : 0;
+          approvedLimit = Math.round(baseLimit * occupationFactor * ageFactor * t4Factor);
+
+          // Ajustement par score de crédit (si disponible)
+          if (typeof latestCreditScore === 'number') {
+            const s = latestCreditScore;
+            const scoreFactor = s >= 750 ? 1.2 : s >= 700 ? 1.1 : s >= 650 ? 1.0 : s >= 600 ? 0.9 : 0.7;
+            approvedLimit = Math.round(approvedLimit * scoreFactor);
+          }
         }
         if (form.soft_credit_limit) approvedLimit = Math.min(approvedLimit, form.soft_credit_limit);
         if (program.max_credit_limit) approvedLimit = Math.min(approvedLimit, program.max_credit_limit);

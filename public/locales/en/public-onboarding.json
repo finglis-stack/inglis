@@ -110,5 +110,9 @@
   },
   "layout": {
     "application_form": "Application Form"
+  },
+  "decision": {
+    "legal_notice": "Subject to program terms and applicable law. Fees, limits and interest per your agreement.",
+    "activation_info": "You will receive an email to set your PIN and activate your card."
   }
 }

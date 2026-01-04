@@ -110,5 +110,9 @@
   },
   "layout": {
     "application_form": "Formulaire de demande"
+  },
+  "decision": {
+    "legal_notice": "Sous réserve des modalités du programme et de la législation applicable. Frais, limites et intérêts selon votre contrat.",
+    "activation_info": "Vous recevrez un courriel avec un lien pour configurer votre NIP et activer votre carte."
   }
 }
