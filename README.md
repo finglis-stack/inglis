@@ -36,6 +36,44 @@ L'institution peut créer des produits financiers sur mesure :
 *   **Design :** Personnalisation visuelle des cartes (Or Rose, Noir Métal, etc.).
 *   **BIN (Bank Identification Number) :** Gestion des BINs partagés ou dédiés pour le routage des transactions.
 
+#### 🧮 Système de PAN alphanumérique et Luhn (conception maison)
+Nous avons conçu un PAN de 18 caractères alphanumériques validé par Luhn, pour augmenter l’entropie et la robustesse tout en gardant une vérification locale simple et rapide.
+
+- Structure du PAN (18 caractères) :
+  - 2 lettres: initiales de l’utilisateur (extraites du nom, ex. “AB”).
+  - 6 chiffres: BIN (issuer_id) du programme.
+  - 2 lettres: bloc aléatoire “random_letters”.
+  - 7 chiffres: identifiant aléatoire “unique_identifier”.
+  - 1 chiffre: check digit Luhn.
+  - Total: 2 + 6 + 2 + 7 + 1 = 18.
+
+- Luhn alphanumérique (implémentation):
+  - Les lettres A–Z sont converties en chiffres via A→10, B→11, …, Z→35; les chiffres 0–9 restent inchangés.
+  - On applique ensuite Luhn (mod 10) sur la base numérique des 17 premiers caractères; le check digit final est (sum*9) % 10.
+  - Implémentations dans le code:
+    - Génération: convertAlphanumericToNumeric + calculateLuhn dans supabase/functions/create-card et supabase/functions/suspend-card.
+    - Validation front: validateLuhnAlphanumeric dans src/lib/utils.ts vérifie longueur 18, conversion alphanumérique puis Luhn.
+
+- Pourquoi alphanumérique:
+  - Entropie accrue et collisions rarissimes, tout en gardant le BIN pour le routage.
+  - Vérification locale immédiate (Luhn) des erreurs de saisie sans appeler une API.
+  - Lisibilité humaine (initiales visibles) mais masquage naturel du bloc sensible (****XYZ) côté affichage.
+
+- Espace des possibilités par utilisateur (par BIN):
+  - random_letters: 26^2 = 676 combinaisons.
+  - unique_identifier: 10^7 = 10 000 000 combinaisons.
+  - Le check digit est déterminé par la base, donc nombre de PAN distincts ≈ 676 × 10^7 = 6 760 000 000 par utilisateur et par BIN.
+  - Avec plusieurs BINs/programmes, l’espace s’agrège par BIN.
+
+- Unicité et réémission:
+  - À la création et à la réémission, on régénère random_letters et unique_identifier, calcule le check digit et vérifie l’absence de collision sur (issuer_id, random_letters, unique_identifier).
+  - La réémission conserve les initiales et le BIN, met à jour la date d’expiration (+4 ans), et journalise l’action (raison, description, auteur).
+  - L’ancien PAN est rendu inactif (statut “blocked” ou “reissue” selon l’action), assurant traçabilité complète.
+
+- Affichage et masquage:
+  - Le PAN est affiché au client sous forme lisible et masquée: “INITS BIN RL ****XYZ CD”.
+  - Exemple d’email: concaténation des segments avec masquage du cœur numérique, tel qu’implémenté dans create-card (envoi via Resend).
+
 ### 👥 Gestion des Utilisateurs (KYC)
 *   **Profils :** Supporte les particuliers (Personal) et les entreprises (Corporate).
 *   **Sécurité des données :** Les informations sensibles (NAS, Adresses) sont chiffrées dans la base de données. Seuls les employés autorisés avec les bonnes permissions RLS (Row Level Security) peuvent les déchiffrer.
