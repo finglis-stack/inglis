@@ -65,10 +65,6 @@ const convertAlphanumericToNumeric = (alphanumeric) => {
 }
 
 const getEmailHtml = (details) => {
-  const isLight = details.cardColor.includes('fde0cf');
-  const textColor = isLight ? '#1F2937' : '#FFFFFF';
-  const logoFilter = isLight ? '' : 'brightness(0) invert(1)';
-
   return `
   <!DOCTYPE html>
   <html lang="fr">
@@ -77,15 +73,12 @@ const getEmailHtml = (details) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Votre nouvelle carte est prête</title>
     <style>
-      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; margin: 0; padding: 0; background-color: #f8f9fa; }
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }
       .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
       .header { padding: 24px; text-align: center; background-color: #f1f3f5; }
       .content { padding: 32px; }
       .card-wrapper { margin: 24px 0; }
-      .card { border-radius: 12px; padding: 24px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 8px 16px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: space-between; height: 190px; color: ${textColor}; background: ${details.cardColor}; }
-      .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-      .card-details { font-size: 20px; letter-spacing: 2px; margin-top: 16px; }
-      .card-footer { display: flex; justify-content: space-between; font-size: 12px; margin-top: 8px; text-transform: uppercase; }
+      .card-image { width: 100%; border-radius: 12px; display: block; }
       .button { display: inline-block; background-color: #1F2937; color: #ffffff !important; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 24px; }
       .footer { padding: 24px; text-align: center; font-size: 12px; color: #6c757d; background-color: #f1f3f5; }
       .footer a { color: #6c757d; text-decoration: none; }
@@ -100,23 +93,7 @@ const getEmailHtml = (details) => {
         <p>Bonjour ${details.profileName},</p>
         <p>Félicitations ! Votre nouvelle carte du programme <strong>${details.programName}</strong> a été créée avec succès. Voici un aperçu de votre carte :</p>
         <div class="card-wrapper">
-          <div class="card">
-            <div class="card-header">
-              <div>
-                <p style="margin:0; font-size: 12px; opacity: 0.8;">${details.programName}</p>
-                <p style="margin:0; font-size: 16px; font-weight: bold; text-transform: uppercase;">${details.cardType}</p>
-              </div>
-              <img src="https://www.inglisdominion.ca/logo.png" alt="Logo" style="height: 32px; filter: ${logoFilter};">
-            </div>
-            <div>
-              <div style="width: 48px; height: 32px; background-color: #ffca28; border-radius: 6px; margin-bottom: 8px;"></div>
-              <p class="card-details">${details.cardNumber}</p>
-              <div class="card-footer">
-                <span>${details.profileName}</span>
-                <span>${details.expiresAt}</span>
-              </div>
-            </div>
-          </div>
+          <img src="${details.cardImageUrl}" alt="Aperçu de la carte ${details.programName}" class="card-image" />
         </div>
         <p>Pour activer votre carte, la première étape est de configurer votre numéro d'identification personnel (NIP). Veuillez cliquer sur le bouton ci-dessous pour le faire en toute sécurité.</p>
         <a href="${details.pinSetupLink}" class="button" style="color: #ffffff !important;">Configurer mon NIP de carte</a>
@@ -294,9 +271,9 @@ serve(async (req) => {
         if (RESEND_API_KEY) {
           const emailHtml = getEmailHtml({
             profileName: profile.type === 'personal' ? profile.full_name : profile.legal_name,
-            programName: program.program_name, cardType: program.card_type, cardColor: program.card_color,
-            cardNumber: `${user_initials}&nbsp;${issuer_id}&nbsp;${random_letters}&nbsp;****${unique_identifier.slice(-3)}&nbsp;${check_digit}`,
-            expiresAt: expires_at_display, pinSetupLink: `https://www.inglisdominion.ca/set-card-pin/${pinSetupToken}`,
+            programName: program.program_name,
+            cardImageUrl: program.card_image_url || 'https://www.inglisdominion.ca/card-default.jpg',
+            pinSetupLink: `https://www.inglisdominion.ca/set-card-pin/${pinSetupToken}`,
           });
           await fetch('https://api.resend.com/emails', {
             method: 'POST',
