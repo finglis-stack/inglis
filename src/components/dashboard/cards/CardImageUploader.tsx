@@ -34,6 +34,12 @@ export const CardImageUploader: React.FC<CardImageUploaderProps> = ({
     }
 
     setUploading(true);
+    // S'assurer que le bucket existe et est public avant l'upload
+    const { error: bucketEnsureError } = await supabase.functions.invoke('ensure-card-designs-bucket');
+    if (bucketEnsureError) {
+      console.warn('ensure-card-designs-bucket error:', bucketEnsureError.message);
+      // On continue quand même: si le bucket existe déjà, l’upload devrait fonctionner.
+    }
     const fileExt = file.name.split('.').pop();
     const filePath = `card-designs/${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`;
 
