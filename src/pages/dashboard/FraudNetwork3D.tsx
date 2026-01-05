@@ -1,44 +1,22 @@
-import { useEffect, useState, useCallback } from 'react';
+"use client";
+
+import { useCallback, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Network, Search, MapPin, AlertTriangle, Info, User, CreditCard, Smartphone, Globe } from 'lucide-react';
+import { Network, Search, MapPin, Info, CreditCard, Globe, User } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
-import { GoogleMap, useJsApiLoader, Marker, Polyline, InfoWindow } from '@react-google-maps/api';
-import { showError } from '@/utils/toast';
+import { useJsApiLoader, GoogleMap, Marker } from '@react-google-maps/api';
+import Graph3D, { GraphNode, GraphEdge } from '@/components/dashboard/fraud/Graph3D';
+import { CardPreview } from '@/components/dashboard/CardPreview';
+import { isIpSuspicious } from '@/utils/ipGeolocation';
 
-// --- Types ---
+type SearchResult = { type: 'card' | 'profile'; id: string; label: string };
 
-interface NetworkNode {
-  id: string;
-  type: 'profile' | 'card' | 'ip' | 'device';
-  label: string; // Sera masqué ou descriptif
-  realName?: string; // Nom réel (optionnel, pour debug ou admin)
-  lon: number;
-  lat: number;
-  color: string;
-  suspicious: boolean;
-  metadata?: any;
-}
-
-interface NetworkEdge {
-  source: string;
-  target: string;
-  weight: number;
-  suspicious: boolean;
-}
-
-interface GeoLocation {
-  lat: number;
-  lon: number;
-  city?: string;
-  country?: string;
-}
-
-// --- Helpers ---
+type GeoPoint = { lat: number; lon: number; city?: string; country?: string };
 
 const fetchMapsApiKey = async (): Promise<string> => {
   const { data, error } = await supabase.functions.invoke('get-google-maps-key');
@@ -47,488 +25,370 @@ const fetchMapsApiKey = async (): Promise<string> => {
   return data.apiKey;
 };
 
-// Fonction pour masquer les données sensibles
-const maskData = (text: string, type: 'name' | 'card' | 'other'): string => {
-  if (!text) return 'Inconnu';
-  
-  if (type === 'name') {
-    // Jean Dupont -> J*** D*****
-    return text.split(' ').map(part => part[0] + '*'.repeat(Math.max(0, part.length - 1))).join(' ');
+const getNodeColor = (type: GraphNode['type'], suspicious?: boolean) => {
+  if (suspicious) return '#ef4444';
+  switch (type) {
+    case 'profile': return '#3b82f6';
+    case 'card': return '#10b981';
+    case 'ip': return '#f59e0b';
+    case 'device': return '#8b5cf6';
+    default: return '#6b7280';
   }
-  
-  // Note: Le type 'card' n'est plus masqué ici car on va afficher le nom du programme
-  
-  return text;
 };
-
-const containerStyle = {
-  width: '100%',
-  height: '600px',
-  borderRadius: '0.5rem',
-};
-
-const monochromeMapStyle = [
-  {
-    "featureType": "all",
-    "elementType": "all",
-    "stylers": [
-      { "saturation": -100 }
-    ]
-  }
-];
-
-// --- Composant Carte ---
-
-const NetworkMap = ({ apiKey, nodes, edges, center, onNodeClick, selectedNode, onInfoWindowClose }) => {
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'fraud-network-map-script',
-    googleMapsApiKey: apiKey,
-    preventGoogleFontsLoading: true,
-  });
-
-  if (loadError) return <div className="text-red-500 p-4 border border-red-200 rounded">Erreur de chargement de la carte Google Maps. Vérifiez votre clé API.</div>;
-  if (!isLoaded) return <Skeleton className="h-[600px] w-full" />;
-
-  return (
-    <GoogleMap
-      mapContainerStyle={containerStyle}
-      center={center}
-      zoom={8}
-      mapTypeId="satellite"
-      options={{ 
-        mapTypeControl: false, 
-        streetViewControl: false, 
-        fullscreenControl: true, 
-        tilt: 45,
-        styles: monochromeMapStyle 
-      }}
-    >
-      {/* Lignes de connexion (Edges) */}
-      {edges.map((edge, i) => {
-        const source = nodes.find(n => n.id === edge.source);
-        const target = nodes.find(n => n.id === edge.target);
-        if (!source || !target) return null;
-
-        // Logique de mise en évidence :
-        // Si un nœud est sélectionné, on regarde si cette ligne y est connectée.
-        const isConnectedToSelected = selectedNode && (edge.source === selectedNode.id || edge.target === selectedNode.id);
-        
-        // Si rien n'est sélectionné, on affiche tout normalement.
-        // Si quelque chose est sélectionné, on grise ce qui n'est pas connecté.
-        const isDimmed = selectedNode && !isConnectedToSelected;
-
-        let strokeColor = edge.suspicious ? "#ef4444" : "#9ca3af"; // Rouge si suspect, Gris sinon
-        let strokeWeight = edge.suspicious ? 2 : 1;
-        let zIndex = 1;
-
-        if (isConnectedToSelected) {
-          strokeColor = "#3b82f6"; // Bleu vif pour les connexions actives
-          strokeWeight = 4; // Plus épais
-          zIndex = 100; // Au dessus
-        } else if (isDimmed) {
-          strokeColor = "rgba(156, 163, 175, 0.2)"; // Gris très transparent
-        }
-
-        return (
-          <Polyline
-            key={`${edge.source}-${edge.target}-${i}`}
-            path={[{ lat: source.lat, lng: source.lon }, { lat: target.lat, lng: target.lon }]}
-            options={{
-              strokeColor: strokeColor,
-              strokeOpacity: isDimmed ? 0.2 : 0.8,
-              strokeWeight: strokeWeight,
-              geodesic: true,
-              zIndex: zIndex,
-            }}
-          />
-        );
-      })}
-
-      {/* Points (Nodes) */}
-      {nodes.map(node => {
-        const isSelected = selectedNode && selectedNode.id === node.id;
-        // Est-ce que ce nœud est connecté au nœud sélectionné ?
-        const isConnected = selectedNode && edges.some(e => 
-          (e.source === selectedNode.id && e.target === node.id) || 
-          (e.source === node.id && e.target === selectedNode.id)
-        );
-        
-        const isDimmed = selectedNode && !isSelected && !isConnected;
-
-        return (
-          <Marker
-            key={node.id}
-            position={{ lat: node.lat, lng: node.lon }}
-            title={node.label}
-            onClick={() => onNodeClick(node)}
-            icon={{
-              path: google.maps.SymbolPath.CIRCLE,
-              fillColor: node.color,
-              fillOpacity: isDimmed ? 0.3 : 0.9,
-              strokeColor: node.suspicious ? '#ef4444' : (isSelected ? '#ffffff' : node.color),
-              strokeWeight: isSelected ? 3 : 1,
-              scale: isSelected ? 10 : (node.type === 'ip' ? 6 : 8),
-            }}
-          />
-        );
-      })}
-
-      {selectedNode && (
-        <InfoWindow
-          position={{ lat: selectedNode.lat, lng: selectedNode.lon }}
-          onCloseClick={onInfoWindowClose}
-        >
-          <div className="p-2 min-w-[200px]">
-            <div className="flex items-center gap-2 mb-2">
-              {selectedNode.type === 'profile' && <User className="h-4 w-4 text-blue-500" />}
-              {selectedNode.type === 'card' && <CreditCard className="h-4 w-4 text-green-500" />}
-              {selectedNode.type === 'ip' && <Globe className="h-4 w-4 text-orange-500" />}
-              {selectedNode.type === 'device' && <Smartphone className="h-4 w-4 text-purple-500" />}
-              <h4 className="font-bold text-sm">{selectedNode.label}</h4>
-            </div>
-            
-            <div className="text-xs space-y-1 text-gray-600">
-              <p>Type: <span className="font-semibold capitalize">{selectedNode.type}</span></p>
-              {selectedNode.metadata?.city && (
-                <p>Lieu: {selectedNode.metadata.city}, {selectedNode.metadata.country}</p>
-              )}
-              {selectedNode.suspicious && (
-                <p className="text-red-600 font-bold flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" /> Activité Suspecte
-                </p>
-              )}
-            </div>
-          </div>
-        </InfoWindow>
-      )}
-    </GoogleMap>
-  );
-};
-
-// --- Composant Principal ---
 
 const FraudNetwork3D = () => {
-  const [loading, setLoading] = useState(false);
-  const [nodes, setNodes] = useState<NetworkNode[]>([]);
-  const [edges, setEdges] = useState<NetworkEdge[]>([]);
-  const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
-  const [mapCenter, setMapCenter] = useState({ lat: 46.8139, lng: -71.2080 }); // Québec par défaut
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [nodes, setNodes] = useState<GraphNode[]>([]);
+  const [edges, setEdges] = useState<GraphEdge[]>([]);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedCard, setSelectedCard] = useState<any | null>(null);
+  const [ipMarkers, setIpMarkers] = useState<GeoPoint[]>([]);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
 
-  const { data: apiKey, isLoading: isLoadingApiKey, isError: isApiKeyError, error: apiKeyError } = useQuery({
+  const { data: apiKey, isLoading: isLoadingApiKey } = useQuery({
     queryKey: ['google-maps-api-key'],
     queryFn: fetchMapsApiKey,
     staleTime: Infinity,
     gcTime: Infinity,
   });
 
-  const getNodeColor = (type: string, suspicious: boolean) => {
-    if (suspicious) return '#ef4444'; // Rouge si suspect
-    switch (type) {
-      case 'profile': return '#3b82f6'; // Bleu
-      case 'card': return '#10b981'; // Vert
-      case 'ip': return '#f59e0b'; // Orange
-      case 'device': return '#8b5cf6'; // Violet
-      default: return '#6b7280';
-    }
-  };
-
-  const searchNetwork = async () => {
+  const onSearch = async () => {
     if (!searchTerm.trim()) return;
     setSearching(true);
     try {
-      // Recherche Profils
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, full_name, legal_name, type')
+        .select('id, full_name, legal_name')
         .or(`full_name.ilike.%${searchTerm}%,legal_name.ilike.%${searchTerm}%`)
         .limit(5);
 
-      // Recherche Cartes
       const { data: cards } = await supabase
         .from('cards')
-        .select('id, user_initials, unique_identifier, profiles(full_name, legal_name)')
-        .or(`user_initials.ilike.%${searchTerm}%,unique_identifier.ilike.%${searchTerm}%`)
+        .select('id, card_programs(program_name)')
+        .or(`random_letters.ilike.%${searchTerm}%,unique_identifier.ilike.%${searchTerm}%`)
         .limit(5);
 
-      const results = [
-        ...(profiles || []).map(p => ({ 
-          type: 'profile', 
-          id: p.id, 
-          // Masquage ici pour la liste de recherche
-          label: `${maskData(p.full_name || p.legal_name, 'name')} (Profil)` 
-        })),
-        ...(cards || []).map(c => {
-          const profile = Array.isArray(c.profiles) ? c.profiles[0] : c.profiles;
-          const profileName = profile?.full_name || profile?.legal_name;
-          return { 
-            type: 'card', 
-            id: c.id, 
-            // Masquage ici
-            label: `${maskData(c.unique_identifier, 'card')} (${maskData(profileName, 'name')})` 
-          };
-        })
+      const res: SearchResult[] = [
+        ...(profiles || []).map((p: any) => ({ type: 'profile', id: p.id, label: `${p.full_name || p.legal_name} (Profil)` })),
+        ...(cards || []).map((c: any) => {
+          const prog = Array.isArray(c.card_programs) ? c.card_programs[0] : c.card_programs;
+          return { type: 'card', id: c.id, label: `${prog?.program_name || 'Carte'} (${c.id.slice(0, 6)})` };
+        }),
       ];
-      setSearchResults(results);
-    } catch (error) {
-      console.error('Search error:', error);
-      showError("Une erreur est survenue lors de la recherche.");
+      setResults(res);
     } finally {
       setSearching(false);
     }
   };
 
-  const loadNetworkForEntity = useCallback(async (entityId: string, entityType: string) => {
-    setLoading(true);
-    setSearchResults([]);
-    setSelectedNode(null);
-    
-    try {
-      let edgesData: any[] = [];
-      
-      // Si c'est un profil, on cherche d'abord ses cartes pour étendre le réseau
-      if (entityType === 'profile') {
-        const { data: profileCards } = await supabase.from('cards').select('id').eq('profile_id', entityId);
-        
-        // On cherche les liens directs avec le profil (Device -> Profil, IP -> Profil)
-        // ET les liens avec ses cartes
-        let orConditions = [`source_id.eq.${entityId}`, `target_id.eq.${entityId}`];
-        
-        if (profileCards && profileCards.length > 0) {
-          const cardIds = profileCards.map(c => c.id);
-          cardIds.forEach(id => {
-            orConditions.push(`source_id.eq.${id}`);
-            orConditions.push(`target_id.eq.${id}`);
-          });
-        }
-        
-        const { data: edges } = await supabase
-          .from('fraud_network_edges')
-          .select('*')
-          .or(orConditions.join(','))
-          .limit(200); // Limite augmentée pour voir plus de connexions
-          
-        edgesData = edges || [];
-      } else {
-        // Recherche standard pour les autres entités
-        const { data } = await supabase
-          .from('fraud_network_edges')
-          .select('*')
-          .or(`source_id.eq.${entityId},target_id.eq.${entityId}`)
-          .limit(100);
-        edgesData = data || [];
-      }
-
-      if (edgesData.length === 0) {
-        setNodes([]); setEdges([]); setLoading(false); return;
-      }
-
-      // Récupération des IPs pour la géolocalisation
-      const ipAddresses = new Set<string>();
-      edgesData.forEach(edge => {
-        if (edge.source_type === 'ip') ipAddresses.add(edge.source_id);
-        if (edge.target_type === 'ip') ipAddresses.add(edge.target_id);
-      });
-
-      const ipLocations = new Map<string, GeoLocation>();
-      if (ipAddresses.size > 0) {
-        const { data: ipData } = await supabase
-          .from('ip_addresses')
-          .select('ip_address, geolocation, city, country')
-          .in('ip_address', Array.from(ipAddresses));
-          
-        if (ipData) {
-          ipData.forEach(ip => {
-            if (ip.geolocation?.lat && ip.geolocation?.lon) {
-              ipLocations.set(ip.ip_address, { 
-                lat: ip.geolocation.lat, 
-                lon: ip.geolocation.lon, 
-                city: ip.city, 
-                country: ip.country 
-              });
-            }
-          });
-        }
-      }
-
-      // Calcul du centre de la carte
-      const geoNodes: { lat: number; lon: number }[] = Array.from(ipLocations.values());
-      let centerLat = 45.5017, centerLon = -73.5673;
-      if (geoNodes.length > 0) {
-        centerLat = geoNodes.reduce((sum, node) => sum + node.lat, 0) / geoNodes.length;
-        centerLon = geoNodes.reduce((sum, node) => sum + node.lon, 0) / geoNodes.length;
-      }
-      setMapCenter({ lat: centerLat, lng: centerLon });
-
-      // Construction des nœuds
-      const nodeMap = new Map<string, NetworkNode>();
-      const nonGeoNodeInfos: any[] = [];
-      const allNodeInfos = new Map<string, any>();
-
-      // Collecte unique des nœuds
-      edgesData.forEach(edge => {
-        if (!allNodeInfos.has(edge.source_id)) allNodeInfos.set(edge.source_id, { id: edge.source_id, type: edge.source_type, suspicious: edge.is_suspicious });
-        if (!allNodeInfos.has(edge.target_id)) allNodeInfos.set(edge.target_id, { id: edge.target_id, type: edge.target_type, suspicious: edge.is_suspicious });
-      });
-
-      // Récupération des noms réels pour les profils (pour le masquage)
-      const profileIds = Array.from(allNodeInfos.values()).filter(n => n.type === 'profile').map(n => n.id);
-      const profileNames = new Map<string, string>();
-      if (profileIds.length > 0) {
-        const { data: profiles } = await supabase.from('profiles').select('id, full_name, legal_name').in('id', profileIds);
-        profiles?.forEach(p => profileNames.set(p.id, p.full_name || p.legal_name));
-      }
-
-      // Récupération des infos de cartes (Programme + Type)
-      const cardIds = Array.from(allNodeInfos.values()).filter(n => n.type === 'card').map(n => n.id);
-      const cardDetails = new Map<string, string>();
-      if (cardIds.length > 0) {
-        const { data: cards } = await supabase
-          .from('cards')
-          .select('id, card_programs(program_name, card_type)')
-          .in('id', cardIds);
-        
-        cards?.forEach(c => {
-          const progData = c.card_programs;
-          const prog = Array.isArray(progData) ? progData[0] : progData;
-          // Format: "Visa Gold (Crédit)"
-          if (prog) {
-            cardDetails.set(c.id, `${prog.program_name} (${prog.card_type === 'credit' ? 'Crédit' : 'Débit'})`);
-          }
-        });
-      }
-
-      // Création des objets Node
-      allNodeInfos.forEach(nodeInfo => {
-        let label = nodeInfo.id;
-        
-        // Masquage intelligent selon le type
-        if (nodeInfo.type === 'profile') {
-          const realName = profileNames.get(nodeInfo.id) || 'Inconnu';
-          label = maskData(realName, 'name');
-        } else if (nodeInfo.type === 'card') {
-          // Utilisation du nom du programme au lieu de "Carte ****"
-          label = cardDetails.get(nodeInfo.id) || "Carte Inconnue";
-        } else if (nodeInfo.type === 'device') {
-          label = `Device ${nodeInfo.id.substring(0, 6)}...`;
-        } else if (nodeInfo.type === 'ip') {
-          label = nodeInfo.id; // IP reste visible
-        }
-
-        if (nodeInfo.type === 'ip' && ipLocations.has(nodeInfo.id)) {
-          const loc = ipLocations.get(nodeInfo.id)!;
-          nodeMap.set(nodeInfo.id, { 
-            id: nodeInfo.id, 
-            type: nodeInfo.type, 
-            label: label, 
-            lat: loc.lat, 
-            lon: loc.lon, 
-            color: getNodeColor(nodeInfo.type, nodeInfo.suspicious), 
-            suspicious: nodeInfo.suspicious || false, 
-            metadata: loc 
-          });
-        } else {
-          nonGeoNodeInfos.push({ ...nodeInfo, label });
-        }
-      });
-
-      // Placement circulaire pour les nœuds sans géolocalisation (autour du centre)
-      const radius = 0.05; // ~5km
-      const angleStep = nonGeoNodeInfos.length > 0 ? (2 * Math.PI) / nonGeoNodeInfos.length : 0;
-      
-      nonGeoNodeInfos.forEach((nodeInfo, i) => {
-        const angle = i * angleStep;
-        const lat = centerLat + radius * Math.cos(angle);
-        const lon = centerLon + radius * Math.sin(angle);
-        
-        nodeMap.set(nodeInfo.id, { 
-          id: nodeInfo.id, 
-          type: nodeInfo.type, 
-          label: nodeInfo.label, 
-          lat, 
-          lon, 
-          color: getNodeColor(nodeInfo.type, nodeInfo.suspicious), 
-          suspicious: nodeInfo.suspicious || false 
-        });
-      });
-
-      setNodes(Array.from(nodeMap.values()));
-      setEdges(edgesData.map(edge => ({ 
-        source: edge.source_id, 
-        target: edge.target_id, 
-        weight: edge.weight || 1, 
-        suspicious: edge.is_suspicious || false 
-      })));
-
-    } catch (error) {
-      console.error('Error loading network:', error);
-      showError("Une erreur est survenue lors du chargement du réseau de fraude.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const renderMapContent = () => {
-    if (isLoadingApiKey) return <Skeleton className="h-[600px] w-full" />;
-    if (isApiKeyError) return <div className="text-red-500">Erreur de clé API: {apiKeyError.message}</div>;
-    if (!apiKey) return <div className="text-muted-foreground">Clé API non disponible.</div>;
-
-    return (
-      <NetworkMap
-        apiKey={apiKey}
-        nodes={nodes}
-        edges={edges}
-        center={mapCenter}
-        selectedNode={selectedNode}
-        onNodeClick={setSelectedNode}
-        onInfoWindowClose={() => setSelectedNode(null)}
-      />
-    );
+  const computeMapCenter = (points: GeoPoint[]) => {
+    if (!points.length) return null;
+    const lat = points.reduce((s, p) => s + (p.lat || 0), 0) / points.length;
+    const lon = points.reduce((s, p) => s + (p.lon || 0), 0) / points.length;
+    return { lat, lng: lon };
   };
 
-  if (loading && nodes.length === 0) {
-    return <div className="p-8"><Skeleton className="h-screen w-full" /></div>;
-  }
+  const loadForCard = useCallback(async (cardId: string) => {
+    // details de carte + image programme
+    const { data: card } = await supabase
+      .from('cards')
+      .select('id, profile_id, status, card_programs(program_name, card_type, card_image_url), profiles(full_name, legal_name)')
+      .eq('id', cardId)
+      .maybeSingle();
+
+    setSelectedCard(card || null);
+
+    // comptes liés
+    const { data: debitAcc } = await supabase.from('debit_accounts').select('id').eq('card_id', cardId);
+    const { data: creditAcc } = await supabase.from('credit_accounts').select('id').eq('card_id', cardId);
+    const debitIds = (debitAcc || []).map((d: any) => d.id);
+    const creditIds = (creditAcc || []).map((c: any) => c.id);
+
+    // transactions de la carte
+    const { data: txForCard } = await supabase
+      .from('transactions')
+      .select('id, ip_address, debit_account_id, credit_account_id, created_at')
+      .or([
+        debitIds.length ? `debit_account_id.in.(${debitIds.join(',')})` : 'debit_account_id.is.null',
+        creditIds.length ? `credit_account_id.in.(${creditIds.join(',')})` : 'credit_account_id.is.null',
+      ].join(','))
+      .limit(1000);
+
+    const ipList = Array.from(new Set((txForCard || []).map((t: any) => t.ip_address).filter(Boolean)));
+
+    // IPs géolocalisées
+    let allMarkers: GeoPoint[] = [];
+    const { data: ipRows } = ipList.length
+      ? await supabase.from('ip_addresses').select('ip_address, geolocation, city, country, is_vpn, is_proxy, is_tor').in('ip_address', ipList)
+      : { data: [] as any[] };
+
+    const nodesBuf: GraphNode[] = [];
+    const edgesBuf: GraphEdge[] = [];
+
+    // nœud carte + profil
+    const program = Array.isArray(card?.card_programs) ? card?.card_programs[0] : card?.card_programs;
+    const holder = Array.isArray(card?.profiles) ? card?.profiles[0] : card?.profiles;
+    const cardLabel = `${program?.program_name || 'Carte'} (${program?.card_type === 'credit' ? 'Crédit' : 'Débit'})`;
+
+    nodesBuf.push({
+      id: cardId,
+      type: 'card',
+      label: cardLabel,
+      color: getNodeColor('card', false),
+      suspicious: false,
+    });
+
+    if (holder) {
+      nodesBuf.push({
+        id: holder.id,
+        type: 'profile',
+        label: holder.full_name || holder.legal_name || 'Profil',
+        color: getNodeColor('profile', false),
+        suspicious: false,
+      });
+      edgesBuf.push({ source: holder.id, target: cardId, weight: 1 });
+    }
+
+    // IP → carte + IP ↔ autres cartes (IP partagée)
+    for (const ipRow of (ipRows || [])) {
+      const geo = ipRow.geolocation;
+      const point: GeoPoint | null = (geo?.lat && geo?.lon) ? { lat: geo.lat, lon: geo.lon, city: ipRow.city, country: ipRow.country } : null;
+      if (point) allMarkers.push(point);
+
+      // suspicion via flags ou API
+      const ipSuspicious = Boolean(ipRow.is_proxy || ipRow.is_vpn || ipRow.is_tor) || (await isIpSuspicious(ipRow.ip_address));
+
+      nodesBuf.push({
+        id: ipRow.ip_address,
+        type: 'ip',
+        label: `${ipRow.ip_address}${ipSuspicious ? ' (suspect)' : ''}`,
+        color: getNodeColor('ip', ipSuspicious),
+        suspicious: ipSuspicious,
+      });
+      edgesBuf.push({ source: ipRow.ip_address, target: cardId, weight: 1, suspicious: ipSuspicious });
+
+      // autres transactions sur la même IP → récupérer comptes et cartes
+      const { data: txSameIp } = await supabase
+        .from('transactions')
+        .select('debit_account_id, credit_account_id')
+        .eq('ip_address', ipRow.ip_address)
+        .limit(1000);
+
+      const otherDebitIds = Array.from(new Set((txSameIp || []).map((t: any) => t.debit_account_id).filter((id: any) => id && !debitIds.includes(id))));
+      const otherCreditIds = Array.from(new Set((txSameIp || []).map((t: any) => t.credit_account_id).filter((id: any) => id && !creditIds.includes(id))));
+
+      if (otherDebitIds.length) {
+        const { data: otherDebits } = await supabase.from('debit_accounts').select('id, card_id, profile_id').in('id', otherDebitIds);
+        const otherCardIds = Array.from(new Set((otherDebits || []).map((d: any) => d.card_id).filter(Boolean)));
+        if (otherCardIds.length) {
+          const { data: otherCards } = await supabase.from('cards').select('id, profiles(full_name, legal_name), card_programs(program_name, card_type)').in('id', otherCardIds);
+          for (const oc of (otherCards || [])) {
+            const prog = Array.isArray(oc.card_programs) ? oc.card_programs[0] : oc.card_programs;
+            const prof = Array.isArray(oc.profiles) ? oc.profiles[0] : oc.profiles;
+            const label = `${prog?.program_name || 'Carte'} (${prog?.card_type === 'credit' ? 'Crédit' : 'Débit'})`;
+            nodesBuf.push({ id: oc.id, type: 'card', label, color: getNodeColor('card', false) });
+            edgesBuf.push({ source: ipRow.ip_address, target: oc.id, weight: 1, suspicious: ipSuspicious });
+            // relier cartes entre elles par la même IP
+            edgesBuf.push({ source: cardId, target: oc.id, weight: 1, suspicious: ipSuspicious });
+            if (prof) {
+              nodesBuf.push({ id: prof.id, type: 'profile', label: prof.full_name || prof.legal_name || 'Profil', color: getNodeColor('profile', false) });
+              edgesBuf.push({ source: prof.id, target: oc.id, weight: 1 });
+            }
+          }
+        }
+      }
+      if (otherCreditIds.length) {
+        const { data: otherCredits } = await supabase.from('credit_accounts').select('id, card_id, profile_id').in('id', otherCreditIds);
+        const otherCardIds = Array.from(new Set((otherCredits || []).map((c: any) => c.card_id).filter(Boolean)));
+        if (otherCardIds.length) {
+          const { data: otherCards } = await supabase.from('cards').select('id, profiles(full_name, legal_name), card_programs(program_name, card_type)').in('id', otherCardIds);
+          for (const oc of (otherCards || [])) {
+            const prog = Array.isArray(oc.card_programs) ? oc.card_programs[0] : oc.card_programs;
+            const prof = Array.isArray(oc.profiles) ? oc.profiles[0] : oc.profiles;
+            const label = `${prog?.program_name || 'Carte'} (${prog?.card_type === 'credit' ? 'Crédit' : 'Débit'})`;
+            nodesBuf.push({ id: oc.id, type: 'card', label, color: getNodeColor('card', false) });
+            edgesBuf.push({ source: ipRow.ip_address, target: oc.id, weight: 1, suspicious: ipSuspicious });
+            edgesBuf.push({ source: cardId, target: oc.id, weight: 1, suspicious: ipSuspicious });
+            if (prof) {
+              nodesBuf.push({ id: prof.id, type: 'profile', label: prof.full_name || prof.legal_name || 'Profil', color: getNodeColor('profile', false) });
+              edgesBuf.push({ source: prof.id, target: oc.id, weight: 1 });
+            }
+          }
+        }
+      }
+    }
+
+    // de-dup nœuds
+    const nodemap = new Map<string, GraphNode>();
+    nodesBuf.forEach(n => {
+      if (!nodemap.has(n.id)) nodemap.set(n.id, n);
+    });
+    const mergedNodes = Array.from(nodemap.values());
+
+    setNodes(mergedNodes);
+    setEdges(edgesBuf);
+    setSelectedNodeId(cardId);
+
+    setIpMarkers(allMarkers);
+    const center = computeMapCenter(allMarkers);
+    setMapCenter(center);
+  }, []);
+
+  const loadForProfile = useCallback(async (profileId: string) => {
+    // profil + cartes reliées
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id, full_name, legal_name')
+      .eq('id', profileId)
+      .maybeSingle();
+
+    const { data: cards } = await supabase
+      .from('cards')
+      .select('id, card_programs(program_name, card_type)')
+      .eq('profile_id', profileId);
+
+    const nodesBuf: GraphNode[] = [];
+    const edgesBuf: GraphEdge[] = [];
+    nodesBuf.push({
+      id: profileId,
+      type: 'profile',
+      label: profile?.full_name || profile?.legal_name || 'Profil',
+      color: getNodeColor('profile'),
+    });
+
+    for (const c of (cards || [])) {
+      const prog = Array.isArray(c.card_programs) ? c.card_programs[0] : c.card_programs;
+      const label = `${prog?.program_name || 'Carte'} (${prog?.card_type === 'credit' ? 'Crédit' : 'Débit'})`;
+      nodesBuf.push({ id: c.id, type: 'card', label, color: getNodeColor('card') });
+      edgesBuf.push({ source: profileId, target: c.id, weight: 1 });
+    }
+
+    // IPs du profil via table ip_addresses
+    const { data: ipRows } = await supabase
+      .from('ip_addresses')
+      .select('ip_address, geolocation, city, country, is_vpn, is_proxy, is_tor')
+      .eq('profile_id', profileId);
+
+    let allMarkers: GeoPoint[] = [];
+
+    for (const ipRow of (ipRows || [])) {
+      const ipSuspicious = Boolean(ipRow.is_proxy || ipRow.is_vpn || ipRow.is_tor) || (await isIpSuspicious(ipRow.ip_address));
+      nodesBuf.push({
+        id: ipRow.ip_address,
+        type: 'ip',
+        label: `${ipRow.ip_address}${ipSuspicious ? ' (suspect)' : ''}`,
+        color: getNodeColor('ip', ipSuspicious),
+        suspicious: ipSuspicious,
+      });
+      edgesBuf.push({ source: ipRow.ip_address, target: profileId, weight: 1, suspicious: ipSuspicious });
+      if (ipRow.geolocation?.lat && ipRow.geolocation?.lon) {
+        allMarkers.push({ lat: ipRow.geolocation.lat, lon: ipRow.geolocation.lon, city: ipRow.city, country: ipRow.country });
+      }
+
+      // lier cartes entre elles via même IP: transactions à cette IP → comptes → cartes
+      const { data: txSameIp } = await supabase
+        .from('transactions')
+        .select('debit_account_id, credit_account_id')
+        .eq('ip_address', ipRow.ip_address)
+        .limit(1000);
+
+      const debitIds = Array.from(new Set((txSameIp || []).map((t: any) => t.debit_account_id).filter(Boolean)));
+      const creditIds = Array.from(new Set((txSameIp || []).map((t: any) => t.credit_account_id).filter(Boolean)));
+
+      const { data: dAccs } = debitIds.length ? await supabase.from('debit_accounts').select('id, card_id').in('id', debitIds) : { data: [] as any[] };
+      const { data: cAccs } = creditIds.length ? await supabase.from('credit_accounts').select('id, card_id').in('id', creditIds) : { data: [] as any[] };
+      const cardIds = Array.from(new Set([...(dAccs || []).map((a: any) => a.card_id), ...(cAccs || []).map((a: any) => a.card_id)].filter(Boolean)));
+
+      if (cardIds.length) {
+        const { data: ipCards } = await supabase.from('cards').select('id, card_programs(program_name, card_type)').in('id', cardIds);
+        for (const oc of (ipCards || [])) {
+          if (!nodesBuf.find(n => n.id === oc.id)) {
+            const prog = Array.isArray(oc.card_programs) ? oc.card_programs[0] : oc.card_programs;
+            const label = `${prog?.program_name || 'Carte'} (${prog?.card_type === 'credit' ? 'Crédit' : 'Débit'})`;
+            nodesBuf.push({ id: oc.id, type: 'card', label, color: getNodeColor('card') });
+          }
+          // relier IP → carte et carte ↔ autres cartes via IP
+          edgesBuf.push({ source: ipRow.ip_address, target: oc.id, weight: 1, suspicious: ipSuspicious });
+          cards?.forEach((baseCard: any) => {
+            if (baseCard.id !== oc.id) edgesBuf.push({ source: baseCard.id, target: oc.id, weight: 1, suspicious: ipSuspicious });
+          });
+        }
+      }
+    }
+
+    setNodes(nodesBuf);
+    setEdges(edgesBuf);
+    setSelectedNodeId(profileId);
+    setIpMarkers(allMarkers);
+    const center = computeMapCenter(allMarkers);
+    setMapCenter(center);
+    setSelectedCard(null);
+  }, []);
+
+  const onSelectResult = async (r: SearchResult) => {
+    setResults([]);
+    setNodes([]); setEdges([]); setIpMarkers([]);
+    if (r.type === 'card') await loadForCard(r.id);
+    else await loadForProfile(r.id);
+  };
+
+  const mapPanel = useMemo(() => {
+    if (isLoadingApiKey) return <Skeleton className="h-[600px] w-full" />;
+    if (!apiKey) return <div className="text-muted-foreground">Clé Google Maps indisponible.</div>;
+    const center = mapCenter || { lat: 46.8139, lng: -71.2080 };
+    return (
+      <GoogleMap
+        mapContainerStyle={{ width: '100%', height: '600px', borderRadius: '0.5rem' }}
+        center={center}
+        zoom={6}
+        options={{ mapTypeId: 'satellite', tilt: 45, streetViewControl: false, mapTypeControl: true, fullscreenControl: true }}
+      >
+        {ipMarkers.map((p, i) => (
+          <Marker key={`${p.lat}-${p.lon}-${i}`} position={{ lat: p.lat, lng: p.lon }} />
+        ))}
+      </GoogleMap>
+    );
+  }, [apiKey, isLoadingApiKey, ipMarkers, mapCenter]);
+
+  const programImageUrl = useMemo(() => {
+    const prog = Array.isArray(selectedCard?.card_programs) ? selectedCard.card_programs[0] : selectedCard?.card_programs;
+    return prog?.card_image_url || undefined;
+  }, [selectedCard]);
 
   return (
     <div className="p-4 md:p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2"><Network className="h-8 w-8" />Réseau de Fraude</h1>
-          <p className="text-muted-foreground">Visualisation des connexions. Les données sensibles sont masquées.</p>
+          <p className="text-muted-foreground">Visualisation 3D et géolocalisation. Les liens sont calculés à partir des données (IP, comptes, cartes, profils).</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Search className="h-5 w-5" />Rechercher une entité</CardTitle>
-          <CardDescription>Entrez un nom ou un identifiant pour visualiser son réseau.</CardDescription>
+          <CardTitle className="flex items-center gap-2"><Search className="h-5 w-5" />Rechercher</CardTitle>
+          <CardDescription>Recherchez une carte ou un profil, puis le graphe et la carte se construiront automatiquement.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
-            <Input 
-              placeholder="Ex: Jean Dupont..." 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-              onKeyDown={(e) => e.key === 'Enter' && searchNetwork()} 
+            <Input
+              placeholder="Ex: Programme, identifiant, nom..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && onSearch()}
             />
-            <Button onClick={searchNetwork} disabled={searching}>
+            <Button onClick={onSearch} disabled={searching}>
               {searching ? '...' : 'Rechercher'}
             </Button>
           </div>
-          {searchResults.length > 0 && (
+          {results.length > 0 && (
             <div className="mt-4 space-y-2">
               <p className="text-sm font-semibold">Résultats:</p>
-              {searchResults.map((result) => (
-                <Button 
-                  key={result.id} 
-                  variant="outline" 
-                  className="w-full justify-start" 
-                  onClick={() => loadNetworkForEntity(result.id, result.type)}
-                >
-                  <MapPin className="h-4 w-4 mr-2" />{result.label}
+              {results.map((r) => (
+                <Button key={r.id} variant="outline" className="w-full justify-start" onClick={() => onSelectResult(r)}>
+                  <MapPin className="h-4 w-4 mr-2" />{r.label}
                 </Button>
               ))}
             </div>
@@ -536,63 +396,84 @@ const FraudNetwork3D = () => {
         </CardContent>
       </Card>
 
-      {nodes.length > 0 ? (
+      {/* Panneau résumé sélection */}
+      {(selectedCard || selectedNodeId) && (
         <div className="grid lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3">
             <Card>
               <CardHeader>
-                <CardTitle>Carte du Réseau</CardTitle>
-                <CardDescription>
-                  Cliquez sur un point (ex: Profil Bleu) pour mettre en évidence toutes ses connexions.
-                </CardDescription>
+                <CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5" /> Graphe 3D</CardTitle>
+                <CardDescription>Cliquez sur un nœud pour mettre en évidence ses connexions (toile d’araignée).</CardDescription>
               </CardHeader>
-              <CardContent>{renderMapContent()}</CardContent>
+              <CardContent>
+                {nodes.length ? (
+                  <Graph3D
+                    nodes={nodes}
+                    edges={edges}
+                    selectedId={selectedNodeId}
+                    onSelect={setSelectedNodeId}
+                  />
+                ) : (
+                  <Skeleton className="h-[600px] w-full" />
+                )}
+              </CardContent>
             </Card>
           </div>
+
           <div className="space-y-4">
             <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2"><Info className="h-5 w-5" />Légende</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Info className="h-5 w-5" />Légende</CardTitle>
+              </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-blue-500" /><span>Profil</span></div>
                 <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-green-500" /><span>Carte</span></div>
                 <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-orange-500" /><span>Adresse IP</span></div>
                 <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-purple-500" /><span>Dispositif</span></div>
                 <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-full bg-red-500" /><span>Suspect</span></div>
-                <div className="h-px bg-gray-200 my-2" />
-                <div className="flex items-center gap-2"><div className="w-8 h-1 bg-blue-500" /><span>Connexion Active</span></div>
               </CardContent>
             </Card>
-            
-            {selectedNode && (
-              <Card className="border-blue-200 bg-blue-50">
-                <CardHeader>
-                  <CardTitle className="text-blue-800">Nœud Sélectionné</CardTitle>
+
+            {selectedCard && (
+              <Card className="overflow-hidden">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5" />Carte sélectionnée</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  <div><span className="text-sm font-semibold">Label:</span><p className="text-lg font-bold">{selectedNode.label}</p></div>
-                  <div><span className="text-sm font-semibold">Type:</span><Badge className="ml-2 capitalize">{selectedNode.type}</Badge></div>
-                  {selectedNode.metadata?.city && (
-                    <div><span className="text-sm font-semibold">Localisation:</span><p className="text-sm">{selectedNode.metadata.city}, {selectedNode.metadata.country}</p></div>
-                  )}
-                  <div>
-                    <span className="text-sm font-semibold">Connexions directes:</span>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {edges.filter(e => e.source === selectedNode.id || e.target === selectedNode.id).length}
-                    </p>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="rounded-lg overflow-hidden">
+                      <CardPreview
+                        programName={(Array.isArray(selectedCard.card_programs) ? selectedCard.card_programs[0]?.program_name : selectedCard.card_programs?.program_name) || 'Programme'}
+                        cardType={(Array.isArray(selectedCard.card_programs) ? selectedCard.card_programs[0]?.card_type : selectedCard.card_programs?.card_type) || 'credit'}
+                        cardImageUrl={programImageUrl}
+                        imageOnly
+                      />
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        {(Array.isArray(selectedCard.profiles) ? selectedCard.profiles[0]?.full_name : selectedCard.profiles?.full_name) ||
+                         (Array.isArray(selectedCard.profiles) ? selectedCard.profiles[0]?.legal_name : selectedCard.profiles?.legal_name) || 'Profil'}
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             )}
           </div>
         </div>
-      ) : (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <MapPin className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Recherchez une entité pour visualiser son réseau de connexions.</p>
-          </CardContent>
-        </Card>
       )}
+
+      {/* Carte Google Maps des IPs */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5" />Géolocalisation IP</CardTitle>
+          <CardDescription>Affichage des adresses IP liées trouvées dans les transactions et profils.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {mapPanel}
+        </CardContent>
+      </Card>
     </div>
   );
 };
