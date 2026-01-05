@@ -35,7 +35,7 @@ const typeScale: Record<GraphNode['type'], number> = {
   device: 0.35,
 };
 
-function buildAdjacency(edges: GraphEdge) {
+function buildAdjacency(edges: GraphEdge[]) {
   const adj = new Map<string, Set<string>>();
   edges.forEach((e) => {
     if (!adj.has(e.source)) adj.set(e.source, new Set());
@@ -128,12 +128,9 @@ function Lines({ nodes, edges, selectedId }: { nodes: PositionedNode[], edges: G
           <line key={i}>
             <bufferGeometry attach="geometry">
               {/* two vertices: source and target */}
-              <float32BufferAttribute
-                attachObject={['attributes', 'position']}
-                args={[
-                  new Float32Array([a.x, a.y, a.z, b.x, b.y, b.z]),
-                  3
-                ]}
+              <bufferAttribute
+                attach="attributes-position"
+                args={[new Float32Array([a.x, a.y, a.z, b.x, b.y, b.z]), 3]}
               />
             </bufferGeometry>
             <lineBasicMaterial attach="material" color={color} transparent opacity={opacity} linewidth={width as any} />

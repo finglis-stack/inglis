@@ -71,10 +71,10 @@ const FraudNetwork3D = () => {
         .limit(5);
 
       const res: SearchResult[] = [
-        ...(profiles || []).map((p: any) => ({ type: 'profile', id: p.id, label: `${p.full_name || p.legal_name} (Profil)` })),
+        ...(profiles || []).map((p: any) => ({ type: 'profile' as const, id: p.id, label: `${p.full_name || p.legal_name} (Profil)` })),
         ...(cards || []).map((c: any) => {
           const prog = Array.isArray(c.card_programs) ? c.card_programs[0] : c.card_programs;
-          return { type: 'card', id: c.id, label: `${prog?.program_name || 'Carte'} (${c.id.slice(0, 6)})` };
+          return { type: 'card' as const, id: c.id, label: `${prog?.program_name || 'Carte'} (${c.id.slice(0, 6)})` };
         }),
       ];
       setResults(res);
@@ -94,7 +94,7 @@ const FraudNetwork3D = () => {
     // details de carte + image programme
     const { data: card } = await supabase
       .from('cards')
-      .select('id, profile_id, status, card_programs(program_name, card_type, card_image_url), profiles(full_name, legal_name)')
+      .select('id, profile_id, status, card_programs(program_name, card_type, card_image_url), profiles(id, full_name, legal_name)')
       .eq('id', cardId)
       .maybeSingle();
 
@@ -183,7 +183,7 @@ const FraudNetwork3D = () => {
         const { data: otherDebits } = await supabase.from('debit_accounts').select('id, card_id, profile_id').in('id', otherDebitIds);
         const otherCardIds = Array.from(new Set((otherDebits || []).map((d: any) => d.card_id).filter(Boolean)));
         if (otherCardIds.length) {
-          const { data: otherCards } = await supabase.from('cards').select('id, profiles(full_name, legal_name), card_programs(program_name, card_type)').in('id', otherCardIds);
+          const { data: otherCards } = await supabase.from('cards').select('id, profiles(id, full_name, legal_name), card_programs(program_name, card_type)').in('id', otherCardIds);
           for (const oc of (otherCards || [])) {
             const prog = Array.isArray(oc.card_programs) ? oc.card_programs[0] : oc.card_programs;
             const prof = Array.isArray(oc.profiles) ? oc.profiles[0] : oc.profiles;
@@ -203,7 +203,7 @@ const FraudNetwork3D = () => {
         const { data: otherCredits } = await supabase.from('credit_accounts').select('id, card_id, profile_id').in('id', otherCreditIds);
         const otherCardIds = Array.from(new Set((otherCredits || []).map((c: any) => c.card_id).filter(Boolean)));
         if (otherCardIds.length) {
-          const { data: otherCards } = await supabase.from('cards').select('id, profiles(full_name, legal_name), card_programs(program_name, card_type)').in('id', otherCardIds);
+          const { data: otherCards } = await supabase.from('cards').select('id, profiles(id, full_name, legal_name), card_programs(program_name, card_type)').in('id', otherCardIds);
           for (const oc of (otherCards || [])) {
             const prog = Array.isArray(oc.card_programs) ? oc.card_programs[0] : oc.card_programs;
             const prof = Array.isArray(oc.profiles) ? oc.profiles[0] : oc.profiles;
