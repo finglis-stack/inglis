@@ -272,13 +272,40 @@ const RiskAnalysisDetails = () => {
   const baseLogRaw = assessment.signals?.analysis_log;
   const baseLog = Array.isArray(baseLogRaw) ? baseLogRaw : [];
   const combinedLog = (() => {
-    if (geoLogItem) {
-      // Éviter les doublons s’il existe déjà une entrée "Vélocité géographique"
-      const hasGeo = baseLog.some((it) => String(it.step).toLowerCase().includes('vélocité géographique'));
-      // Place l'item de vélocité au début pour être affiché plus haut que la décision finale
-      return hasGeo ? baseLog : [geoLogItem, ...baseLog];
+    const lower = (s: any) => String(s || '').toLowerCase();
+
+    const validationIdx = baseLog.findIndex((it: any) => lower(it.step).includes('validation de la carte'));
+    const deviceIdx = baseLog.findIndex((it: any) => lower(it.step).includes('analyse du dispositif'));
+    const existingGeoIdx = baseLog.findIndex((it: any) => lower(it.step).includes('vélocité géographique'));
+
+    // Déterminer l’élément géo à insérer (existant ou calculé côté client)
+    let geoItem = existingGeoIdx >= 0 ? baseLog[existingGeoIdx] : geoLogItem;
+
+    if (!geoItem) {
+      // Pas d’item géo à placer; rendu inchangé
+      return baseLog;
     }
-    return baseLog;
+
+    // Créer un tableau de travail sans l’entrée géo existante pour éviter les doublons
+    const working = existingGeoIdx >= 0
+      ? [...baseLog.slice(0, existingGeoIdx), ...baseLog.slice(existingGeoIdx + 1)]
+      : [...baseLog];
+
+    // Calculer l’index d’insertion: entre "Validation de la carte" et "Analyse du dispositif" si possible
+    let insertIndex = 0;
+    if (validationIdx >= 0 && deviceIdx >= 0) {
+      insertIndex = deviceIdx > validationIdx ? deviceIdx : (validationIdx + 1);
+    } else if (validationIdx >= 0) {
+      insertIndex = validationIdx + 1;
+    } else if (deviceIdx >= 0) {
+      insertIndex = deviceIdx;
+    } else {
+      // Fallback: proche du début pour visibilité
+      insertIndex = Math.min(1, working.length);
+    }
+
+    working.splice(insertIndex, 0, geoItem);
+    return working;
   })();
 
   const riskSignals = combinedLog.filter((log: any) => {
