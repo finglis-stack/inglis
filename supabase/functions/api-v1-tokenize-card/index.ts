@@ -30,7 +30,7 @@ serve(async (req) => {
     // 1. Find the card based on its number components
     const { data: card, error: cardError } = await supabaseAdmin
       .from('cards')
-      .select('id, pin, expires_at')
+      .select('id, pin, expires_at, card_program_id, user_initials, issuer_id, random_letters, unique_identifier, check_digit')
       .match({
         user_initials: card_number.initials,
         issuer_id: card_number.issuer_id,
@@ -92,8 +92,27 @@ serve(async (req) => {
       throw tokenError;
     }
 
-    // 6. Return only the token
-    return new Response(JSON.stringify({ token: token }), {
+    // 6. Fetch display metadata from the card program
+    const { data: program, error: programError } = await supabaseAdmin
+      .from('card_programs')
+      .select('program_name, card_type, card_image_url')
+      .eq('id', card.card_program_id)
+      .single();
+
+    // Build masked number for display
+    const masked_number = `${card.user_initials} ${card.issuer_id} ${card.random_letters} ****${String(card.unique_identifier).slice(-3)} ${card.check_digit}`;
+
+    // 7. Return token plus minimal display info for the mobile wallet
+    return new Response(JSON.stringify({
+      token: token,
+      display: {
+        program_name: program?.program_name || 'Carte',
+        card_type: program?.card_type || 'debit',
+        card_image_url: program?.card_image_url || null,
+        masked_number,
+        expiry_display: expiry_date
+      }
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
