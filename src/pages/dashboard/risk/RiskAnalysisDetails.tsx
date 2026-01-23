@@ -196,10 +196,10 @@ const RiskAnalysisDetails = () => {
 
               if (distanceKm > geoPrefs.distance_min_km) {
                 if (speedKmh > geoPrefs.impossible_speed_kmh) {
-                  impact = '-50';
+                  impact = '-80';
                   resultText = `Déplacement impossible (${Math.round(speedKmh)} km/h, ${Math.round(distanceKm)} km en ${Math.round(timeDiffMinutes)} min)`;
                 } else if (speedKmh > geoPrefs.very_fast_speed_kmh) {
-                  impact = '-25';
+                  impact = '-40';
                   resultText = `Déplacement très rapide (${Math.round(speedKmh)} km/h, ${Math.round(distanceKm)} km)`;
                 }
               } else {

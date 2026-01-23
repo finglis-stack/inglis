@@ -109,7 +109,7 @@ serve(async (req) => {
       amount: { low_value_threshold: 25, high_value_threshold: 10000, absolute_max: 1000000, high_value_no_baseline_penalty: 30, below_mean_bonus: 5 },
       zscore: { mild: 1.5, high: 2.5, extreme: 3.5, weights: { mild: 20, high: 40, extreme: 80 } },
       geo: { impossible_speed_kmh: 900, very_fast_speed_kmh: 500, distance_min_km: 1 },
-      velocity: { burst_window_minutes: 10, penalty_3: 20, penalty_5: 40 },
+      velocity: { burst_window_minutes: 10, penalty_3: 40, penalty_5: 80 },
       decision: { block_threshold: 40 },
       device: { blocked_penalty: 100, trusted_bonus: 15, recognized_bonus: 10, new_device_penalty: 15, low_confidence_threshold: 0.5, low_confidence_penalty: 10 },
       behavioral: { bot_penalty: 60, no_mouse_penalty: 25, short_time_ms: 3000, short_time_penalty: 20, suspicious_pattern_weight: 5, pan_fast_ms: 1000, pan_fast_penalty: 15, paste_penalty: 20 },
@@ -505,19 +505,19 @@ serve(async (req) => {
                 const speedKmh = distanceKm / timeDiffHours;
 
                 if (speedKmh > cfg.geo.impossible_speed_kmh) {
-                  riskScore -= 50;
+                  riskScore -= 80;
                   analysisLog.push({
                     step: "Vélocité géographique",
                     result: `Déplacement impossible (${Math.round(speedKmh)} km/h, ${Math.round(distanceKm)} km en ${Math.round(timeDiffMinutes)} min)`,
-                    impact: "-50",
+                    impact: "-80",
                     timestamp: Date.now() - startTime
                   });
                 } else if (speedKmh > cfg.geo.very_fast_speed_kmh) {
-                  riskScore -= 25;
+                  riskScore -= 40;
                   analysisLog.push({
                     step: "Vélocité géographique",
                     result: `Déplacement très rapide (${Math.round(speedKmh)} km/h, ${Math.round(distanceKm)} km)`,
-                    impact: "-25",
+                    impact: "-40",
                     timestamp: Date.now() - startTime
                   });
                 }
