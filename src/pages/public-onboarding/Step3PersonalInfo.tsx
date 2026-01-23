@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from 'react-i18next';
-import { AddressAutocomplete } from '@/components/public-onboarding/AddressAutocomplete';
+import { AddressAutocompleteOSM } from '@/components/public-onboarding/AddressAutocompleteOSM';
 import { showError } from '@/utils/toast';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -89,7 +89,7 @@ const Step3PersonalInfo = () => {
         </div>
         <div className="grid gap-2">
           <Label>{t('personal_info.address')}</Label>
-          <AddressAutocomplete initialAddress={pageData.address} onAddressSelect={handleAddressSelect} />
+          <AddressAutocompleteOSM initialAddress={pageData.address} onAddressSelect={handleAddressSelect} />
         </div>
         
         <Card className="bg-gray-50/50 border-dashed">

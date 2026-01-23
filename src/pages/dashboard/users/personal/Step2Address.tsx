@@ -4,7 +4,7 @@ import { useNewUser } from '@/context/NewUserContext';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useTranslation } from 'react-i18next';
-import { AddressAutocomplete } from '@/components/public-onboarding/AddressAutocomplete';
+import { AddressAutocompleteOSM } from '@/components/public-onboarding/AddressAutocompleteOSM';
 import { showError } from '@/utils/toast';
 
 const Step2Address = () => {
@@ -33,9 +33,9 @@ const Step2Address = () => {
         <div className="grid gap-2">
           <Label>{t('personalSteps.address')}</Label>
           <div className="border rounded-md p-1 bg-background">
-            <AddressAutocomplete 
-              initialAddress={address} 
-              onAddressSelect={handleAddressSelect} 
+            <AddressAutocompleteOSM
+              initialAddress={address}
+              onAddressSelect={handleAddressSelect}
             />
           </div>
           <p className="text-xs text-muted-foreground">Utilisez la barre de recherche pour trouver l'adresse normalisée.</p>
