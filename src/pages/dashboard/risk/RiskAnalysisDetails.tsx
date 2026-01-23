@@ -275,7 +275,8 @@ const RiskAnalysisDetails = () => {
     if (geoLogItem) {
       // Éviter les doublons s’il existe déjà une entrée "Vélocité géographique"
       const hasGeo = baseLog.some((it) => String(it.step).toLowerCase().includes('vélocité géographique'));
-      return hasGeo ? baseLog : [...baseLog, geoLogItem];
+      // Place l'item de vélocité au début pour être affiché plus haut que la décision finale
+      return hasGeo ? baseLog : [geoLogItem, ...baseLog];
     }
     return baseLog;
   })();
