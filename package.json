@@ -12,6 +12,10 @@
     "start": "vite preview --port $PORT --host"
   },
   "dependencies": {
+    "@capacitor/android": "7.4.4",
+    "@capacitor/cli": "7.4.4",
+    "@capacitor/core": "7.4.4",
+    "@capacitor/ios": "7.4.4",
     "@fingerprintjs/fingerprintjs": "^5.0.1",
     "@hookform/resolvers": "^3.9.0",
     "@openglobus/og": "^0.27.20",
