@@ -45,15 +45,24 @@ export const MobileWalletProvider = ({ children }: { children: React.ReactNode }
     setCards((prev) => {
       // Avoid duplicates by token
       if (prev.some((c) => c.token === card.token)) return prev;
-      return [card, ...prev];
+      const next = [card, ...prev];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      return next;
     });
   };
 
   const removeCard = (token: string) => {
-    setCards((prev) => prev.filter((c) => c.token !== token));
+    setCards((prev) => {
+      const next = prev.filter((c) => c.token !== token);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
   };
 
-  const clear = () => setCards([]);
+  const clear = () => {
+    setCards([]);
+    localStorage.removeItem(STORAGE_KEY);
+  };
 
   const value = useMemo(() => ({ cards, addCard, removeCard, clear }), [cards]);
 
