@@ -160,6 +160,12 @@ const AddCardInner = () => {
       showSuccess('Carte ajoutée');
       setPinOpen(false);
       navigate('/mobile/wallet', { replace: true });
+    } catch (err) {
+      if (err instanceof Error) {
+        showError(err.message);
+      } else {
+        showError(t('error'));
+      }
     } finally {
       setTokenizing(false);
     }
