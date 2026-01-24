@@ -233,7 +233,7 @@ const AppContent = () => {
   };
 
   // En mode natif (Capacitor), on affiche l'app mobile dédiée (onboarding + wallet)
-  const isNative = typeof Capacitor.isNativePlatform === 'function' ? Capacitor.isNativePlatform() : false;
+  const isNative = (typeof Capacitor.getPlatform === 'function') ? (Capacitor.getPlatform() !== 'web') : false;
   if (isNative) {
     return <MobileAppRoutes />;
   }
@@ -262,7 +262,7 @@ const AppContent = () => {
 
 const App = () => {
   // Masque les toasts dans l'app native pour éviter les superpositions avec la barre de statut/notifications
-  const isNative = typeof Capacitor.isNativePlatform === 'function' ? Capacitor.isNativePlatform() : false;
+  const isNative = (typeof Capacitor.getPlatform === 'function') ? (Capacitor.getPlatform() !== 'web') : false;
 
   return (
     <QueryClientProvider client={queryClient}>
