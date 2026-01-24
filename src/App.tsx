@@ -108,6 +108,7 @@ import PaymentSuccess from "@/pages/q12x/PaymentSuccess";
 import PublicStatementPortal from "@/pages/PublicStatementPortal";
 import MobileWallet from "@/pages/mobile/MobileWallet";
 import MobileOnboarding from "@/pages/mobile/Onboarding";
+import MobileAddCard from "@/pages/mobile/AddCard";
 
 const queryClient = new QueryClient();
 
@@ -193,6 +194,7 @@ const MobileAppRoutes = () => (
   <Routes>
     <Route path="/" element={<MobileOnboarding />} />
     <Route path="/mobile/wallet" element={<MobileWallet />} />
+    <Route path="/mobile/add-card" element={<MobileAddCard />} />
     <Route path="*" element={<MobileOnboarding />} />
   </Routes>
 );
