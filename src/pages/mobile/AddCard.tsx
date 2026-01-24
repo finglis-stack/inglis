@@ -7,7 +7,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
 import { Loader2, CreditCard } from 'lucide-react';
-import { useMobileWallet } from '@/context/MobileWalletContext';
+import { MobileWalletProvider, useMobileWallet } from '@/context/MobileWalletContext';
 import { showError, showSuccess } from '@/utils/toast';
 import { getFunctionError } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
@@ -293,4 +293,10 @@ const AddCardPage = () => {
   );
 };
 
-export default AddCardPage;
+const MobileAddCard = () => (
+  <MobileWalletProvider>
+    <AddCardPage />
+  </MobileWalletProvider>
+);
+
+export default MobileAddCard;
