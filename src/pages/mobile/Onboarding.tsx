@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import MobileLayout from '@/components/mobile/MobileLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -16,22 +16,19 @@ const Slide = ({
   desc: string;
 }) => {
   return (
-    <Card className="overflow-hidden border-0 shadow-none bg-transparent">
-      <CardContent className="p-0">
-        <div className="w-full aspect-[9/16] rounded-2xl overflow-hidden bg-muted">
-          <img
-            src={src}
-            alt=""
-            className="w-full h-full object-cover"
-            loading="eager"
-          />
-        </div>
-        <div className="mt-4 space-y-2 px-1">
-          <h2 className="text-xl font-semibold">{title}</h2>
-          <p className="text-sm text-muted-foreground">{desc}</p>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden">
+      <img
+        src={src}
+        alt=""
+        className="w-full h-full object-cover"
+        loading="eager"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
+        <h2 className="text-xl font-light tracking-wide text-white">{title}</h2>
+        <p className="text-sm text-white/80">{desc}</p>
+      </div>
+    </div>
   );
 };
 
@@ -55,7 +52,7 @@ const MobileOnboarding = () => {
         title: t('mobile.onboarding.title2', 'Simple, élégant et bilingue'),
         desc: t(
           'mobile.onboarding.desc2',
-          'Interface clair/sombre selon le thème de l’OS, en français ou anglais.'
+          'Thème sombre cohérent, en français ou anglais.'
         ),
       },
       {
@@ -91,41 +88,33 @@ const MobileOnboarding = () => {
   };
 
   return (
-    <div
-      className="min-h-screen bg-background text-foreground flex flex-col"
-      style={{
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
+    <MobileLayout
+      title="Inglis Dominion"
+      headerRight={
+        <Button variant="ghost" size="sm" onClick={finish} className="rounded-xl bg-white/5 text-white hover:bg-white/10">
+          {t('skip', 'Passer')}
+        </Button>
+      }
     >
-      <div className="max-w-md mx-auto w-full px-4 py-4 flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col gap-6">
+        <Slide {...slides[index]} />
+
         <div className="flex items-center justify-between">
-          <div className="text-lg font-semibold">Inglis Dominion</div>
-          <Button variant="ghost" size="sm" onClick={finish}>
-            {t('skip', 'Passer')}
-          </Button>
-        </div>
-
-        <div className="mt-4 flex-1">
-          <Slide {...slides[index]} />
-        </div>
-
-        <div className="mt-6 flex items-center justify-between">
           <div className="flex gap-2">
             {slides.map((_, i) => (
               <span
                 key={i}
-                className={`h-2 w-2 rounded-full transition-colors ${i === index ? 'bg-primary' : 'bg-muted'}`}
+                className={`h-1 w-6 rounded-full transition-all ${i === index ? 'bg-white/80' : 'bg-white/20'}`}
               />
             ))}
           </div>
 
-          <Button onClick={onNext}>
+          <Button onClick={onNext} className="rounded-xl bg-white/10 text-white hover:bg-white/20 px-5 h-10">
             {index < slides.length - 1 ? t('next', 'Suivant') : t('start', 'Commencer')}
           </Button>
         </div>
       </div>
-    </div>
+    </MobileLayout>
   );
 };
 

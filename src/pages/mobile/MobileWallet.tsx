@@ -1,58 +1,40 @@
-import React, { useEffect } from 'react';
-import { MobileWalletProvider, useMobileWallet } from '@/context/MobileWalletContext';
-import { Card, CardContent } from '@/components/ui/card';
+import React from 'react';
+import MobileLayout from '@/components/mobile/MobileLayout';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
-import CardPreview from '@/components/dashboard/CardPreview';
-import { Trash2, Nfc, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { MobileWalletProvider, useMobileWallet } from '@/context/MobileWalletContext';
+import MobileCard from '@/components/mobile/MobileCard';
 
 const WalletContent = () => {
   const { t } = useTranslation('common');
   const { cards, removeCard } = useMobileWallet();
   const navigate = useNavigate();
 
-  // Auto-match OS theme (dark / light)
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const apply = () => {
-      if (mq.matches) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    };
-    apply();
-    mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
-  }, []);
-
   return (
-    <div
-      className="min-h-screen bg-background text-foreground"
-      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+    <MobileLayout
+      title="Portefeuille"
+      headerRight={
+        <Button
+          onClick={() => navigate('/mobile/add-card')}
+          size="sm"
+          className="rounded-xl bg-white/10 text-white hover:bg-white/20 px-4 h-9"
+        >
+          Ajouter
+        </Button>
+      }
     >
-      <div className="max-w-md mx-auto p-4 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold">Inglis Dominion Wallet</h1>
-          <Button onClick={() => navigate('/mobile/add-card')} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter une carte
-          </Button>
-        </div>
-
+      <div className="space-y-6">
         {cards.length === 0 && (
-          <Card className="border-dashed">
-            <CardContent className="p-6 text-center space-y-3">
-              <div className="text-sm text-muted-foreground">
-                Aucune carte enregistrée pour le moment.
-              </div>
-              <Button onClick={() => navigate('/mobile/add-card')} className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter votre première carte
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="rounded-2xl border border-white/10 p-6 text-center bg-white/5 text-white/80">
+            <div className="text-sm">Aucune carte enregistrée pour le moment.</div>
+            <Button
+              onClick={() => navigate('/mobile/add-card')}
+              className="mt-4 w-full rounded-xl bg-white/10 text-white hover:bg-white/20 h-10"
+            >
+              Ajouter votre première carte
+            </Button>
+          </div>
         )}
 
         {cards.length > 0 && (
@@ -61,16 +43,11 @@ const WalletContent = () => {
               <div className="flex gap-4">
                 {cards.map((c) => (
                   <div key={c.token} className="min-w-[280px]">
-                    <CardPreview
+                    <MobileCard
                       programName={c.programName || 'Inglis Dominion'}
                       cardType={(c.cardType as 'credit' | 'debit') || 'debit'}
-                      cardImageUrl={c.cardImageUrl || undefined}
-                      imageOnly={!!c.cardImageUrl}
-                      overlayCardNumber={!!c.cardImageUrl}
-                      blurCardNumber={false}
-                      showCardNumber
-                      cardNumber={c.maskedNumber}
-                      expiryDate={c.expiryDisplay}
+                      maskedNumber={c.maskedNumber}
+                      expiryDisplay={c.expiryDisplay}
                     />
                   </div>
                 ))}
@@ -79,34 +56,25 @@ const WalletContent = () => {
 
             <div className="space-y-4">
               {cards.map((c) => (
-                <Card key={c.token}>
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm text-muted-foreground">
-                        {c.programName || 'Carte'} · {c.cardType === 'credit' ? 'Crédit' : 'Débit'}
-                      </div>
-                      <Button variant="outline" size="sm" disabled>
-                        <Nfc className="h-4 w-4 mr-2" />
-                        NFC (bientôt)
-                      </Button>
+                <div key={c.token} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="flex items-center justify-between text-sm text-white/70">
+                    <div>
+                      {c.programName || 'Carte'} · {c.cardType === 'credit' ? 'Crédit' : 'Débit'}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm">
-                        {c.maskedNumber} · {c.expiryDisplay}
-                      </div>
-                      <Button variant="destructive" size="sm" onClick={() => removeCard(c.token)}>
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        {t('cancel')}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <button
+                      className="text-red-300 hover:text-red-200 underline-offset-2 hover:underline"
+                      onClick={() => removeCard(c.token)}
+                    >
+                      {t('cancel', 'Supprimer')}
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           </>
         )}
       </div>
-    </div>
+    </MobileLayout>
   );
 };
 
