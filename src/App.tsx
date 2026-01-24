@@ -229,8 +229,17 @@ const DomainRouter = ({ children }) => {
 
 const isNativeEnv = () => {
   try {
+    // Détection fiable de l'environnement Capacitor (natif)
     const platform = typeof Capacitor.getPlatform === 'function' ? Capacitor.getPlatform() : 'web';
     if (platform === 'ios' || platform === 'android') return true;
+
+    // Les apps Capacitor chargent via le schéma capacitor://localhost
+    const protocol = window.location.protocol;
+    if (protocol === 'capacitor:') return true;
+
+    const origin = window.location.origin || '';
+    if (origin.startsWith('capacitor://')) return true;
+
     // Fallback: présence de l'objet global Capacitor (dans les webviews natives)
     if (typeof (window as any).Capacitor !== 'undefined') return true;
   } catch {
