@@ -53,7 +53,7 @@ export const CardPreview = ({
     <div
       className={cn(
         useImage
-          ? "relative w-full aspect-[1.586] overflow-hidden"
+          ? "relative w-full overflow-hidden"
           : "relative rounded-2xl p-4 shadow-xl ring-1 ring-black/10 dark:ring-white/10 flex flex-col justify-between w-full aspect-[1.586] text-white overflow-hidden transition-transform duration-300 will-change-transform hover:scale-[1.01]"
       )}
       style={!useImage ? { background: cardColor } : undefined}
