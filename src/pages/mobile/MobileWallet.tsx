@@ -27,7 +27,10 @@ const WalletContent = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div
+      className="min-h-screen bg-background text-foreground"
+      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       <div className="max-w-md mx-auto p-4 space-y-6">
         <Card>
           <CardHeader>

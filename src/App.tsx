@@ -8,6 +8,7 @@ import { lazy, Suspense } from 'react';
 import { BrandingProvider } from '@/context/BrandingContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 
 // --- App Chooser & Routers ---
 import LocalhostChooser from '@/pages/LocalhostChooser';
@@ -106,6 +107,7 @@ import PublicCheckoutPage from "@/pages/q12x/PublicCheckoutPage";
 import PaymentSuccess from "@/pages/q12x/PaymentSuccess";
 import PublicStatementPortal from "@/pages/PublicStatementPortal";
 import MobileWallet from "@/pages/mobile/MobileWallet";
+import MobileOnboarding from "@/pages/mobile/Onboarding";
 
 const queryClient = new QueryClient();
 
@@ -186,6 +188,15 @@ const Q12xAppRoutes = () => (
   </Routes>
 );
 
+// Routes dédiées à l'app mobile (Capacitor)
+const MobileAppRoutes = () => (
+  <Routes>
+    <Route path="/" element={<MobileOnboarding />} />
+    <Route path="/mobile/wallet" element={<MobileWallet />} />
+    <Route path="*" element={<MobileOnboarding />} />
+  </Routes>
+);
+
 const DomainRouter = ({ children }) => {
   const navigate = useNavigate();
   const [isCheckingDomain, setIsCheckingDomain] = useState(true);
@@ -221,6 +232,12 @@ const AppContent = () => {
     setLocalhostApp(choice);
   };
 
+  // En mode natif (Capacitor), on affiche l'app mobile dédiée (onboarding + wallet)
+  const isNative = typeof Capacitor.isNativePlatform === 'function' ? Capacitor.isNativePlatform() : false;
+  if (isNative) {
+    return <MobileAppRoutes />;
+  }
+
   const hostname = window.location.hostname;
 
   if (hostname === 'localhost') {
@@ -244,12 +261,19 @@ const AppContent = () => {
 };
 
 const App = () => {
+  // Masque les toasts dans l'app native pour éviter les superpositions avec la barre de statut/notifications
+  const isNative = typeof Capacitor.isNativePlatform === 'function' ? Capacitor.isNativePlatform() : false;
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider delayDuration={200}>
         <BrandingProvider>
-          <Toaster />
-          <Sonner />
+          {!isNative && (
+            <>
+              <Toaster />
+              <Sonner />
+            </>
+          )}
           <BrowserRouter>
             <AppContent />
           </BrowserRouter>
