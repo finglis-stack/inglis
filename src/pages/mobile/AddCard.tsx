@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useTranslation } from 'react-i18next';
 import { Loader2, CreditCard } from 'lucide-react';
@@ -23,7 +24,7 @@ type CardNumberParts = {
 
 const normalize = (s: string) => s.replace(/\s+/g, '').toUpperCase();
 
-// Formatteur dynamique du PAN: LL 000000 LL 0000000 D
+// Formatter dynamique du PAN: LL 000000 LL 0000000 D
 const formatPan = (raw: string) => {
   const s = normalize(raw);
   let out = '';
@@ -95,10 +96,7 @@ const parsePartsFromPan = (panFormatted: string): CardNumberParts | null => {
   };
 };
 
-// Luhn alphanumérique (base-36 approximé):
-// - lettres A-Z -> 10..35 (converties en deux chiffres décimaux, ex: 10 -> [1,0])
-// - chiffres 0-9 -> 0..9
-// On calcule le check digit standard Luhn mod 10 sur cette séquence décimale étendue.
+// Luhn alphanumérique (base-36 approximé)
 const luhnAlphaValid = (panFormatted: string): boolean => {
   const parts = parsePartsFromPan(panFormatted);
   if (!parts) return false;
@@ -118,9 +116,9 @@ const luhnAlphaValid = (panFormatted: string): boolean => {
     }
   }
 
-  // Luhn classique sur digits[]
+  // Luhn classique
   let sum = 0;
-  let double = true; // on commence à doubler depuis la droite; on ajoute le check plus tard
+  let double = true;
   for (let i = digits.length - 1; i >= 0; i--) {
     let d = digits[i];
     if (double) {
@@ -135,16 +133,19 @@ const luhnAlphaValid = (panFormatted: string): boolean => {
   return computedCheck === checkDigit;
 };
 
-const AddCardPage = () => {
+const AddCardInner = () => {
   const { t } = useTranslation('common');
   const navigate = useNavigate();
   const { addCard } = useMobileWallet();
 
   const [panInput, setPanInput] = useState('');
   const [expiry, setExpiry] = useState('');
-  const [pin, setPin] = useState('');
-  const [loading, setLoading] = useState(false);
   const [pulse, setPulse] = useState(false);
+
+  // Dialog PIN
+  const [pinOpen, setPinOpen] = useState(false);
+  const [pin, setPin] = useState('');
+  const [tokenizing, setTokenizing] = useState(false);
 
   const formattedPan = useMemo(() => formatPan(panInput), [panInput]);
   const isValidPan = useMemo(() => luhnAlphaValid(formattedPan), [formattedPan]);
@@ -153,26 +154,28 @@ const AddCardPage = () => {
   const handlePanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPanInput(e.target.value);
     setPulse(true);
-    setTimeout(() => setPulse(false), 150);
+    setTimeout(() => setPulse(false), 140);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const openPinDialog = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!parts || !isValidPan) {
-      showError(t('error'));
+      showError('PAN invalide');
       return;
     }
     if (!/^\d{2}\/\d{2}$/.test(expiry)) {
-      showError(t('error'));
+      showError('Expiration invalide (MM/AA)');
       return;
     }
-    if (pin.length !== 4) {
-      showError(t('error'));
-      return;
-    }
+    setPinOpen(true);
+  };
 
-    setLoading(true);
+  const submitWithPin = async () => {
+    if (pin.length !== 4) {
+      showError('NIP invalide (4 chiffres)');
+      return;
+    }
+    setTokenizing(true);
     try {
       const { data, error } = await supabase.functions.invoke('api-v1-tokenize-card', {
         body: {
@@ -181,12 +184,10 @@ const AddCardPage = () => {
           pin: pin,
         },
       });
-
       if (error) throw new Error(getFunctionError(error, t('error')));
 
       const token: string = data?.token;
       const display = data?.display;
-
       if (!token) throw new Error(t('error'));
 
       addCard({
@@ -197,16 +198,17 @@ const AddCardPage = () => {
         expiryDisplay: display?.expiry_display || expiry,
         programName: display?.program_name || undefined,
         cardType: display?.card_type,
-        cardImageUrl: display?.card_image_url || null,
+        cardImageUrl: display?.card_image_url || null, // image produit réelle
       });
 
-      showSuccess(t('save'));
+      showSuccess('Carte ajoutée');
+      setPinOpen(false);
       navigate('/mobile/wallet', { replace: true });
     } catch (err) {
       if (err instanceof Error) showError(err.message);
       else showError(t('error'));
     } finally {
-      setLoading(false);
+      setTokenizing(false);
     }
   };
 
@@ -227,7 +229,7 @@ const AddCardPage = () => {
               programName="Inglis Dominion"
               cardType="debit"
               imageOnly={false}
-              overlayCardNumber
+              overlayCardNumber={false}
               blurCardNumber={false}
               showCardNumber
               cardNumber={formattedPan || 'LT 000000 QZ 0000000 7'}
@@ -238,10 +240,10 @@ const AddCardPage = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Numéro de carte</CardTitle>
+            <CardTitle>Informations carte</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={openPinDialog} className="space-y-4">
               <div className="grid gap-2">
                 <Label>PAN (LL 000000 LL 0000000 D)</Label>
                 <Input
@@ -268,35 +270,59 @@ const AddCardPage = () => {
                     inputMode="numeric"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label>NIP</Label>
-                  <InputOTP maxLength={4} value={pin} onChange={setPin}>
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} />
-                      <InputOTPSlot index={1} />
-                      <InputOTPSlot index={2} />
-                      <InputOTPSlot index={3} />
-                    </InputOTPGroup>
-                  </InputOTP>
-                </div>
               </div>
 
-              <Button type="submit" disabled={loading || !isValidPan} className="w-full">
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {loading ? t('submitting') : 'Ajouter'}
+              <Button type="submit" disabled={!isValidPan} className="w-full">
+                Continuer
               </Button>
             </form>
           </CardContent>
         </Card>
+
+        {/* Dialog PIN en dernier avec effet de chargement */}
+        <Dialog open={pinOpen} onOpenChange={setPinOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Entrer votre NIP</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid gap-2 max-w-xs mx-auto">
+                <InputOTP maxLength={4} value={pin} onChange={setPin}>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+              {tokenizing && (
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Tokenisation en cours...
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPinOpen(false)} disabled={tokenizing}>
+                Annuler
+              </Button>
+              <Button onClick={submitWithPin} disabled={tokenizing || pin.length !== 4}>
+                {tokenizing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {tokenizing ? 'Validation...' : 'Confirmer'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
 };
 
-const MobileAddCard = () => (
+const AddCardPage = () => (
   <MobileWalletProvider>
-    <AddCardPage />
+    <AddCardInner />
   </MobileWalletProvider>
 );
 
-export default MobileAddCard;
+export default AddCardPage;

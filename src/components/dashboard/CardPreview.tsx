@@ -52,7 +52,7 @@ export const CardPreview = ({
   return (
     <div
       className={cn(
-        "relative rounded-xl p-6 font-mono shadow-lg flex flex-col justify-between w-full aspect-[1.586] text-white overflow-hidden"
+        "relative rounded-2xl p-4 shadow-xl ring-1 ring-black/10 dark:ring-white/10 flex flex-col justify-between w-full aspect-[1.586] text-white overflow-hidden transition-transform duration-300 will-change-transform hover:scale-[1.01]"
       )}
       style={!useImage ? { background: cardColor } : undefined}
     >
