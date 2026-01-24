@@ -129,6 +129,7 @@ const MainAppRoutes = () => (
     <Route path="/pay/:checkoutId" element={<PublicCheckoutPage />} />
     <Route path="/statement/:token" element={<PublicStatementPortal />} />
     <Route path="/mobile/wallet" element={<MobileWallet />} />
+    <Route path="/mobile/add-card" element={<MobileAddCard />} />
     <Route path="/onboarding/welcome" element={<Welcome />} />
     <Route path="/onboarding/create-account" element={<CreateAccount />} />
     <Route path="/onboarding/institution-info" element={<InstitutionInfo />} />

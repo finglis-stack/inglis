@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2, CreditCard } from 'lucide-react';
 import { MobileWalletProvider, useMobileWallet } from '@/context/MobileWalletContext';
 import { showError, showSuccess } from '@/utils/toast';
-import { getFunctionError } from '@/lib/utils';
+import { getFunctionError, validateLuhnAlphanumeric } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import CardPreview from '@/components/dashboard/CardPreview';
 
@@ -96,6 +96,11 @@ const parsePartsFromPan = (panFormatted: string): CardNumberParts | null => {
   };
 };
 
+const formatExpiry = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+};
 /**
  * Validation basique du format PAN: LL 000000 LL 0000000 D
  * - 2 lettres, 6 chiffres, 2 lettres, 7 chiffres, 1 chiffre
@@ -121,7 +126,10 @@ const AddCardInner = () => {
   const [tokenizing, setTokenizing] = useState(false);
 
   const formattedPan = useMemo(() => formatPan(panInput), [panInput]);
-  const isValidPan = useMemo(() => validatePanStructure(formattedPan), [formattedPan]);
+  const isValidPan = useMemo(
+    () => validateLuhnAlphanumeric(normalize(formattedPan)),
+    [formattedPan]
+  );
   const parts = useMemo(() => parsePartsFromPan(formattedPan), [formattedPan]);
 
   const handlePanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -229,7 +237,7 @@ const AddCardInner = () => {
                   autoComplete="off"
                 />
                 <div className={`text-sm ${isValidPan ? 'text-green-600' : 'text-red-600'}`}>
-                  {isValidPan ? 'PAN au bon format' : 'PAN invalide'}
+                  {isValidPan ? 'PAN valide (Luhn alphanumérique)' : 'PAN invalide'}
                 </div>
               </div>
 
@@ -238,7 +246,7 @@ const AddCardInner = () => {
                   <Label>Expiration (MM/AA)</Label>
                   <Input
                     value={expiry}
-                    onChange={(e) => setExpiry(e.target.value)}
+                    onChange={(e) => setExpiry(formatExpiry(e.target.value))}
                     placeholder="06/28"
                     inputMode="numeric"
                   />
