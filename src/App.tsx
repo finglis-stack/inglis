@@ -224,6 +224,18 @@ const DomainRouter = ({ children }) => {
   return children;
 };
 
+const isNativeEnv = () => {
+  try {
+    const platform = typeof Capacitor.getPlatform === 'function' ? Capacitor.getPlatform() : 'web';
+    if (platform === 'ios' || platform === 'android') return true;
+    // Fallback: présence de l'objet global Capacitor (dans les webviews natives)
+    if (typeof (window as any).Capacitor !== 'undefined') return true;
+  } catch {
+    // ignore
+  }
+  return false;
+};
+
 const AppContent = () => {
   const [localhostApp, setLocalhostApp] = useState(() => localStorage.getItem('dyad-app-choice'));
 
@@ -233,8 +245,7 @@ const AppContent = () => {
   };
 
   // En mode natif (Capacitor), on affiche l'app mobile dédiée (onboarding + wallet)
-  const isNative = (typeof Capacitor.getPlatform === 'function') ? (Capacitor.getPlatform() !== 'web') : false;
-  if (isNative) {
+  if (isNativeEnv()) {
     return <MobileAppRoutes />;
   }
 
@@ -262,13 +273,13 @@ const AppContent = () => {
 
 const App = () => {
   // Masque les toasts dans l'app native pour éviter les superpositions avec la barre de statut/notifications
-  const isNative = (typeof Capacitor.getPlatform === 'function') ? (Capacitor.getPlatform() !== 'web') : false;
+  const native = isNativeEnv();
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider delayDuration={200}>
         <BrandingProvider>
-          {!isNative && (
+          {!native && (
             <>
               <Toaster />
               <Sonner />
