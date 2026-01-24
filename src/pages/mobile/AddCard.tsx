@@ -1,8 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +23,7 @@ type CardNumberParts = {
 
 const normalize = (s: string) => s.replace(/\s+/g, '').toUpperCase();
 
-// Formatter dynamique du PAN: LL 000000 LL 0000000 D
+// Formatter PAN: LL 000000 LL 0000000 D
 const formatPan = (raw: string) => {
   const s = normalize(raw);
   let out = '';
@@ -101,24 +100,17 @@ const formatExpiry = (value: string) => {
   if (digits.length <= 2) return digits;
   return `${digits.slice(0, 2)}/${digits.slice(2)}`;
 };
-/**
- * Validation basique du format PAN: LL 000000 LL 0000000 D
- * - 2 lettres, 6 chiffres, 2 lettres, 7 chiffres, 1 chiffre
- * - Pas de Luhn alphanumérique ici (la vérification détaillée est côté serveur)
- */
-const validatePanStructure = (panFormatted: string): boolean => {
-  const s = normalize(panFormatted);
-  return /^[A-Z]{2}\d{6}[A-Z]{2}\d{7}\d$/.test(s);
-};
 
 const AddCardInner = () => {
   const { t } = useTranslation('common');
   const navigate = useNavigate();
   const { addCard } = useMobileWallet();
 
+  // Étapes: 1 = PAN, 2 = Expiration, 3 = Conditions
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+
   const [panInput, setPanInput] = useState('');
   const [expiry, setExpiry] = useState('');
-  const [pulse, setPulse] = useState(false);
 
   // Dialog PIN
   const [pinOpen, setPinOpen] = useState(false);
@@ -126,28 +118,26 @@ const AddCardInner = () => {
   const [tokenizing, setTokenizing] = useState(false);
 
   const formattedPan = useMemo(() => formatPan(panInput), [panInput]);
-  const isValidPan = useMemo(
-    () => validateLuhnAlphanumeric(normalize(formattedPan)),
-    [formattedPan]
-  );
   const parts = useMemo(() => parsePartsFromPan(formattedPan), [formattedPan]);
 
-  const handlePanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPanInput(e.target.value);
-    setPulse(true);
-    setTimeout(() => setPulse(false), 140);
+  const handlePanContinue = () => {
+    // Validation silencieuse (sans messages dans le champ)
+    if (!parts || !validateLuhnAlphanumeric(normalize(formattedPan))) {
+      showError('Veuillez vérifier votre numéro de carte.');
+      return;
+    }
+    setStep(2);
   };
 
-  const openPinDialog = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!parts || !isValidPan) {
-      showError('PAN invalide');
-      return;
-    }
+  const handleExpiryContinue = () => {
     if (!/^\d{2}\/\d{2}$/.test(expiry)) {
-      showError('Expiration invalide (MM/AA)');
+      showError('Veuillez entrer une expiration au format MM/AA.');
       return;
     }
+    setStep(3);
+  };
+
+  const handleAcceptTerms = () => {
     setPinOpen(true);
   };
 
@@ -156,6 +146,11 @@ const AddCardInner = () => {
       showError('NIP invalide (4 chiffres)');
       return;
     }
+    if (!parts) {
+      showError('Numéro de carte manquant.');
+      return;
+    }
+
     setTokenizing(true);
     try {
       const { data, error } = await supabase.functions.invoke('api-v1-tokenize-card', {
@@ -179,7 +174,7 @@ const AddCardInner = () => {
         expiryDisplay: display?.expiry_display || expiry,
         programName: display?.program_name || undefined,
         cardType: display?.card_type,
-        cardImageUrl: display?.card_image_url || null, // image produit réelle
+        cardImageUrl: display?.card_image_url || null,
       });
 
       showSuccess('Carte ajoutée');
@@ -220,47 +215,75 @@ const AddCardInner = () => {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Informations carte</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={openPinDialog} className="space-y-4">
-              <div className="grid gap-2">
-                <Label>PAN (LL 000000 LL 0000000 D)</Label>
-                <Input
-                  value={formattedPan}
-                  onChange={handlePanChange}
-                  placeholder="LT 000000 QZ 0000000 7"
-                  className={`text-lg tracking-wider ${pulse ? 'animate-pulse' : ''} transition-transform duration-150 focus:scale-[1.01]`}
-                  inputMode="text"
-                  autoCapitalize="characters"
-                  autoComplete="off"
-                />
-                <div className={`text-sm ${isValidPan ? 'text-green-600' : 'text-red-600'}`}>
-                  {isValidPan ? 'PAN valide (Luhn alphanumérique)' : 'PAN invalide'}
+          <CardContent className="pt-4">
+            {step === 1 && (
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Input
+                    value={formattedPan}
+                    onChange={(e) => setPanInput(e.target.value)}
+                    placeholder="Numéro de carte (ex: LT 000000 QZ 0000000 7)"
+                    className="h-14 text-xl tracking-wider px-4"
+                    inputMode="text"
+                    autoCapitalize="characters"
+                    autoComplete="off"
+                  />
                 </div>
+                <Button onClick={handlePanContinue} className="w-full h-12 text-base">
+                  Continuer
+                </Button>
               </div>
+            )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Expiration (MM/AA)</Label>
+            {step === 2 && (
+              <div className="space-y-4">
+                <div className="grid gap-2">
                   <Input
                     value={expiry}
                     onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                    placeholder="06/28"
+                    placeholder="Expiration (MM/AA)"
+                    className="h-14 text-xl px-4"
                     inputMode="numeric"
                   />
                 </div>
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => setStep(1)} className="flex-1 h-12 text-base">
+                    Retour
+                  </Button>
+                  <Button onClick={handleExpiryContinue} className="flex-1 h-12 text-base">
+                    Continuer
+                  </Button>
+                </div>
               </div>
+            )}
 
-              <Button type="submit" disabled={!isValidPan} className="w-full">
-                Continuer
-              </Button>
-            </form>
+            {step === 3 && (
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <p>
+                    En ajoutant cette carte à votre portefeuille Inglis, vous acceptez que les informations fournies
+                    soient vérifiées et tokenisées de manière sécurisée. La carte peut être utilisée pour les paiements
+                    au sein des services Inglis. Assurez-vous que le numéro et la date d&apos;expiration sont exacts.
+                  </p>
+                  <p>
+                    Vous consentez également aux conditions de sécurité associées au NIP, et à la conservation locale
+                    d&apos;un jeton représentant votre carte pour une utilisation rapide dans l&apos;application.
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => setStep(2)} className="flex-1 h-12 text-base">
+                    Retour
+                  </Button>
+                  <Button onClick={handleAcceptTerms} className="flex-1 h-12 text-base">
+                    J&apos;accepte et continuer
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Dialog PIN en dernier avec effet de chargement */}
+        {/* Dialog PIN */}
         <Dialog open={pinOpen} onOpenChange={setPinOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
