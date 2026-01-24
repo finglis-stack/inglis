@@ -96,41 +96,14 @@ const parsePartsFromPan = (panFormatted: string): CardNumberParts | null => {
   };
 };
 
-// Luhn alphanumérique (base-36 approximé)
-const luhnAlphaValid = (panFormatted: string): boolean => {
-  const parts = parsePartsFromPan(panFormatted);
-  if (!parts) return false;
-  const withoutCheck = `${parts.initials}${parts.issuer_id}${parts.random_letters}${parts.unique_identifier}`;
-  const checkDigit = parseInt(parts.check_digit, 10);
-  const digits: number[] = [];
-
-  for (const ch of withoutCheck) {
-    if (/\d/.test(ch)) {
-      digits.push(parseInt(ch, 10));
-    } else if (/[A-Z]/.test(ch)) {
-      const val = ch.charCodeAt(0) - 55; // A=10 ... Z=35
-      const valStr = String(val);
-      for (const d of valStr) digits.push(parseInt(d, 10));
-    } else {
-      return false;
-    }
-  }
-
-  // Luhn classique
-  let sum = 0;
-  let double = true;
-  for (let i = digits.length - 1; i >= 0; i--) {
-    let d = digits[i];
-    if (double) {
-      d *= 2;
-      if (d > 9) d -= 9;
-    }
-    sum += d;
-    double = !double;
-  }
-
-  const computedCheck = (10 - (sum % 10)) % 10;
-  return computedCheck === checkDigit;
+/**
+ * Validation basique du format PAN: LL 000000 LL 0000000 D
+ * - 2 lettres, 6 chiffres, 2 lettres, 7 chiffres, 1 chiffre
+ * - Pas de Luhn alphanumérique ici (la vérification détaillée est côté serveur)
+ */
+const validatePanStructure = (panFormatted: string): boolean => {
+  const s = normalize(panFormatted);
+  return /^[A-Z]{2}\d{6}[A-Z]{2}\d{7}\d$/.test(s);
 };
 
 const AddCardInner = () => {
@@ -148,7 +121,7 @@ const AddCardInner = () => {
   const [tokenizing, setTokenizing] = useState(false);
 
   const formattedPan = useMemo(() => formatPan(panInput), [panInput]);
-  const isValidPan = useMemo(() => luhnAlphaValid(formattedPan), [formattedPan]);
+  const isValidPan = useMemo(() => validatePanStructure(formattedPan), [formattedPan]);
   const parts = useMemo(() => parsePartsFromPan(formattedPan), [formattedPan]);
 
   const handlePanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -256,7 +229,7 @@ const AddCardInner = () => {
                   autoComplete="off"
                 />
                 <div className={`text-sm ${isValidPan ? 'text-green-600' : 'text-red-600'}`}>
-                  {isValidPan ? 'PAN valide (Luhn alphanumérique)' : 'PAN invalide'}
+                  {isValidPan ? 'PAN au bon format' : 'PAN invalide'}
                 </div>
               </div>
 
