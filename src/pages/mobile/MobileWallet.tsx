@@ -48,6 +48,7 @@ const WalletContent = () => {
                       cardType={(c.cardType as 'credit' | 'debit') || 'debit'}
                       maskedNumber={c.maskedNumber}
                       expiryDisplay={c.expiryDisplay}
+                      cardImageUrl={c.cardImageUrl || undefined}
                     />
                   </div>
                 ))}
