@@ -1,205 +1,177 @@
 # Inglis Dominion & Q12x - L'Infrastructure de Paiement du Futur
 
-> **Créé par :** Félix Inglis-Chevarie (Sec 4)
-> **Statut :** Remplacement complet de Visa/Mastercard codé entre deux cours de math. 🚀
+> **Développeur Principal :** Félix Inglis-Chevarie, Léa
+> **Statut du Projet :** Opérationnel. Remplacement complet des réseaux de paiement traditionnels (Visa/Mastercard) via une architecture propriétaire et indépendante sous format private loop.
 
 ---
 
-## 🌟 Introduction
+## Introduction
 
-Bienvenue dans la documentation officielle d'**Inglis Dominion**. Ce n'est pas juste une application, c'est un écosystème financier complet. 
+Bienvenue dans la documentation officielle d'Inglis Dominion. Bien plus qu'une simple application, il s'agit d'un écosystème financier complet et autonome. 
 
-Le but ? Remplacer les réseaux de paiement traditionnels (comme Visa ou Mastercard) par une architecture moderne, ouverte et sans frais d'interchange abusifs. Ce projet gère tout le cycle de vie de la monnaie numérique : de l'émission de la carte bancaire jusqu'au paiement chez le marchand, en passant par la détection de fraude par intelligence artificielle.
+L'objectif de cette infrastructure est de remplacer les réseaux de paiement traditionnels par une architecture moderne, ouverte et affranchie des frais d'interchange abusifs. Ce projet gère l'intégralité du cycle de vie de la monnaie numérique : de l'émission sécurisée de la carte bancaire jusqu'au traitement du paiement chez le marchand, en passant par une détection de fraude en temps réel propulsée par l'intelligence artificielle.
 
-Ce monorepo contient **trois applications distinctes** qui communiquent ensemble via une base de données PostgreSQL unifiée.
+Ce monorepo contient trois applications distinctes qui communiquent de manière asynchrone et sécurisée via une base de données PostgreSQL unifiée.
 
 ---
 
-## 🏗️ Architecture du Système
+## Architecture du Système
 
-Le projet est divisé en trois piliers majeurs :
+Le projet repose sur trois piliers architecturaux majeurs :
 
-1.  **Inglis Dominion (Côté Émetteur)** : Le tableau de bord pour les banques et les Fintechs pour émettre des cartes.
-2.  **Q12x (Côté Acquéreur/Marchand)** : Le processeur de paiement (style Stripe) pour les commerçants.
-3.  **Le Moteur d'Onboarding (Côté Client)** : Le système public pour que les gens demandent des cartes.
+1. **Inglis Dominion (Côté Émetteur / Issuer) :** Le centre de commande dédié aux institutions financières et aux Fintechs pour la gestion et l'émission des cartes.
+2. **Q12x (Côté Acquéreur / Acquirer) :** Le processeur de paiement conçu pour les commerçants (alternative à Stripe).
+3. **Le Moteur d'Onboarding (Côté Client) :** Le portail public automatisé pour l'acquisition de nouveaux clients et la demande de cartes.
 
 ---
 
 ## 1. Inglis Dominion : La Plateforme d'Émission (Issuer)
 
-C'est le "QG" des institutions financières. C'est ici que la banque gère ses programmes de cartes et ses clients.
+Véritable centre névralgique pour les institutions financières, ce module permet la gestion intégrale des programmes de cartes et du portefeuille client.
 
-### 💳 Gestion des Programmes de Cartes
-L'institution peut créer des produits financiers sur mesure :
-*   **Types de cartes :** Crédit, Débit, ou Hybride.
-*   **Configuration financière :** Définition des taux d'intérêt, délais de grâce, limites de crédit, et frais (annuels ou par transaction).
-*   **Design :** Personnalisation visuelle des cartes (Or Rose, Noir Métal, etc.).
-*   **BIN (Bank Identification Number) :** Gestion des BINs partagés ou dédiés pour le routage des transactions.
+### Gestion des Programmes de Cartes
+L'institution dispose d'une flexibilité totale pour concevoir des produits financiers sur mesure :
+* **Types de produits :** Cartes de crédit, de débit ou hybrides.
+* **Configuration financière :** Paramétrage des taux d'intérêt, délais de grâce, limites de crédit et structures de frais (annuels ou par transaction).
+* **Design & Personnalisation :** Déclinaisons visuelles des cartes physiques et virtuelles par image.
+* **BIN (Bank Identification Number) :** Gestion de BINs partagés ou dédiés pour optimiser le routage des transactions dans le système propriétaire.
 
-#### 🧮 Système de PAN alphanumérique et Luhn (conception maison)
-Nous avons conçu un PAN de 18 caractères alphanumériques validé par Luhn, pour augmenter l’entropie et la robustesse tout en gardant une vérification locale simple et rapide.
+### Système de PAN Alphanumérique et Algorithme de Luhn
+Nous avons développé une implémentation propriétaire de numéros de compte principal (PAN) sur 18 caractères alphanumériques. Cette approche augmente considérablement l'entropie et la robustesse du système, tout en permettant une vérification locale rapide.
 
-- Structure du PAN (18 caractères) :
-  - 2 lettres: initiales de l’utilisateur (extraites du nom, ex. “AB”).
-  - 6 chiffres: BIN (issuer_id) du programme.
-  - 2 lettres: bloc aléatoire “random_letters”.
-  - 7 chiffres: identifiant aléatoire “unique_identifier”.
-  - 1 chiffre: check digit Luhn.
-  - Total: 2 + 6 + 2 + 7 + 1 = 18.
+**Structure du PAN (18 caractères) :**
+* 2 lettres : Initiales de l'utilisateur (ex. "AB").
+* 6 chiffres : BIN (issuer_id) du programme financier.
+* 2 lettres : Bloc aléatoire de sécurité ("random_letters").
+* 7 chiffres : Identifiant unique aléatoire ("unique_identifier").
+* 1 chiffre : Somme de contrôle (Check digit) validée par Luhn.
 
-- Luhn alphanumérique (implémentation):
-  - Les lettres A–Z sont converties en chiffres via A→10, B→11, …, Z→35; les chiffres 0–9 restent inchangés.
-  - On applique ensuite Luhn (mod 10) sur la base numérique des 17 premiers caractères; le check digit final est (sum*9) % 10.
-  - Implémentations dans le code:
-    - Génération: convertAlphanumericToNumeric + calculateLuhn dans supabase/functions/create-card et supabase/functions/suspend-card.
-    - Validation front: validateLuhnAlphanumeric dans src/lib/utils.ts vérifie longueur 18, conversion alphanumérique puis Luhn.
+**Fonctionnement du Luhn Alphanumérique :**
+* Les lettres (A–Z) sont converties en valeurs numériques (A=10, B=11, ..., Z=35).
+* L'algorithme de Luhn (modulo 10) est appliqué sur la base numérique des 17 premiers caractères.
+* Le "check digit" final est calculé via la formule `(somme * 9) % 10`.
+* Cette logique est implémentée côté backend (`supabase/functions/create-card` et `suspend-card`) et côté frontend (`src/lib/utils.ts` via `validateLuhnAlphanumeric`).
 
-- Pourquoi alphanumérique:
-  - Entropie accrue et collisions rarissimes, tout en gardant le BIN pour le routage.
-  - Vérification locale immédiate (Luhn) des erreurs de saisie sans appeler une API.
-  - Lisibilité humaine (initiales visibles) mais masquage naturel du bloc sensible (****XYZ) côté affichage.
+**Avantages du modèle Alphanumérique :**
+* Entropie massive prévenant les collisions, tout en conservant la structure BIN pour le routage interbancaire.
+* Validation locale instantanée évitant les requêtes API inutiles lors d'erreurs de saisie.
+* Capacité théorique d'environ 6,76 milliards de PAN distincts par utilisateur et par BIN.
 
-- Espace des possibilités par utilisateur (par BIN):
-  - random_letters: 26^2 = 676 combinaisons.
-  - unique_identifier: 10^7 = 10 000 000 combinaisons.
-  - Le check digit est déterminé par la base, donc nombre de PAN distincts ≈ 676 × 10^7 = 6 760 000 000 par utilisateur et par BIN.
-  - Avec plusieurs BINs/programmes, l’espace s’agrège par BIN.
+**Sécurité, Unicité et Affichage :**
+* La réémission d'une carte régénère les blocs aléatoires tout en conservant les initiales et le BIN, et prolonge l'expiration de 4 ans. L'ancien PAN est invalidé avec traçabilité complète.
+* Côté interface client, le PAN est masqué pour protéger le cœur numérique (ex: `INITS BIN RL ****XYZ CD`).
 
-- Unicité et réémission:
-  - À la création et à la réémission, on régénère random_letters et unique_identifier, calcule le check digit et vérifie l’absence de collision sur (issuer_id, random_letters, unique_identifier).
-  - La réémission conserve les initiales et le BIN, met à jour la date d’expiration (+4 ans), et journalise l’action (raison, description, auteur).
-  - L’ancien PAN est rendu inactif (statut “blocked” ou “reissue” selon l’action), assurant traçabilité complète.
+### Conformité et Gestion des Utilisateurs (KYC)
+* **Profils pris en charge :** Particuliers (Personal) et Entreprises (Corporate).
+* **Sécurité des données sensibles :** Les informations critiques (NAS, adresses) sont chiffrées au repos dans la base de données. L'accès est strictement contrôlé par des politiques RLS (Row Level Security).
+* **Gestion du NIP :** Interface sécurisée permettant aux utilisateurs de définir leur NIP via un jeton unique envoyé par courriel (intégration API Resend).
 
-- Affichage et masquage:
-  - Le PAN est affiché au client sous forme lisible et masquée: “INITS BIN RL ****XYZ CD”.
-  - Exemple d’email: concaténation des segments avec masquage du cœur numérique, tel qu’implémenté dans create-card (envoi via Resend).
+### Bureau de Crédit Intégré
+Un système interne complet pour l'évaluation du risque :
+* **Pulling sécurisé :** Consultation du dossier client (score, historique, dettes) conditionnée par un consentement traçable, temporaire et chiffré.
+* **Reporting continu :** Synchronisation et consolidation régulières des comptes de crédit, gérant le multi-devises et le calcul des intérêts.
+* **Gouvernance :** Traçabilité complète des accès (horodatage, jetons temporaires, journalisation) garantissant la confidentialité des données.
 
-### 👥 Gestion des Utilisateurs (KYC)
-*   **Profils :** Supporte les particuliers (Personal) et les entreprises (Corporate).
-*   **Sécurité des données :** Les informations sensibles (NAS, Adresses) sont chiffrées dans la base de données. Seuls les employés autorisés avec les bonnes permissions RLS (Row Level Security) peuvent les déchiffrer.
-*   **Gestion du NIP :** Système sécurisé pour permettre aux utilisateurs de définir leur NIP de carte via un lien unique envoyé par courriel (utilisant l'API Resend).
-
-### 🏦 Bureau de Crédit
-Un bureau de crédit complet intégré côté émetteur :
-*   **Pulling sécurisé avec consentement :** L’institution consulte le dossier du client (score, historique, dettes, limites) via un consentement traçable et à durée limitée, avec chiffrement et contrôle d’accès.
-*   **Reporting continu :** Les comptes de crédit et l’historique de paiements sont synchronisés régulièrement et consolidés, incluant multi-comptes, multi-devises, règles de grâce et intérêts.
-*   **Gouvernance & confidentialité :** Consentement horodaté, jetons temporaires, chiffrement des données sensibles, RLS et journalisation des accès garantissent une visibilité mesurée et sécurisée.
-*   **Expérience unifiée :** Vue claire du profil, chronologie des mises à jour et indicateurs clés pour faciliter les décisions, sans friction pour l’utilisateur.
-
-### 💰 Gestion des Comptes
-*   **Ledger (Grand Livre) :** Suivi en temps réel des soldes (Solde comptable vs Solde disponible).
-*   **Transactions :** Historique complet avec calcul automatique des intérêts.
-*   **Relevés (Statements) :** Génération automatique des relevés mensuels le jour du cycle de facturation via une Edge Function planifiée.
+### Grand Livre (Ledger) et Comptes
+* **Comptabilité en temps réel :** Suivi strict de la différence entre le solde comptable et le solde disponible.
+* **Historique :** Traçabilité immuable des transactions avec calcul automatisé des intérêts.
+* **Relevés (Statements) :** Génération automatique des relevés mensuels coordonnée par une Edge Function (tâche planifiée).
 
 ---
 
 ## 2. Le Moteur d'Onboarding Public
 
-Comment un client obtient-il une carte ? Via les formulaires publics intelligents.
+L'acquisition de clients est gérée par des flux automatisés et intelligents.
 
-### 📝 Formulaires Dynamiques
-*   L'institution crée un formulaire dans son dashboard (ex: "Carte Étudiant").
-*   Le système génère une URL publique unique (ou la lie à un domaine personnalisé, voir plus bas).
-*   Le formulaire est une "Single Page Application" (SPA) fluide qui guide l'utilisateur.
+### Formulaires Dynamiques (SPA)
+* L'institution configure ses formulaires d'application depuis son tableau de bord.
+* Une application monopage (SPA) fluide est générée pour guider le prospect.
 
-### 🤖 Décision Automatisée
-C'est là que la magie opère. Quand une demande est soumise :
-1.  Une **Edge Function** (`process-onboarding-application`) se déclenche.
-2.  Elle analyse le revenu déclaré vs les critères du programme.
-3.  Elle vérifie le score de crédit (si activé).
-4.  **Résultat :** Elle approuve ou rejette la demande instantanément.
-5.  Si approuvé, elle crée le compte, génère le numéro de carte (avec l'algorithme de Luhn), et envoie les accès au client.
+### Décision Automatisée et Déploiement
+Lors de la soumission d'un dossier, une Edge Function (`process-onboarding-application`) prend le relais :
+* Analyse croisée des revenus déclarés, des critères du programme et du score de crédit.
+* Prise de décision instantanée (approbation/rejet).
+* En cas d'approbation : Création du compte, génération du PAN et transmission sécurisée des accès.
 
-### 🌐 Gestion des Domaines Personnalisés
-Grâce à l'API de Vercel intégrée dans le backend Supabase, une institution peut connecter son propre domaine (ex: `apply.mabanque.com`) directement à son formulaire d'onboarding Inglis Dominion. Le système gère la vérification DNS et le certificat SSL automatiquement.
+### Domaines Personnalisés (White-labeling)
+Grâce à l'intégration de l'API Vercel, les institutions peuvent lier leur propre domaine (ex: `apply.mabanque.com`) à notre infrastructure. La vérification DNS et le provisionnement des certificats SSL sont entièrement automatisés.
 
 ---
 
 ## 3. Q12x : Le Processeur de Paiement (Acquirer)
 
-C'est la partie qui remplace Stripe. C'est ce que les magasins utilisent pour se faire payer.
+Q12x est l'infrastructure d'acquisition marchande permettant de traiter les encaissements en toute sécurité.
 
-### 🛍️ Checkouts & Liens de Paiement
-Les marchands peuvent créer des liens de paiement configurables (Montant fixe ou variable, devise, description) et les envoyer à leurs clients.
+### Liens de Paiement et Checkouts
+Génération de liens de paiement configurables (montant fixe/variable, devise, métadonnées) prêts à être partagés par les commerçants.
 
-### 🔒 La Page de Paiement Hébergée
-*   Conçue pour être ultra-sécurisée.
-*   **Tokenisation :** Les numéros de carte ne touchent jamais le serveur du marchand. Ils sont envoyés directement à l'API Inglis Dominion qui renvoie un jeton (`tok_...`) temporaire.
-*   **Honeypot :** Des champs cachés piègent les bots stupides qui essaient de remplir le formulaire.
+### Page de Paiement Hébergée (HPP)
+* **Tokenisation avancée :** Les données de carte (PAN) ne transitent jamais par les serveurs du marchand. Elles sont directement tokenisées par l'API Inglis Dominion (génération d'un jeton `tok_...`).
+* **Sécurité anti-bot :** Implémentation de champs "Honeypot" pour bloquer les scripts malveillants lors du passage en caisse.
 
 ---
 
-## 4. Le Système de Sécurité Anti-Fraude 🛡️
+## 4. Sécurité et Moteur Anti-Fraude
 
-C'est probablement la partie la plus complexe du code. Chaque transaction passe par un pipeline d'analyse en temps réel avant d'être approuvée.
+Chaque transaction est soumise à un pipeline d'analyse transactionnelle en temps réel, constituant le cœur sécuritaire de l'écosystème.
 
-### 🕵️‍♂️ Device Fingerprinting
-On utilise une librairie pour générer une empreinte unique de l'appareil (basée sur le navigateur, l'écran, les polices, etc.).
-*   Si une carte est utilisée sur un nouvel appareil inconnu -> **Risque augmente.**
-*   Si l'appareil est marqué comme "Bloqué" dans le dashboard -> **Transaction rejetée.**
+### Empreinte Numérique (Device Fingerprinting)
+Création d'une empreinte matérielle et logicielle unique (navigateur, résolution, polices). L'utilisation d'une carte sur un appareil inconnu ou préalablement bloqué ajuste dynamiquement le score de risque ou déclenche un rejet immédiat.
 
-### 🖱️ Biométrie Comportementale
-Le système enregistre comment l'utilisateur bouge sa souris et tape au clavier.
-*   Mouvements de souris parfaits et linéaires ? -> **C'est un bot.**
-*   Vitesse de frappe inhumaine ? -> **C'est un script.**
-*   Copier-coller du numéro de carte ? -> **Suspect (souvent des cartes volées).**
+### Biométrie Comportementale
+Analyse des interactions physiques de l'utilisateur avec la page de paiement :
+* Détection des mouvements de souris parfaitement linéaires (typique des bots).
+* Analyse de la vitesse de frappe et détection des copier-coller de numéros de carte (indicateur fort de données volées).
 
-### 🌍 Vélocité & Géolocalisation
-*   **Vitesse :** Si 5 achats sont faits en 1 minute -> **Blocage.**
-*   **Voyage Impossible :** Si une carte est utilisée à Montréal, et 10 minutes plus tard à Paris, le système calcule la distance et la vitesse nécessaire. Si c'est impossible physiquement -> **Blocage.**
-*   **Analyse IP :** Détection des VPN, Proxy, et Tor via une Edge Function proxy pour éviter les bloqueurs de publicité.
+### Vélocité, Géolocalisation et Adresses IP
+* **Vélocité transactionnelle :** Blocage automatique en cas de fréquence d'achats anormale.
+* **Voyage impossible :** Calcul de la vitesse de déplacement requise entre deux transactions géographiquement distantes. Si le délai est physiquement irréalisable, la transaction est bloquée.
+* **Analyse IP :** Détection d'utilisation de VPN, Proxy ou nœuds Tor via une Edge Function proxy, contournant efficacement les bloqueurs de publicité.
 
-### 🕸️ Réseau de Fraude (Graph)
-Le système construit un graphe de connexions. Si une carte frauduleuse a touché l'IP `1.2.3.4`, toutes les autres cartes ayant touché cette IP deviennent suspectes. On peut visualiser ce réseau en 3D dans le dashboard.
+### Analyse de Réseau par Graphe (Fraud Rings)
+Le système cartographie les connexions entre les entités. Si une carte compromise est associée à une IP spécifique, les autres cartes liées à cette même IP voient leur niveau de risque augmenter. Ce graphe relationnel est visualisable en 3D dans le tableau de bord.
 
-### 🔧 Anti-Fraude modulable par profil
-Le moteur anti-fraude est configurable finement à l’échelle du profil (personnel ou entreprise) :
-- Activation/désactivation de règles par profil (fingerprinting, biométrie, géo-vélocité, IP, réseau).
-- Seuils de vélocité géographique (distance minimale, vitesse très rapide, vitesse impossible).
-- Fenêtre temporelle et seuils de vélocité IP (nombre de tentatives, profils/cartes uniques).
-- Listes de confiance et de blocage pour appareils et adresses IP (is_trusted, is_blocked).
-- Détection VPN/Proxy/Tor activable avec paramètres ajustables.
-- Biométrie comportementale (vitesse de souris/clavier, copier-coller) avec seuils modulables.
-- Pondération/impact par règle sur le score de risque et priorités des règles.
-- Seuils pour la détection de “fraud rings” (cartes/profils reliés).
+### Moteur de Règles Modulable
+Les paramètres anti-fraude sont configurables par l'institution pour chaque profil (personnel/entreprise) :
+* Ajustement des seuils de vélocité, de distance minimale et de tolérance biométrique.
+* Gestion des listes blanches/noires (appareils et IPs).
+* Pondération dynamique des règles sur le score de risque global.
 
-### ⛔ Blocage avec raison et réémission (PAN) automatique
-- Suspension de carte avec action, raison et description, journalisée et visible dans le dashboard (traçabilité complète).
-- Réémission automatique d’une carte avec un nouveau PAN (nouvelle carte) en cas de compromission; l’ancienne est désactivée et l’opération est auditée.
-- Historique horodaté des décisions (qui, quand, pourquoi) accessible pour contrôle et conformité.
+### Gestion Automatisée des Compromissions
+* Suspension immédiate et journalisée (raison, acteur, horodatage) en cas de détection de fraude.
+* Mécanisme de réémission automatique : génération d'un nouveau PAN et désactivation de l'ancienne carte sans intervention manuelle.
 
-### 🗺️ Carte Google pour la vélocité géographique
-- Affichage de 2 points et d’une flèche entre la localisation précédente et actuelle; si la distance est nulle, un seul point est affiché.
-- La carte reste visible même en cas de tentative refusée grâce au recours à la dernière IP observée du profil.
-
-### ⚙️ Chargement Google Maps fiable
-- Chargement stabilisé via un renderer dédié pour éviter l’erreur “Loader must not be called again with different options”.
+### Visualisation Géospatiale
+* Intégration d'une interface Google Maps illustrant le vecteur (points et flèche) entre les deux dernières localisations transactionnelles.
+* Rendu stabilisé via un composant dédié pour éviter les rechargements d'API non désirés.
 
 ---
 
 ## 5. Fonctionnalités Techniques Avancées
 
-### 📞 SVI (Système Vocal Interactif) avec Twilio
-J'ai codé un système téléphonique. Un utilisateur peut appeler un numéro, entrer son numéro de carte et son NIP, et le système lui lit son solde et ses dernières transactions via *Text-to-Speech*. Le code est hébergé dans une Edge Function (`twilio-ivr`) qui répond aux webhooks de Twilio avec du XML (TwiML).
+### Serveur Vocal Interactif (SVI / IVR) via Twilio
+Intégration d'un système téléphonique automatisé. Les utilisateurs peuvent s'authentifier par téléphone (PAN + NIP) pour consulter leur solde et leurs dernières transactions via Text-to-Speech. La logique est opérée par une Edge Function (`twilio-ivr`) communiquant en TwiML.
 
-### 📲 Google Wallet (Push Provisioning)
-Le système peut générer des **OPC (Opaque Payment Cards)**. C'est un payload cryptographique complexe signé avec des clés PGP qui permet d'ajouter la carte Inglis Dominion directement dans le Google Wallet d'un téléphone Android.
+### Google Wallet (Push Provisioning)
+Support de la génération d'OPC (Opaque Payment Cards). Ce payload cryptographique signé par clés PGP permet l'ajout direct et sans friction de la carte Inglis Dominion dans le portefeuille Google Wallet des appareils Android.
 
-### ⚡ Edge Functions & Webhooks
-Toute la logique lourde (création de carte, analyse de fraude, envoi d'emails) tourne sur des fonctions Serverless (Deno) chez Supabase pour une vitesse maximale et une sécurité accrue (les clés privées ne sont jamais exposées au client).
+### Architecture Serverless (Edge Functions)
+L'ensemble des opérations lourdes et sensibles (génération cryptographique, moteur de fraude, communications) est déporté sur des fonctions Serverless Deno (Supabase Edge Functions), garantissant des performances optimales et l'isolation totale des clés privées.
 
 ---
 
-## 💻 Stack Technologique
+## Stack Technologique
 
-*   **Frontend :** React, TypeScript, Vite.
-*   **UI/UX :** Tailwind CSS, Shadcn/ui, Framer Motion (pour les anims), Recharts (pour les graphiques).
-*   **Backend / Base de données :** Supabase (PostgreSQL).
-*   **Sécurité :** RLS (Row Level Security) sur toutes les tables. Personne ne voit les données qu'il ne doit pas voir.
-*   **Infrastructure :** Vercel (Hébergement), Cloudflare (DNS).
-*   **APIs Externes :** Twilio (Téléphonie), Resend (Emails), IPGeolocation (Fraude), Google Maps (Visuel).
+| Domaine | Technologies Utilisées |
+| :--- | :--- |
+| **Frontend** | React, TypeScript, Vite |
+| **Interface & UX** | Tailwind CSS, Shadcn/ui, Framer Motion, Recharts |
+| **Backend & Base de données** | Supabase (PostgreSQL) |
+| **Sécurité des données** | RLS (Row Level Security) sur 100% des tables |
+| **Infrastructure & Réseau** | Vercel (Hébergement application), Cloudflare (DNS) |
+| **Intégrations & APIs** | Twilio (SVI/Téléphonie), Resend (Courriels), IPGeolocation, Google Maps |
 
 ---
 
 > **Note du développeur :**
-> Ce projet a été réalisé entièrement par moi, Félix, étudiant de secondaire 4. Il prouve qu'on n'a pas besoin d'être une multinationale pour construire des systèmes financiers complexes. Il suffit de curiosité, de temps, et d'une bonne connexion internet. 😉
+> Ce projet a été conçu et développé de bout en bout par des jeunes. Il démontre que la construction de systèmes financiers complexes, hautement sécurisés et performants repose davantage sur l'architecture logicielle et l'ingénierie que sur les ressources d'une multinationale.
