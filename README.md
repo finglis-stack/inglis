@@ -1,7 +1,7 @@
-# Inglis Dominion & Q12x - L'Infrastructure de Paiement du Futur
+# Inglis Dominion & Q12x - Infrastructure de Paiement propriétaire
 
 > **Développeur Principal :** Félix Inglis-Chevarie, Léa
-> **Statut du Projet :** Opérationnel. Remplacement complet des réseaux de paiement traditionnels (Visa/Mastercard) via une architecture propriétaire et indépendante sous format private loop.
+> **Statut du Projet :** Opérationnel. Remplacement complet des réseaux de paiement traditionnels (Visa/Mastercard) via une architecture propriétaire et indépendante sous format private loop ouvert aux marchands.
 
 ---
 
